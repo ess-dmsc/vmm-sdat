@@ -14,13 +14,13 @@ bool Configuration::printUsage(const std::string & errorMessage, char* argv)
         std::cout << "\nERROR: " << errorMessage << std::endl;
     }
     printf("\nUsages:\n");
-    printf("analyse raw data:\n\t./convert -f ./data/a00010.h5 -x 1,0,1,1 -y 2,14,2,15 "
+    printf("analyse raw data:\n\t./convert -f ~/data/H4_2018_October/Run011_pions_neighbourON_calib_gdgem_readouts_20181030-093456_00001.h5 -x 1,2,14,1,2,15,1,1,2,1,1,3,2,2,6,2,2,7,3,1,6,3,1,7 -y 1,1,0,1,1,1,1,2,0,1,2,1,2,2,4,2,2,5,3,1,4,3,1,5 "
            "-bc 20 -tac 100 -th 0 -cs 3 -cxys 6 -dt 200 -mst 2 -spc 500 -dp 200 -cha 0 -utpc 1 -hits 1 ");
 
     printf("\nFlags:\n");
     printf("-f: h5 data file with the extension .h5\n\tThe data file was created by ESS tool.\n");
-    printf("-x: mapping of chips, list of fecs and chips in x direction separated by comma (fec,chip, fec,chip etc) \n\n");
-    printf("-y: mapping of chips, list of fecs and chips in y direction separated by comma (fec,chip, fec,chip etc) \n\n");
+    printf("-x: mapping of detectors, fecs and chips in x direction separated by comma (det,fec,chip, det,fec,chip etc) \n\n");
+    printf("-y: mapping of detectors, fecs and chips in y direction separated by comma (det,fec,chip, det,fec,chip etc) \n\n");
     printf("-bc: bunch crossing clock. Optional argument (default 20 MHz)\n\n");
     printf("-tac: tac slope. Optional argument (default 100 ns)\n\n");
     printf("-th: threshold value in ADC counts. Optional argument (default 0)\n\n");

@@ -851,13 +851,13 @@ int NMXClusterer::GetChannel(std::pair<uint8_t, uint8_t> fecChip, int channelID)
     auto search = pOffsets.find(fecChip);
     if (search != end(pOffsets)) {
         uint32_t ch = channelID + search->second;
-        /*
+
 		 if (ch % 2 == 0) {
 		 ch += 1;
 		 } else {
 		 ch -= 1;
 		 }
-*/
+
         return ch;
     } else {
         return -1;

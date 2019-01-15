@@ -58,7 +58,7 @@ m_fileName(fileName), m_dets(dets), m_channels(channels), m_analyzeChannels(anal
         int x = (m_channels[std::make_pair(det.first, 0)]+1) *64;
         int y = (m_channels[std::make_pair(det.first, 1)]+1) *64;
         m_TH2D_clusterXY[det.second] = new TH2D(name.c_str(), name.c_str(), x* 8, 0, x,y*8,0,y);
-        name = std::to_string(det.second) + "_clusterXYDeltaTime";
+        name = std::to_string(det.first) + "_clusterXYDeltaTime";
         m_TH1D_clusterXYDeltaTime[det.second] = new TH1D(name.c_str(), name.c_str(), 2000, -1000, 1000);
         name = std::to_string(det.first) + "_imageXY";
         m_TH2D_imageXY[det.second] = new TH2D(name.c_str(), name.c_str(), x, 0, x,y,0,y);
