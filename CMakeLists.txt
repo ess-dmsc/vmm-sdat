@@ -1,7 +1,7 @@
 # CMakeLists.txt for vmm-hdf5-to-root program. It creates a library with dictionary and a main program
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 project(vmm-hdf5-to-root)
-
+set(CMAKE_BUILD_TYPE RelWithDebInfo)
 set(CMAKE_CXX_STANDARD 11)
 
 if(ENABLE_DTRACE)
@@ -28,10 +28,10 @@ find_package(ROOT REQUIRED)
 include(${ROOT_USE_FILE})
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-ROOT_GENERATE_DICTIONARY(vmm-hdf5-to-rootDict NMXClusterer.h  RootFile.h Readout.h DataStructures.h LINKDEF convertLinkDef.h MODULE vmm-hdf5-to-root)
+ROOT_GENERATE_DICTIONARY(vmm-hdf5-to-rootDict NMXClusterer.h  RootFile.h Readout.h DataStructures.h Configuration.h LINKDEF convertLinkDef.h MODULE vmm-hdf5-to-root)
 
 #---Create a shared library with geneated dictionary
-add_library(vmm-hdf5-to-root SHARED NMXClusterer.cpp RootFile.cpp vmm-hdf5-to-rootDict.cxx)
+add_library(vmm-hdf5-to-root SHARED NMXClusterer.cpp RootFile.cpp Configuration.cpp vmm-hdf5-to-rootDict.cxx)
 target_link_libraries(vmm-hdf5-to-root ${ROOT_LIBRARIES} ${Boost_SYSTEM_LIBRARY} ${HDF5_LIBRARIES} h5cpp)
 
 #---Create  a main program using the library

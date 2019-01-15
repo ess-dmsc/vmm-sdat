@@ -2,6 +2,8 @@
 #include <vector>
 struct HitNMX {
 	uint32_t eventNr;
+        uint8_t detID;
+        uint8_t planeID;
 	uint8_t fecID;
 	uint8_t vmmID;
 	double triggerTimestamp;
@@ -19,12 +21,14 @@ struct ClusterNMX {
 	uint32_t id;
 	uint16_t size;
 	uint32_t adc;
+        uint8_t detID;
+        uint8_t planeID;
 	float position;
 	double time;
 	double utpcTime;
-	float utpcPosition;
+    double utpcPosition;
 	double centerOfTime;
-	float centerOfCharge;
+    double centerOfCharge;
 	bool clusterXAndY;
 	uint16_t maxDeltaTime;
 	uint16_t maxMissingStrip;
@@ -36,6 +40,7 @@ struct ClusterNMX {
 
 struct CommonClusterNMX {
 	uint32_t id;
+        uint8_t detID;
 	uint32_t idX;
 	uint32_t idY;
 	uint16_t sizeX;
