@@ -34,7 +34,7 @@ For help concerning the possible parameters, type:
 
 Complete command line:
 ```
-./convert -f ~/data/a00010.h5 -x 1,0,1,1 -y 2,14,2,15 -bc 20 -tac 100 -th 0 -cs 3 -cxys 6 -dt 200 -mst 2 -spc 500 -dp 200 -cha 0 -utpc 1 -hits 1 
+/convert -f data.h5 -x 1,2,14,1,2,15,1,1,2,1,1,3,2,2,6,2,2,7,3,1,6,3,1,7 -y 1,1,0,1,1,1,1,2,0,1,2,1,2,2,4,2,2,5,3,1,4,3,1,5 -bc 20 -tac 100 -th 0 -cs 1 -cxys 2 -dt 200 -mst 2 -spc 500 -dp 200 -cha 0 -utpc 1 -hits 1 -n 100000
 ```
 ### Explanation of parameters
   
@@ -66,4 +66,4 @@ See also the list of [contributors](https://github.com/ess-dmsc/vmm-hdf5-to-root
 
 ## License
 
-This project is licensed under the BSD 2-Clause "Simplified" License - see the https://github.com/ess-dmsc/vmm-hdf5-to-root/contributors/LICENSE.md file for details.
+This project is licensed under the BSD 2-Clause "Simplified" License - see the [license](https://github.com/ess-dmsc/vmm-hdf5-to-root/contributors/LICENSE.md) file for details.
