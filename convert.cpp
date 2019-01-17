@@ -44,7 +44,7 @@ int main(int argc, char**argv) {
             bool result = m_NMXClusterer->AnalyzeHits(static_cast<double>(RowData.srs_timestamp), RowData.fec, RowData.chip_id, RowData.channel, RowData.bcid, RowData.tdc, RowData.adc, RowData.over_threshold, RowData.chiptime);
             //std::cout << "hit: " << lines << ": " << (uint32_t) RowData.fec << ", " << (uint32_t) RowData.chip_id << ", " << RowData.srs_timestamp << ", " << RowData.channel << ", " << RowData.bcid << ", " << RowData.tdc << ", " << RowData.adc << ", " << RowData.over_threshold << ", " << RowData.chiptime << std::endl;
             lines++;
-            if (result == false || lines >= m_configuration.nHits)
+            if (result == false || (lines >= m_configuration.nHits && m_configuration.nHits > 0))
                 break;
         }
 
