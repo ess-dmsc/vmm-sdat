@@ -34,11 +34,11 @@ For help concerning the possible parameters, type:
 
 Complete command line:
 ```
-/convert -f data.h5 -x 1,2,14,1,2,15,1,1,2,1,1,3,2,2,6,2,2,7,3,1,6,3,1,7 -y 1,1,0,1,1,1,1,2,0,1,2,1,2,2,4,2,2,5,3,1,4,3,1,5 -bc 20 -tac 100 -th 0 -cs 1 -cxys 2 -dt 200 -mst 2 -spc 500 -dp 200 -cha 0 -utpc 1 -hits 1 -n 100000
+./convert -f data.h5 -x 1,2,14,1,2,15,1,1,2,1,1,3,2,2,6,2,2,7,3,1,6,3,1,7 -y 1,1,0,1,1,1,1,2,0,1,2,1,2,2,4,2,2,5,3,1,4,3,1,5 -bc 20 -tac 100 -th 0 -cs 1 -cxys 2 -dt 200 -mst 2 -spc 500 -dp 200 -cha 0 -utpc 1 -hits 1 -n 100000
 ```
 ### Explanation of parameters
   
-    -f: h5 data file with the extension .h5. The data file was created by ESS tool.
+    -f: h5 data file with the extension .h5. The data file was created by ESS DAQ (EFU).
     -x: mapping of detectors, fecs and chips in x direction separated by comma (det,fec,chip, det,fec,chip etc)
     -y: mapping of detectors, fecs and chips in y direction separated by comma (det,fec,chip, det,fec,chip etc)
     -bc: bunch crossing clock. Optional argument (default 20 MHz)
