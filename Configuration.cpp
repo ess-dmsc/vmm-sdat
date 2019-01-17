@@ -15,7 +15,7 @@ bool Configuration::printUsage(const std::string & errorMessage, char* argv)
     }
     printf("\nUsages:\n");
     printf("analyse raw data:\n\t./convert -f ~/data/H4_2018_October/Run011_pions_neighbourON_calib_gdgem_readouts_20181030-093456_00001.h5 -x 1,2,14,1,2,15,1,1,2,1,1,3,2,2,6,2,2,7,3,1,6,3,1,7 -y 1,1,0,1,1,1,1,2,0,1,2,1,2,2,4,2,2,5,3,1,4,3,1,5 "
-           "-bc 20 -tac 100 -th 0 -cs 3 -cxys 6 -dt 200 -mst 2 -spc 500 -dp 200 -cha 0 -utpc 1 -hits 1 ");
+           "-bc 20 -tac 100 -th 0 -cs 1 -cxys 2 -dt 200 -mst 2 -spc 500 -dp 200 -cha 0 -utpc 1 -hits 1 ");
 
     printf("\nFlags:\n");
     printf("-f: h5 data file with the extension .h5\n\tThe data file was created by ESS tool.\n");
@@ -33,6 +33,7 @@ bool Configuration::printUsage(const std::string & errorMessage, char* argv)
     printf("-cha: analyze TDC, BCID and ADC of all channels. Takes a long time. Optional argument (default 0)\n\n");
     printf("-utpc: use uTPC method to determine timestamp of cluster. Optional argument (default 1)\n\n");
     printf("-hits: store not only clusters but all hits (a hit is a VMM3 channel over threshold). Creates large files. Optional argument (default 1)\n\n");
+    printf("-n: number of hits. Optional argument.\n\n");
 
     return false;
 
@@ -151,7 +152,12 @@ bool Configuration::parseCommandLine(int argc, char**argv)
         } else if (strncmp(argv[i], "-hits", 5) == 0) {
             useHitsFound = true;
             useHits = atoi(argv[i + 1]);
-        } else {
+        }
+        else if (strncmp(argv[i], "-n", 2) == 0) {
+            nHitsFound = true;
+            nHits = atoi(argv[i + 1]);
+        }
+        else {
             return printUsage("Wrong type of argument!", argv[i]);
         }
     }

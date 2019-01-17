@@ -39,12 +39,12 @@ int main(int argc, char**argv) {
             return lhs.srs_timestamp < rhs.srs_timestamp;
         });
         */
-        for (auto RowData : AllElements) {
+        for (auto RowData : AllElements ) {
 
-            int result = m_NMXClusterer->AnalyzeHits(static_cast<double>(RowData.srs_timestamp), RowData.fec, RowData.chip_id, RowData.channel, RowData.bcid, RowData.tdc, RowData.adc, RowData.over_threshold, RowData.chiptime);
+            bool result = m_NMXClusterer->AnalyzeHits(static_cast<double>(RowData.srs_timestamp), RowData.fec, RowData.chip_id, RowData.channel, RowData.bcid, RowData.tdc, RowData.adc, RowData.over_threshold, RowData.chiptime);
             //std::cout << "hit: " << lines << ": " << (uint32_t) RowData.fec << ", " << (uint32_t) RowData.chip_id << ", " << RowData.srs_timestamp << ", " << RowData.channel << ", " << RowData.bcid << ", " << RowData.tdc << ", " << RowData.adc << ", " << RowData.over_threshold << ", " << RowData.chiptime << std::endl;
             lines++;
-            if (result == -1)
+            if (result == false || lines >= m_configuration.nHits)
                 break;
         }
 

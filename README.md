@@ -35,13 +35,28 @@ Complete command line:
 ```
 ./convert -f ~/data/a00010.h5 -x 1,0,1,1 -y 2,14,2,15 -bc 20 -tac 100 -th 0 -cs 3 -cxys 6 -dt 200 -mst 2 -spc 500 -dp 200 -cha 0 -utpc 1 -hits 1 
 ```
+## Explanation of parameters
+  
+    -f: h5 data file with the extension .h5. The data file was created by ESS tool.
+    -x: mapping of detectors, fecs and chips in x direction separated by comma (det,fec,chip, det,fec,chip etc)
+    -y: mapping of detectors, fecs and chips in y direction separated by comma (det,fec,chip, det,fec,chip etc)
+    -bc: bunch crossing clock. Optional argument (default 20 MHz)
+    -tac: tac slope. Optional argument (default 100 ns)
+    -th: threshold value in ADC counts. Optional argument
+    -cs: minimum cluster size. Optional argument (default 3)
+    -cxys: minimum cluster size in x and y together. Optional argument (default 6)
+    -dt: maximum time difference between strips in time sorted vector. Optional argument (default 200)
+    -mst: maximum missing strips in strip sorted vector. Optional argument (default 2);
+    -spc: maximum time span of cluster in one dimension (determined by drift size and speed). Optional argument (default 500)
+    -dp: maximum time between matched clusters in x and y. Optional argument (default 200);
+    -cha: analyze TDC, BCID and ADC of all channels. Takes a long time. Optional argument (default 0)
+    -utpc: use uTPC method to determine timestamp of cluster. Optional argument (default 1)
+    -hits: store not only clusters but all hits (a hit is a VMM3 channel over threshold). Creates large files. Optional argument (default 1)
+    -n: number of hits. Optional argument, if missing, all hits are analyzed.
 
 ## Built With
 * [CMAKE](https://cmake.org/) - Cross platform makefile generation
 
-
-## Contributing
-TBD
 
 
 ## Authors

@@ -27,8 +27,8 @@ public:
 	void WriteRootFile();
 	void FillTree();
 	void SaveHistograms();
-
-        void SaveHits(HitNMX&& hits);
+        void AddHits(HitNMX&& hits);
+        void SaveHits();
         void SaveClusters(ClusterVector&& clusters);
         void SaveClustersXY(CommonClusterVector&& clustersXY);
 

@@ -185,51 +185,51 @@ NMXClusterer::~NMXClusterer() {
 }
 
 //====================================================================================================================
-int NMXClusterer::AnalyzeHits(double srsTimestamp, uint8_t fecID, uint8_t vmmID, uint16_t chNo, uint16_t bcid, uint16_t tdc, uint16_t adc, bool overThresholdFlag, float chipTime) {
-    //if(m_eventNr > 5) return -1;
-    auto searchFecChip = pFecChip_DetectorPlane.find(std::make_pair(fecID, vmmID));
+bool NMXClusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId, uint16_t chNo, uint16_t bcid, uint16_t tdc, uint16_t adc, bool overThresholdFlag, float chipTime) {
+
+    auto searchFecChip = pFecChip_DetectorPlane.find(std::make_pair(fecId, vmmId));
     if (searchFecChip == pFecChip_DetectorPlane.end()) {
-        DTRACE(DEB, "\t\tDetector or Plane not defined for FEC %d and vmmID %d not defined!\n", (int)fecID, (int)vmmID);
+        DTRACE(DEB, "\t\tDetector or Plane not defined for FEC %d and vmmId %d not defined!\n", (int)fecId, (int)vmmId);
         return true;
     }
-    auto det_plane = GetDetectorPlane(std::make_pair(fecID, vmmID));
+    auto det_plane = GetDetectorPlane(std::make_pair(fecId, vmmId));
     auto det = std::get < 0 > (det_plane);
     auto plane = std::get < 1 > (det_plane);
 
     // Plane 0: x
     // plane 1: y
-    int pos = GetChannel(std::make_pair(fecID, vmmID), chNo);
+    int pos = GetChannel(std::make_pair(fecId, vmmId), chNo);
     if (pos == -1) {
-        DTRACE(DEB, "\t\tChannel not defined for FEC %d and vmmID %d not defined!\n", (int)fecID, (int)vmmID);
+        DTRACE(DEB, "\t\tChannel not defined for FEC %d and vmmId %d not defined!\n", (int)fecId, (int)vmmId);
         return true;
     }
-    m_deltaTriggerTimestamp[fecID] = 0;
-    if (srsTimestamp < m_oldTriggerTimestamp[fecID]) {
-        if (m_oldTriggerTimestamp[fecID] - srsTimestamp > 0x1FFFFFFFFFF) {
-            m_stats_overflow[fecID]++;
-                        DTRACE(DEB,"\n*********************************** OVERFLOW  fecIndex %d , fecID %d, m_lineNr %d, eventNr  %d, "
-                        "srsTimestamp %llu, old srsTimestamp %llu\n", fecID, fecID, m_lineNr, m_eventNr, static_cast<uint64_t>(srsTimestamp), static_cast<uint64_t>(m_oldTriggerTimestamp[fecID]));
+    m_deltaTriggerTimestamp[fecId] = 0;
+    if (srsTimestamp < m_oldTriggerTimestamp[fecId]) {
+        if (m_oldTriggerTimestamp[fecId] - srsTimestamp > 0x1FFFFFFFFFF) {
+            m_stats_overflow[fecId]++;
+                        DTRACE(DEB,"\n*********************************** OVERFLOW  fecIndex %d , fecId %d, m_lineNr %d, eventNr  %d, "
+                        "srsTimestamp %llu, old srsTimestamp %llu\n", fecId, fecId, m_lineNr, m_eventNr, static_cast<uint64_t>(srsTimestamp), static_cast<uint64_t>(m_oldTriggerTimestamp[fecId]));
                         srsTimestamp += 0x3FFFFFFFFFF;
         } else {
-            m_stats_timeError[fecID]++;
-                        DTRACE(DEB,"\n*********************************** TIME ERROR  fecIndex %d , fecID %d, m_lineNr %d, eventNr  %d, "
-                        "srsTimestamp %llu, old srsTimestamp %llu\n", fecID, fecID, m_lineNr, m_eventNr, static_cast<uint64_t>(srsTimestamp), static_cast<uint64_t>(m_oldTriggerTimestamp[fecID]));
+            m_stats_timeError[fecId]++;
+                        DTRACE(DEB,"\n*********************************** TIME ERROR  fecIndex %d , fecId %d, m_lineNr %d, eventNr  %d, "
+                        "srsTimestamp %llu, old srsTimestamp %llu\n", fecId, fecId, m_lineNr, m_eventNr, static_cast<uint64_t>(srsTimestamp), static_cast<uint64_t>(m_oldTriggerTimestamp[fecId]));
         }
     }
 
-    double remainder = std::fmod(m_deltaTriggerTimestamp[fecID], pTriggerPeriod);
+    double remainder = std::fmod(m_deltaTriggerTimestamp[fecId], pTriggerPeriod);
     if (remainder > 0) {
-        uint64_t offset = m_deltaTriggerTimestamp[fecID] / pTriggerPeriod;
-        m_deltaTriggerTimestamp[fecID] = m_deltaTriggerTimestamp[fecID] - offset * pTriggerPeriod - remainder + (offset + 1) * pTriggerPeriod;
-        srsTimestamp = m_oldTriggerTimestamp[fecID] + m_deltaTriggerTimestamp[fecID];
+        uint64_t offset = m_deltaTriggerTimestamp[fecId] / pTriggerPeriod;
+        m_deltaTriggerTimestamp[fecId] = m_deltaTriggerTimestamp[fecId] - offset * pTriggerPeriod - remainder + (offset + 1) * pTriggerPeriod;
+        srsTimestamp = m_oldTriggerTimestamp[fecId] + m_deltaTriggerTimestamp[fecId];
                 DTRACE(DEB,"\n******* SRS timestamp wrong increment: fec %d,vmmId %d, chNo %d, line %d, "
 				"trigger period %d, offset %llu, remainder %llu,  delta time %llu, "
-                                "new time %llu, old time %llu\n", fecID, vmmID, chNo, m_lineNr, pTriggerPeriod, offset, static_cast<uint64_t>(remainder), static_cast<uint64_t>(m_deltaTriggerTimestamp[fecID]), static_cast<uint64_t>(srsTimestamp), static_cast<uint64_t>(m_oldTriggerTimestamp[fecID]));
+                                "new time %llu, old time %llu\n", fecId, vmmId, chNo, m_lineNr, pTriggerPeriod, offset, static_cast<uint64_t>(remainder), static_cast<uint64_t>(m_deltaTriggerTimestamp[fecId]), static_cast<uint64_t>(srsTimestamp), static_cast<uint64_t>(m_oldTriggerTimestamp[fecId]));
     }
 
     bool newEvent = false;
-    if (srsTimestamp > m_oldTriggerTimestamp[fecID]) {
-        m_deltaTriggerTimestamp[fecID] = srsTimestamp - m_oldTriggerTimestamp[fecID];
+    if (srsTimestamp > m_oldTriggerTimestamp[fecId]) {
+        m_deltaTriggerTimestamp[fecId] = srsTimestamp - m_oldTriggerTimestamp[fecId];
         newEvent = true;
     }
 
@@ -268,14 +268,16 @@ int NMXClusterer::AnalyzeHits(double srsTimestamp, uint8_t fecID, uint8_t vmmID,
 
     //uint64_t bcTime = pBCTime_ns * (bcid + 1);
     //uint64_t tdcTime = tdc * pTAC / 256;
-
+    m_lineNr++;
     if (pCreateHits) {
+
         HitNMX theHit;
+        theHit.id = m_lineNr;
         theHit.eventNr = m_eventNr;
-        theHit.detID = det;
-        theHit.planeID = plane;
-        theHit.fecID = fecID;
-        theHit.vmmID = vmmID;
+        theHit.detId = det;
+        theHit.planeId = plane;
+        theHit.fecId = fecId;
+        theHit.vmmId = vmmId;
         theHit.triggerTimestamp = srsTimestamp;
         theHit.chNo = chNo;
         theHit.position = pos;
@@ -287,7 +289,7 @@ int NMXClusterer::AnalyzeHits(double srsTimestamp, uint8_t fecID, uint8_t vmmID,
         theHit.chipTime = chipTime;
         theHit.totalTime = srsTimestamp + chipTime;
         theHit.position = (uint16_t) pos;
-        m_rootFile->SaveHits(std::move(theHit));
+        m_rootFile->AddHits(std::move(theHit));
     }
 
     //uint64_t theChiptime = (bcTime - tdcTime);
@@ -296,31 +298,31 @@ int NMXClusterer::AnalyzeHits(double srsTimestamp, uint8_t fecID, uint8_t vmmID,
 
     if (newEvent) {
         DTRACE(DEB, "\neventNr  %d\n", m_eventNr);
-        //DTRACE(DEB, "fecID  %d\n", fecID);
+        //DTRACE(DEB, "fecId  %d\n", fecId);
     }
-    if (m_deltaTriggerTimestamp[fecID] > 0) {
+    if (m_deltaTriggerTimestamp[fecId] > 0) {
         DTRACE(DEB, "\tTriggerTimestamp %llu [ns]\n", static_cast<uint64_t>(srsTimestamp));
-        DTRACE(DEB, "\tTime since last trigger %f us (%.4f kHz)\n", m_deltaTriggerTimestamp[fecID] * 0.001, (double )(1000000 / m_deltaTriggerTimestamp[fecID]));
+        DTRACE(DEB, "\tTime since last trigger %f us (%.4f kHz)\n", m_deltaTriggerTimestamp[fecId] * 0.001, (double )(1000000 / m_deltaTriggerTimestamp[fecId]));
     }
 
-    if (m_oldFecID != fecID || newEvent) {
-        DTRACE(DEB, "\tfecID  %d\n", fecID);
+    if (m_oldFecId != fecId || newEvent) {
+        DTRACE(DEB, "\tfecId  %d\n", fecId);
 
     }
-    if (m_oldVmmID != vmmID || newEvent) {
-        DTRACE(DEB, "\tDetector %d, plane %d, vmmID  %d\n",(int)det, (int)plane, vmmID);
+    if (m_oldVmmId != vmmId || newEvent) {
+        DTRACE(DEB, "\tDetector %d, plane %d, vmmId  %d\n",(int)det, (int)plane, vmmId);
     }
     DTRACE(DEB, "\t\tChannel %d (chNo  %d) - overThresholdFlag %d\n",  pos, chNo, (int)overThresholdFlag);
     DTRACE(DEB, "\t\t\tbcid %d, tdc %d, adc %d\n", bcid, tdc, adc);
     DTRACE(DEB, "\t\t\ttotal time %llu, chip time %f ns\n", totalTime, chipTime);
 
-    m_oldTriggerTimestamp[fecID] = srsTimestamp;
+    m_oldTriggerTimestamp[fecId] = srsTimestamp;
 
-    m_oldBcID = bcid;
-    m_oldVmmID = vmmID;
-    m_oldFecID = fecID;
-    m_lineNr++;
-    return 0;
+    m_oldBcId = bcid;
+    m_oldVmmId = vmmId;
+    m_oldFecId = fecId;
+
+    return true;
 }
 
 //====================================================================================================================
@@ -410,11 +412,11 @@ int NMXClusterer::ClusterByStrip(uint8_t det, uint8_t plane, ClusterContainer &c
         if (stripCount == 0 || (std::abs(strip1 - strip2) > 0 && std::abs(strip1 - strip2) - 1 <= missingStrips && time1 - startTime <= spanTime && largestTime - time1 <= spanTime)) {
             DTRACE(DEB, "\tstrip %d, time %llu, adc %d:\n", strip1, (uint64_t )time1, adc1);
 
-            if (time1 > largestTime) {
+            if (time1 >= largestTime) {
                 largestTime = time1;
                 clusterPosition = strip1;
             }
-            if (time1 < startTime) {
+            if (time1 <= startTime) {
                 startTime = time1;
             }
             if (stripCount > 0 && maxMissingStrip < std::abs(strip1 - strip2) - 1) {
@@ -460,6 +462,7 @@ int NMXClusterer::ClusterByStrip(uint8_t det, uint8_t plane, ClusterContainer &c
         centerOfTime = (centerOfTime / (float) totalADC);
         StoreClusters(det, plane, vStrips, vTimes, clusterPosition, largestTime, centerOfGravity, centerOfTime,
                       stripCount, totalADC, maxDeltaTime, maxMissingStrip, spanCluster);
+
         clusterCount++;
     }
     return clusterCount;
@@ -469,11 +472,11 @@ int NMXClusterer::ClusterByStrip(uint8_t det, uint8_t plane, ClusterContainer &c
 void NMXClusterer::StoreClusters(uint8_t det, uint8_t plane, std::vector<float>& strips, std::vector<double>& times, float clusterPosition, double clusterTime, float centerOfCharge, double centerOfTime, uint16_t clusterSize, uint32_t clusterADC, uint16_t maxDeltaTime, uint16_t maxMissingStrip, uint16_t deltaSpan) {
     ClusterNMX theCluster;
     m_cluster_id++;
-    DTRACE(DEB, "Cluster id %d\n", m_cluster_id);
-    theCluster.id = m_cluster_id;
-    theCluster.detID = det;
-    theCluster.planeID = plane;
 
+    DTRACE(DEB, "Cluster id %d\n", m_cluster_id);
+    theCluster.id = static_cast<uint32_t>(m_cluster_id);
+    theCluster.detId = det;
+    theCluster.planeId = plane;
     theCluster.size = clusterSize;
     theCluster.adc = clusterADC;
     theCluster.time = clusterTime;
@@ -493,14 +496,19 @@ void NMXClusterer::StoreClusters(uint8_t det, uint8_t plane, std::vector<float>&
     theCluster.clusterXAndY = false;
     theCluster.maxDeltaTime = maxDeltaTime;
     theCluster.maxMissingStrip = maxMissingStrip;
-    theCluster.deltaSpan = deltaSpan;
+    theCluster.spanCluster = deltaSpan;
     theCluster.strips = std::move(strips);
     theCluster.times = std::move(times);
-    if (clusterPosition > -1.0) {
-       m_stats_maxDeltaTime[std::make_pair(det, plane)][(unsigned int)(maxDeltaTime / 50)]++;
-       m_stats_maxMissingStrip[std::make_pair(det, plane)][(unsigned int) (maxMissingStrip)]++;
-       m_stats_deltaSpan[std::make_pair(det, plane)][(unsigned int) (deltaSpan / 50)]++;
-       m_clusters_new[std::make_pair(det, plane)].emplace_back(std::move(theCluster));
+    if (theCluster.position > -1.0) {
+
+        m_stats_maxDeltaTime[std::make_pair(det, plane)][(unsigned int)(maxDeltaTime / 50)]++;
+        m_stats_maxMissingStrip[std::make_pair(det, plane)][(unsigned int) (maxMissingStrip)]++;
+        m_stats_deltaSpan[std::make_pair(det, plane)][(unsigned int) (deltaSpan / 50)]++;
+        m_clusters_new[std::make_pair(det, plane)].emplace_back(std::move(theCluster));
+    }
+    else
+    {
+        std::cout << (int)theCluster.id << " " << (int) theCluster.detId << " " <<  (int)theCluster.planeId << " " << theCluster.position << std::endl;
     }
 }
 
@@ -541,7 +549,7 @@ void NMXClusterer::MatchClustersXY(uint8_t det, uint16_t dPlane) {
             CommonClusterNMX theCommonCluster;
             m_clusterXY_id++;
             theCommonCluster.id = m_clusterXY_id;
-            theCommonCluster.detID = det;
+            theCommonCluster.detId = det;
             theCommonCluster.idX = nx.id;
             theCommonCluster.idY = (*it).id;
             theCommonCluster.sizeX = nx.size;
@@ -567,7 +575,8 @@ void NMXClusterer::MatchClustersXY(uint8_t det, uint16_t dPlane) {
             theCommonCluster.maxDeltaTimeY = (*it).maxDeltaTime;
             theCommonCluster.maxMissingStripX = nx.maxMissingStrip;
             theCommonCluster.maxMissingStripY = (*it).maxMissingStrip;
-
+            theCommonCluster.spanClusterX = nx.spanCluster;
+            theCommonCluster.spanClusterY = (*it).spanCluster;
             theCommonCluster.stripsX = nx.strips;
             theCommonCluster.timesX = nx.times;
             theCommonCluster.stripsY = (*it).strips;
@@ -618,11 +627,10 @@ void NMXClusterer::AnalyzeClustersXY(uint8_t det, double timeReadyToCluster) {
     m_clusterCnt[std::make_pair(det, 0)] += m_clusters[std::make_pair(det, 0)].size();
     m_clusterCnt[std::make_pair(det, 1)] += m_clusters[std::make_pair(det, 1)].size();
 
+    m_rootFile->SaveHits();
     m_rootFile->SaveClusters(std::move(m_clusters[std::make_pair(det, 0)]));
     m_rootFile->SaveClusters(std::move(m_clusters[std::make_pair(det, 1)]));
     m_rootFile->SaveClustersXY(std::move(m_clustersXY[det]));
-    m_rootFile->FillTree();
-
 
     m_clusters[std::make_pair(det, 0)].clear();
     m_clusters[std::make_pair(det, 1)].clear();
@@ -743,6 +751,9 @@ bool NMXClusterer::ChooseClustersToBeMatched(ClusterVector &data, ClusterVector 
 }
 
 void NMXClusterer::PrintStats() {
+    int totalX = 0;
+    int totalY = 0;
+    int totalXY = 0;
     for(auto const &searchDet: pDets)
     {
         std::cout << "\n\n*******************************************************************" << std::endl;
@@ -824,6 +835,9 @@ void NMXClusterer::PrintStats() {
         std::cout << "Clusters in y: " << m_clusterCnt[y] << std::endl;
         std::cout << "Common clusters in x/y: " << m_clusterCnt_XY[searchDet.first] << std::endl;
         std::cout << "*******************************************************************" << std::endl;
+        totalX+=m_clusterCnt[x] ;
+        totalY+=m_clusterCnt[y] ;
+        totalXY+=m_clusterCnt_XY[searchDet.first] ;
     }
 
     for (auto const &fec: m_stats_overflow) {
@@ -832,7 +846,11 @@ void NMXClusterer::PrintStats() {
         std::cout << "Time errors fec " << (int)fec.first << ": " << m_stats_timeError[fec.first] << std::endl;
         std::cout << "*******************************************************************" << std::endl;
     }
-
+    std::cout << "\n*******************************************************************" << std::endl;
+    std::cout << "Total clusters in x: " << totalX << std::endl;
+    std::cout << "Toltal clusters in y: " << totalY << std::endl;
+    std::cout << "Total common clusters in x/y: " << totalXY << std::endl;
+    std::cout << "*******************************************************************" << std::endl;
 }
 
 
@@ -847,16 +865,22 @@ std::pair<int, int> NMXClusterer::GetDetectorPlane(std::pair<uint8_t, uint8_t> f
 
 
 //====================================================================================================================
-int NMXClusterer::GetChannel(std::pair<uint8_t, uint8_t> fecChip, int channelID) {
+int NMXClusterer::GetChannel(std::pair<uint8_t, uint8_t> fecChip, int chNo) {
     auto search = pOffsets.find(fecChip);
     if (search != end(pOffsets)) {
-        uint32_t ch = channelID + search->second;
+        uint32_t ch = chNo + search->second;
+        if(fecChip.second == 6 || fecChip.second ==7 || (fecChip.first == 2 && (fecChip.second == 4 || fecChip.second == 5)))
+        {
+            return ch;
+        }
+        //Chips for adapter
 
-		 if (ch % 2 == 0) {
-		 ch += 1;
-		 } else {
-		 ch -= 1;
-		 }
+
+        if (ch % 2 == 0) {
+            ch += 1;
+        } else {
+            ch -= 1;
+        }
 
         return ch;
     } else {

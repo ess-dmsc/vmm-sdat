@@ -10,9 +10,8 @@
 #include <future>   // async
 #include <atomic>   // async
 #include <queue>   // async
-#include "TH1F.h"
-#include "TF1.h"
-#include "TFitResult.h"
+
+
 
 #define USE_ROOT
 
@@ -31,7 +30,7 @@ public:
 	~NMXClusterer();
 
 	// Analyzing and storing the hits
-	int AnalyzeHits(double srsTimestamp, uint8_t fecID, uint8_t vmmID, uint16_t chNo, uint16_t bcid, uint16_t tdc, uint16_t adc, bool overThresholdFlag, float chipTime);
+        bool AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId, uint16_t chNo, uint16_t bcid, uint16_t tdc, uint16_t adc, bool overThresholdFlag, float chipTime);
         void StoreHits(uint8_t det,uint8_t plane, int pos, uint16_t adc, uint16_t bcid, double chipTime, bool overThresholdFlag);
 
         // Analyzing and storing the clusters in x or y
@@ -49,7 +48,7 @@ public:
         int ClusterByTime(uint8_t det,uint8_t plane,HitContainer& hits, uint16_t dTime, uint16_t missingStrips, uint16_t spanTime);
         int ClusterByStrip(uint8_t det,uint8_t plane,ClusterContainer &cluster, uint16_t missingStrips, uint16_t spanTime, uint16_t maxDeltaTime);
 
-        void StoreClusters(uint8_t det,uint8_t plane, std::vector<float>& strips, std::vector<double>& times,
+        void StoreClusters(uint8_t det, uint8_t plane, std::vector<float>& strips, std::vector<double>& times,
 			float clusterPosition, double clusterTime, float centerOfCharge,
                         double centerOfTime, uint16_t clusterSize, uint32_t clusterADC, uint16_t maxDeltaTime, uint16_t maxDeltaStrip, uint16_t deltaSpan);
 
@@ -61,7 +60,7 @@ public:
 
         std::pair<int, int> GetDetectorPlane(std::pair<uint8_t, uint8_t> fecChip);
         // Helper methods that map channels to strips
-        int GetChannel(std::pair<uint8_t, uint8_t> fecChip, int channelID);
+        int GetChannel(std::pair<uint8_t, uint8_t> fecChip, int chNo);
 
 
 
@@ -94,17 +93,17 @@ private:
 	bool pUseUTPC = true;
 	bool pCreateHits;
 
-	int m_lineNr = 1;
-	int m_eventNr = 0;
+        int m_lineNr = 0;
+        int m_eventNr = 0;
         std::map<std::pair<uint8_t, uint8_t>, double> m_lowestCommonTriggerTimestamp_plane;
         std::map<uint8_t, double> m_lowestCommonTriggerTimestamp_det;
 
         std::map<uint8_t, double> m_deltaTriggerTimestamp;
         std::map<uint8_t, double> m_oldTriggerTimestamp;
 
-	uint16_t m_oldBcID = 0;
-	uint8_t m_oldVmmID = 0;
-	uint8_t m_oldFecID = 0;
+        uint16_t m_oldBcId = 0;
+        uint8_t m_oldVmmId = 0;
+        uint8_t m_oldFecId = 0;
 
         std::map<std::pair<uint8_t,uint8_t>,HitContainer> m_hits;
         std::map<std::pair<uint8_t,uint8_t>,HitContainer> m_hits_new;
