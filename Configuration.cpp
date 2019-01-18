@@ -2,6 +2,7 @@
 #include <sstream>
 #include <vector>
 #include <string>
+#include <cstring>
 
 #include "Configuration.h"
 
