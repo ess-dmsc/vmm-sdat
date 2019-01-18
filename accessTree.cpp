@@ -24,7 +24,7 @@ int main(int argc, char**argv)
  TString rootFileName = "";
 	if(argc != 2)
 	{
-		rootFileName="~/data/20190115_Fe55_719uA_gdgem_readouts_20190115-165753_00000_bc_20_tac_100_cxys2_cs1_dt200_mst2_spc500_dp200_HITS.root";
+                rootFileName="../vmm-hdf5-to-root/example.root";
 	}
 	else
 	{

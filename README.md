@@ -56,6 +56,8 @@ Complete command line:
     -n: number of hits. Optional argument, if missing, all hits are analyzed.
 
 
+## Accessing the produced ROOT tree
+The script accessTree in the build directory shows how to access the produced trees. An example.root tree is provided in the source directory.
 
 
 ## Authors
