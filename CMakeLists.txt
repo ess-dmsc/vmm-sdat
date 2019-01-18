@@ -36,6 +36,9 @@ target_link_libraries(vmm-hdf5-to-root ${ROOT_LIBRARIES} ${Boost_SYSTEM_LIBRARY}
 
 #---Create  a main program using the library
 add_executable(convert convert.cpp)
+add_executable(accessTree accessTree.cpp)
+
 target_link_libraries(convert vmm-hdf5-to-root)
+target_link_libraries(accessTree vmm-hdf5-to-root)
 
 
