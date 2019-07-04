@@ -1,70 +1,104 @@
 #pragma once
 #include <vector>
-struct HitNMX {
-        uint32_t id;
-	uint32_t eventNr;
-        uint8_t detId;
-        uint8_t planeId;
-        uint8_t fecId;
-        uint8_t vmmId;
-	double triggerTimestamp;
-	double totalTime;
-	uint8_t chNo;
-	uint16_t position;
-	uint16_t bcid;
-	uint16_t tdc;
-	uint16_t adc;
-	bool overThresholdFlag;
-	float chipTime;
+struct Hit {
+    uint32_t id;
+    uint32_t event;
+    uint8_t det;
+    uint8_t plane;
+    uint8_t fec;
+    uint8_t vmm;
+    double readout_time;
+    double time;
+    uint8_t ch;
+    uint16_t pos;
+    uint16_t bcid;
+    uint16_t tdc;
+    uint16_t adc;
+    bool over_threshold;
+    float chip_time;
 };
 
-struct ClusterNMX {
-        uint32_t id;
-        uint8_t detId;
-        uint8_t planeId;
-        uint16_t size;
-        uint32_t adc;
-	float position;
-	double time;
-	double utpcTime;
-        double utpcPosition;
-	double centerOfTime;
-        double centerOfCharge;
-	bool clusterXAndY;
-	uint16_t maxDeltaTime;
-	uint16_t maxMissingStrip;
-        uint16_t spanCluster;
-	std::vector<float> strips;
-	std::vector<double> times;
+struct ClusterPlane {
+    uint32_t id;
+    uint8_t det;
+    uint8_t plane;
+    uint16_t size;
+    uint32_t adc;
+    double time;
+    double time_utpc;
+    double time_charge2;
+    double pos;
+    double pos_utpc;
+    double pos_charge2;
+    bool plane_coincidence;
+    uint16_t max_delta_time;
+    uint16_t max_missing_strip;
+    uint16_t span_cluster;
+    std::vector<double> strips;
+    std::vector<double> times;
 
 };
 
-struct CommonClusterNMX {
-        uint32_t id;
-        uint8_t detId;
-	uint32_t idX;
-	uint32_t idY;
-	uint16_t sizeX;
-	uint16_t sizeY;
-	uint32_t adcX;
-	uint32_t adcY;
-	float positionX;
-	float positionY;
-	double timeX;
-	double timeY;
-	int16_t deltaPlane;
-        uint16_t spanClusterX;
-        uint16_t spanClusterY;
-	uint16_t maxDeltaTimeX;
-	uint16_t maxDeltaTimeY;
-	uint16_t maxMissingStripX;
-	uint16_t maxMissingStripY;
-	std::vector<float> stripsX;
-	std::vector<double> timesX;
-	std::vector<float> stripsY;
-	std::vector<double> timesY;
+struct ClusterDetector {
+    uint32_t id;
+    uint32_t id0;
+    uint32_t id1;
+    uint8_t det;
+    uint16_t size0;
+    uint16_t size1;
+    uint32_t adc0;
+    uint32_t adc1;
+    double pos0;
+    double pos1;
+    double time0;
+    double time1;
+    double pos0_utpc;
+    double pos1_utpc;
+    double time0_utpc;
+    double time1_utpc;
+    double pos0_charge2;
+    double pos1_charge2;
+    double time0_charge2;
+    double time1_charge2;
+    double dt0;
+    double dt1;
+    /*
+    double dt0_utpc;
+    double dt1_utpc;
+    double dt0_charge2;
+    double dt1_charge2;
+    */
+    int16_t delta_plane;
+    uint16_t span_cluster0;
+    uint16_t span_cluster1;
+    uint16_t max_delta_time0;
+    uint16_t max_delta_time1;
+    uint16_t max_missing_strip0;
+    uint16_t max_missing_strip1;
+    std::vector<double> strips0;
+    std::vector<double> times0;
+    std::vector<double> strips1;
+    std::vector<double> times1;
 };
 
+struct Track {
+    uint32_t id;
+    std::vector<uint8_t> det;
+    std::vector<double> x;
+    std::vector<double> y;
+    std::vector<double> z;
+    std::vector<double> t;
+
+    std::vector<double> x_utpc;
+    std::vector<double> y_utpc;
+    std::vector<double> z_utpc;
+    std::vector<double> t_utpc;
+
+    std::vector<double> x_charge2;
+    std::vector<double> y_charge2;
+    std::vector<double> z_charge2;
+    std::vector<double> t_charge2;
+};
 using std::string;
 
 
@@ -73,8 +107,8 @@ using ClusterTuple = std::tuple<uint16_t, double, uint16_t>;
 using HitContainer = std::vector<HitTuple>;
 using ClusterContainer = std::vector<ClusterTuple>;
 
-using ClusterVector = std::vector<ClusterNMX>;
-using CommonClusterVector = std::vector<CommonClusterNMX>;
-
-using RootHitVector = std::vector<HitNMX>;
+using ClusterVectorPlane = std::vector<ClusterPlane>;
+using ClusterVectorDetector = std::vector<ClusterDetector>;
+using TrackVector = std::vector<Track>;
+using HitVector = std::vector<Hit>;
 

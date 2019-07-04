@@ -6,65 +6,84 @@
 #include <map>
 #include <sstream>
 
-
-class Configuration  {
+class Configuration
+{
 public:
-        Configuration() = default;
-        ~Configuration() = default;
-        bool parseCommandLine(int argc, char**argv);
+    Configuration() = default;
+    ~Configuration() = default;
+    bool ParseCommandLine(int argc, char **argv);
 
-        bool printUsage(const std::string & errorMessage, char* argv);
-        int channels_x = 0;
-        int channels_y = 0;
-        std::string fileName = "";
-        std::string rootFilename = "";
-        bool isConfigured = false;
-        bool fFound = false;
-        bool tacFound = false;
-        bool bcFound = false;
-        bool xFound = false;
-        bool yFound = false;
-        bool thresholdFound = false;
-        bool clusterSizeFound = false;
-        bool clusterSizeXYFound = false;
-        bool deltaTimeHitsFound = false;
-        bool missingStripsClusterFound = false;
-        bool spanClusterTimeFound = false;
-        bool deltaTimePlanesFound = false;
-        bool analyzeChannelsFound = false;
+    bool PrintUsage(const std::string &errorMessage, char *argv);
+    bool CreateMapping();
+    
+    //**************************************************************
+    // BEGIN INPUT PARAMETERS
+    //**************************************************************
 
-        bool useUTPCFound = false;
-        bool useHitsFound = false;
-        bool nHitsFound = false;
+    //The tuples for the VMMs are defined as follows:
+    //detector (choose a number between 0 and 255)
+    //plane (0 or 1)
+    //fec (fecID set in firmware)
+    //vmm (depends on connection of hybrid to FEC, FEC channel 1 equals VMMs 0 and 1, FEC channel 2 VMMs 2 and 3, FEC channel 8 VMMs 14 and 15)
+    //When looking at the detector, the following conventions are used:
+    //  - top side of the hybrids is visible (if the hybrids are mounted in the readout plane)
+    //  - OR: Side of the Hirose connector is visible (if hybrids are mounted on the side of the detector)
+    //  - plane 0 is at the bottom (HDMI cables go downwards)
+    //  - plane 1 is at the right side (HDMI cables go to the right)
+    //If one looks at a VMM3a hybrid (connector to detector readout is on the bottom side), the channel 0 of the VMM 0 is always where the HDMI cable is connected
+    //If the planes are correctly used as described above, the VMM IDs are always in icreasing order PER HYBRID (e.g. 14, 15 or e.g. 0, 1)
+    std::vector<std::tuple<uint8_t, uint8_t, uint8_t, uint8_t>> pVMMs{{1, 0, 1, 0}, {1, 0, 1, 1}, {1, 0, 1, 2}, {1, 0, 1, 3}, {1, 1, 1, 6}, {1, 1, 1, 7}, {1, 1, 1, 8}, {1, 1, 1, 9}};
 
-        std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> pXChips { {1, 1, 6 }, { 1, 1, 7 }, {1, 1, 0 }, {1, 1, 1 } };
-        std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> pYChips { { 1, 1, 14 }, { 1, 1, 15 }, { 1, 1, 4 }, {1, 1, 5 } };
+    //The tuples for the axes are defined as follows:
+    //detector (choose a number between 0 and 255)
+    //plane (0 or 1)
+    //flip axis flag (0 or 1)
+    //Using the convention described above, if the axis is NOT FLIPPED:
+    //  - plane 0 is at the bottom and goes from left (0) to right (255)
+    //  - plane 1 is at the right and goes from bottom (0) to top (255)
+    //If the axis is FLIPPED:
+    //  - plane 0 is at the bottom and goes from right (255) to left (0)
+    //  - plane 1 is at the right and goes from top (0) to bottom (255)
+    std::map<std::pair<uint8_t, uint8_t>, uint8_t> pAxes{{{1,0},0},{{1,1},0}};
 
-        uint16_t pTAC = 100;
-        uint16_t pBC = 20;
-        uint16_t pADCThreshold = 0;
-        uint16_t pMinClusterSize = 3;
-        uint16_t pXYClusterSize = 6;
-        //Maximum time difference between strips in time sorted cluster (x or y)
-        uint16_t pDeltaTimeHits = 200;
-        //Number of missing strips in strip sorted cluster (x or y)
-        uint16_t pMissingStripsCluster = 2;
-        //Maximum time span for total cluster (x or y)
-        uint16_t pSpanClusterTime = 500;
-        //Maximum cluster time difference between matching clusters in x and y
-        //Cluster time is either calculated with center-of-mass or uTPC method
-        uint16_t pDeltaTimePlanes = 200;
+    std::string pFileName = "";
+   
+    uint16_t pTAC = 60;
+    uint16_t pBC = 40;
+    uint16_t pADCThreshold = 0;
+    uint16_t pMinClusterSize = 1;
+    uint16_t pCoincidentClusterSize = 2;
+    //Maximum time difference between strips in time sorted cluster (x or y)
+    uint16_t pDeltaTimeHits = 200;
+    //Number of missing strips in strip sorted cluster (x or y)
+    uint16_t pMissingStripsCluster = 1;
+    //Maximum time span for total cluster (x or y)
+    uint16_t pSpanClusterTime = 500;
+    //Maximum cluster time difference between matching clusters in two planes
+    uint16_t pDeltaTimePlanes = 200;
 
-        bool analyzeChannels = false;
+    bool createJSON = false;
+    bool pCreateHits = true;
+    std::string pConditionCoincidence = "center-of-mass";
+    float pChargeRatio = 2;
+    int nHits = 0;
+    //**************************************************************
+    // END PARAMETERS
+    //**************************************************************
+    
+    std::string pRootFilename = "";
 
-        bool useHits = true;
-        bool useUTPC = true;
-        int nHits = 0;
+    uint32_t pBCTime_ns = 1000 / (int)pBC;
+    uint32_t pTriggerPeriod = 1000 * 4096 / (int)pBC;
 
+    std::map<std::tuple<uint8_t, uint8_t>, int> pChannels;
+    std::map<std::pair<uint8_t, uint8_t>, std::pair<uint8_t, uint8_t>> pFecChip_DetectorPlane;
+    std::multimap<std::pair<uint8_t, uint8_t>, uint8_t> pDetectorPlane_Fec;
+    std::map<std::pair<uint8_t, uint8_t>, uint32_t> pOffsets;
+    std::map<std::pair<uint8_t, uint8_t>, uint32_t> p_DetPlane_idx;
+    std::map<uint8_t, uint8_t> pDets;
+    std::vector<uint8_t> pFecs;
+
+    bool fFound = false;
+    bool vmmsFound = false;
 };
-
-
-
-
-
-

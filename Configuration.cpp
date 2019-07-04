@@ -3,78 +3,136 @@
 #include <vector>
 #include <string>
 #include <cstring>
+#include <regex>
 
 #include "Configuration.h"
 
 
-bool Configuration::printUsage(const std::string & errorMessage, char* argv)
+bool Configuration::PrintUsage(const std::string & errorMessage, char* argv)
 {
     if (argv != nullptr) {
         std::cout << "\nERROR: " << errorMessage << ": " << argv << std::endl;
     } else {
         std::cout << "\nERROR: " << errorMessage << std::endl;
     }
-    printf("\nUsages:\n");
-    printf("analyse raw data:\n\t./convert -f ~/data/H4_2018_October/Run011_pions_neighbourON_calib_gdgem_readouts_20181030-093456_00001.h5 -x 1,2,14,1,2,15,1,1,2,1,1,3,2,2,6,2,2,7,3,1,6,3,1,7 -y 1,1,0,1,1,1,1,2,0,1,2,1,2,2,4,2,2,5,3,1,4,3,1,5 "
-           "-bc 20 -tac 100 -th 0 -cs 1 -cxys 2 -dt 200 -mst 2 -spc 500 -dp 200 -cha 0 -utpc 1 -hits 1 ");
+ 
+    std::cout << "\nUsage:" << std::endl; 
+    std::cout << "./convertFile -f ../../FAN0_gdgem_readouts_20190528-165706_00000.h5 " << 
+         "-vmm \"{1,0,2,0},{1,0,2,1},{1,0,2,2},{1,0,2,3},{1,1,2,6},{1,1,2,7},{1,1,2,8},{1,1,2,9}\" " <<
+         "-axis \"{{1,0},0},{{1,1},0}\" " << 
+         "-bc 40 -tac 60 -th 0 -cs 1 -ccs 2 -dt 200 -mst 1 -spc 500 -dp 200 -coin center-of-mass -ratio 2 -hits 1 -json 0 -n 0 " << std::endl;
 
-    printf("\nFlags:\n");
-    printf("-f: h5 data file with the extension .h5\n\tThe data file was created by ESS tool.\n");
-    printf("-x: mapping of detectors, fecs and chips in x direction separated by comma (det,fec,chip, det,fec,chip etc) \n\n");
-    printf("-y: mapping of detectors, fecs and chips in y direction separated by comma (det,fec,chip, det,fec,chip etc) \n\n");
-    printf("-bc: bunch crossing clock. Optional argument (default 20 MHz)\n\n");
-    printf("-tac: tac slope. Optional argument (default 100 ns)\n\n");
-    printf("-th: threshold value in ADC counts. Optional argument (default 0)\n\n");
-    printf("-cs: minimum cluster size. Optional argument (default 3)\n\n");
-    printf("-cxys: minimum cluster size in x and y together. Optional argument (default 6)\n\n");
-    printf("-dt: maximum time difference between strips in time sorted vector. Optional argument (default 200)\n\n");
-    printf("-mst: maximum missing strips in strip sorted vector. Optional argument (default 2)\n\n");
-    printf("-spc: maximum time span of cluster in one dimension (determined by drift size and speed). Optional argument (default 500)\n\n");
-    printf("-dp: maximum time between matched clusters in x and y. Optional argument (default 200)\n\n");
-    printf("-cha: analyze TDC, BCID and ADC of all channels. Takes a long time. Optional argument (default 0)\n\n");
-    printf("-utpc: use uTPC method to determine timestamp of cluster. Optional argument (default 1)\n\n");
-    printf("-hits: store not only clusters but all hits (a hit is a VMM3 channel over threshold). Creates large files. Optional argument (default 1)\n\n");
-    printf("-n: number of hits. Optional argument.\n\n");
+    std::cout << "\n\nFlags:\n" << std::endl;
+    std::cout << "-f: h5 data file with the extension .h5. The data file was created by ESS DAQ tool.\n" << std::endl;
+    
+    std::cout << "-vmm: mapping of detectors, plane, fecs and chips starting and ending with \" and separated by brackets and comma {{det, plane, fec,chip}, {det, plane, fec, chip}, etc.}.\n" << std::endl;
+    std::cout << "    The tuples for the VMMs are defined as follows:" << std::endl;
+    std::cout << "        detector (choose a number between 0 and 255)" << std::endl;
+    std::cout << "        plane (0 or 1)" << std::endl;
+    std::cout << "        fec (fecID set in firmware based on IP address, 10.0.0.1 is fecID 1, 10.0.0.2 is fecID 2 and so on)" << std::endl;
+    std::cout << "        vmm (depends on connection of hybrid to FEC, FEC channel 1 equals VMMs 0 and 1, FEC channel 2 VMMs 2 and 3, FEC channel 8 VMMs 14 and 15)" << std::endl;
+    std::cout << "    When looking at the detector, the following conventions are used:" << std::endl;
+    std::cout << "        - top side of the hybrids is visible (if the hybrids are mounted in the readout plane)" << std::endl;
+    std::cout << "        - side of the Hirose connector (bottom of the hybird) is visible (if hybrids are mounted on the side of the detector)" << std::endl;
+    std::cout << "        - plane 0 is at the bottom (HDMI cables go downwards)" << std::endl;
+    std::cout << "        - plane 1 is at the right side (HDMI cables go to the right)" << std::endl;
+    std::cout << "    If one looks at a VMM3a hybrid (connector to detector readout is on the bottom side), the channel 0 of the VMM 0 is always where the HDMI cable is connected" << std::endl;
+    std::cout << "    If the planes are correctly used as described above, the VMM IDs are always in icreasing order PER HYBRID (e.g. 14, 15 or e.g. 0, 1)" << std::endl;
+    
+    std::cout << "-axis: direction of axis. Detector, plane and direction flag (if direction flag = 1, axis direction is flipped). Detector, plane and direction flag starting and ending with \" and separated by bracket and comma {{{det,plane},flag}, {{det, plane},flag}}.\n" << std::endl;
+    std::cout << "    The tuples for the axes are defined as follows:" << std::endl;
+    std::cout << "        - detector (choose a number between 0 and 255)" << std::endl;
+    std::cout << "        - plane (0 or 1)" << std::endl;
+    std::cout << "        - flip axis flag (0 or 1)" << std::endl;
+    std::cout << "    Using the convention described above, if the plane axis is NOT FLIPPED:" << std::endl;
+    std::cout << "        - plane 0 is at the bottom and goes from left (0) to right (255)" << std::endl;
+    std::cout << "        - plane 1 is at the right and goes from bottom (0) to top (255)" << std::endl;
+    std::cout << "    If the plane axis is FLIPPED:" << std::endl;
+    std::cout << "        - plane 0 is at the bottom and goes from right (255) to left (0)" << std::endl;
+    std::cout << "        - plane 1 is at the right and goes from top (0) to bottom (255)" << std::endl;
+    
+    std::cout << "-bc: bunch crossing clock. Optional argument (default 40 MHz).\n" << std::endl;
+    std::cout << "-tac: tac slope. Optional argument (default 60 ns).\n" << std::endl;
+    std::cout << "-th: threshold value in ADC counts. Optional argument (default 0).\n" << std::endl;
+    std::cout << "-cs: minimum cluster size per plane. Optional argument (default 1).\n" << std::endl;
+    std::cout << "-ccs: minimum cluster size in plane 0 and plane 1 together. Optional argument (default 2).\n" << std::endl;
+    std::cout << "-dt: maximum time difference between strips in time sorted vector. Optional argument (default 200).\n" << std::endl;
+    std::cout << "-mst: maximum missing strips in strip sorted vector. Optional argument (default 2).\n" << std::endl;
+    std::cout << "-spc: maximum time span of cluster in one dimension (determined by drift size and speed). Optional argument (default 500).\n" << std::endl;
+    std::cout << "-dp: maximum time between matched clusters in x and y. Optional argument (default 200).\n" << std::endl;
+    std::cout << "-coin: Valid clusters normally occur at the same time in plane 0 and plane 1 of a detctor. The parameter -dp determines the permitted time difference between the planes.\n" << std::endl;
+    std::cout << "     The time can be calculated with the center-of-mass algorithm (center-of-mass), the uTPC method (utpc) or the center-of-mass squared method (charge2). Optional argument (default center-of-mass).\n" << std::endl;
+    std::cout << "-ratio: Valid clusters normally have the same amount of charge in both detector planes (ratio of (charge plane 0 / charge plane 1) is 100\% or 1.\n" << std::endl;
+    std::cout << "     The desired ratio for the matching can be set as optional argument, the default is 2 or 200\%, i.e. the charge in plane 0 has to be between 50\% and 200\% of the charge in plane 1.\n" << std::endl;
+    std::cout << "-hits: store not only clusters but all hits (a hit is a VMM3 channel over threshold). Creates large files. Optional argument (default 1).\n" << std::endl;
+    std::cout << "-json: create a json file of the detector images. Optional argument (default 1).\n" << std::endl;
+    std::cout << "-n: number of hits to analyze. Optional argument (default 0, i.e. all hits).\n" << std::endl;
+
 
     return false;
-
-
-
 }
 
-bool Configuration::parseCommandLine(int argc, char**argv)
+bool Configuration::ParseCommandLine(int argc, char**argv)
 {
+
     if (argc == 1 || argc % 2 == 0) {
-        return printUsage("Wrong number of arguments!", argv[argc - 1]);
+        return PrintUsage("Wrong number of arguments!", argv[argc - 1]);
     }
     for (int i = 1; i < argc; i += 2) {
         if (strncmp(argv[i], "-f", 2) == 0) {
             fFound = true;
-            fileName = argv[i + 1];
-            std::cout << fileName << std::endl;
+            pFileName = argv[i + 1];
+            std::cout << pFileName << std::endl;
         } else if (strncmp(argv[i], "-bc", 3) == 0) {
-            bcFound = true;
             pBC = atoi(argv[i + 1]);
-        } else if (strncmp(argv[i], "-x", 2) == 0) {
-            xFound = true;
-            std::string xString = argv[i + 1];
+            pBCTime_ns = 1000 / (int) pBC;
+            pTriggerPeriod = 1000 * 4096 / pBC;
+        } else if (strncmp(argv[i], "-vmm", 4) == 0) {
+            vmmsFound = true;
+            std::string vmmString = argv[i + 1];
+            char removeChars[] = "{}";
+            for (unsigned int i = 0; i < strlen(removeChars); ++i)
+            {
+                vmmString.erase (std::remove(vmmString.begin(), vmmString.end(), removeChars[i]), vmmString.end());
+            }
             std::string delims = ",";
             size_t lastOffset = 0;
-            pXChips.clear();
+            pVMMs.clear();
+            
             int n = 0;
             int det = 0;
+            int plane = 0;
             int fec = 0;
             int vmm = 0;
             while (true) {
-                size_t offset = xString.find_first_of(delims, lastOffset);
-                if (n % 3 == 0) {
-                    det = atoi(xString.substr(lastOffset, offset - lastOffset).c_str());
-                } else if(n % 3 == 1) {
-                    fec = atoi(xString.substr(lastOffset, offset - lastOffset).c_str());
+                size_t offset = vmmString.find_first_of(delims, lastOffset);
+                if (n % 4 == 0) {
+                    det = atoi(vmmString.substr(lastOffset, offset - lastOffset).c_str());
+                  
+                } else if(n % 4 == 1) {
+                    plane = atoi(vmmString.substr(lastOffset, offset - lastOffset).c_str());
+                }
+                else if(n % 4 == 2) {
+                    fec = atoi(vmmString.substr(lastOffset, offset - lastOffset).c_str());
                 }
                 else {
-                   vmm = atoi(xString.substr(lastOffset, offset - lastOffset).c_str());
-                   pXChips.emplace_back(std::make_tuple(det, fec, vmm));
+                    vmm = atoi(vmmString.substr(lastOffset, offset - lastOffset).c_str());
+                    auto searchTuple =  std::find(std::begin(pVMMs), std::end(pVMMs), std::make_tuple(det, plane, fec, vmm));                
+                    if (searchTuple == pVMMs.end())
+                    {
+                        pVMMs.emplace_back(std::make_tuple(det, plane, fec, vmm));
+
+                        auto searchTuple =  pChannels.find(std::make_pair(det, plane));
+                        if (searchTuple == pChannels.end())
+                        {
+                            pChannels[std::make_tuple(det, plane)] = 64;
+                            
+                        }
+                        else
+                        {
+                            pChannels[std::make_tuple(det, plane)] += 64;
+                        }
+                    }
                 }
                 n++;
                 if (offset == std::string::npos) {
@@ -82,32 +140,42 @@ bool Configuration::parseCommandLine(int argc, char**argv)
                 } else {
                     lastOffset = offset + 1; // add one to skip the delimiter
                 }
-
             }
-            if (pXChips.size() != (int) (n / 3)) {
-                return printUsage("Wrong number of Detectors, FECs and VMMs in x!", argv[i]);
+            if (pVMMs.size() != (int) (n / 4)) {
+                return PrintUsage("Wrong number of detectors, planes, FECs and VMMs!", argv[i]);
             }
-
-        } else if (strncmp(argv[i], "-y", 2) == 0) {
-            yFound = true;
-            std::string yString = argv[i + 1];
+        }
+        else if (strncmp(argv[i], "-axis", 5) == 0) {
+            std::string axisString = argv[i + 1];
+            char removeChars[] = "{}";
+            for (unsigned int i = 0; i < strlen(removeChars); ++i)
+            {
+                axisString.erase (std::remove(axisString.begin(), axisString.end(), removeChars[i]), axisString.end());
+            }
             std::string delims = ",";
             size_t lastOffset = 0;
-            pYChips.clear();
+            pAxes.clear();
+            
             int n = 0;
-            int det = 0;
-            int fec = 0;
-            int vmm = 0;
+            uint8_t det = 0;
+            uint8_t plane = 0;
+            uint8_t flip = 0;
             while (true) {
-                size_t offset = yString.find_first_of(delims, lastOffset);
+                size_t offset = axisString.find_first_of(delims, lastOffset);
                 if (n % 3 == 0) {
-                    det = atoi(yString.substr(lastOffset, offset - lastOffset).c_str());
+                    det = atoi(axisString.substr(lastOffset, offset - lastOffset).c_str());
+                  
                 } else if(n % 3 == 1) {
-                    fec = atoi(yString.substr(lastOffset, offset - lastOffset).c_str());
+                    plane = atoi(axisString.substr(lastOffset, offset - lastOffset).c_str());
                 }
                 else {
-                   vmm = atoi(yString.substr(lastOffset, offset - lastOffset).c_str());
-                   pYChips.emplace_back(std::make_tuple(det, fec, vmm));
+                    flip = atoi(axisString.substr(lastOffset, offset - lastOffset).c_str());
+
+                    auto searchMap = pAxes.find(std::make_pair(det, plane));
+                    if (searchMap == pAxes.end())
+                    {
+                        pAxes.emplace(std::make_pair(std::make_pair(det, plane), flip));
+                    }
                 }
                 n++;
                 if (offset == std::string::npos) {
@@ -116,77 +184,163 @@ bool Configuration::parseCommandLine(int argc, char**argv)
                     lastOffset = offset + 1; // add one to skip the delimiter
                 }
             }
-            if (pYChips.size() != (int) (n / 3)) {
-                return printUsage("Wrong number of Detectors, FECs and VMMs in y!", argv[i]);
+            if (pAxes.size() != (int) (n / 3)) {
+                return PrintUsage("Wrong number of detectors, planes, direction flag for axis!", argv[i]);
             }
-
-        } else if (strncmp(argv[i], "-tac", 4) == 0) {
-            tacFound = true;
+        }
+        else if (strncmp(argv[i], "-tac", 4) == 0) {
             pTAC = atoi(argv[i + 1]);
         } else if (strncmp(argv[i], "-th", 3) == 0) {
-            thresholdFound = true;
             pADCThreshold = atoi(argv[i + 1]);
         } else if (strncmp(argv[i], "-cs", 3) == 0) {
-            clusterSizeFound = true;
             pMinClusterSize = atoi(argv[i + 1]);
-        } else if (strncmp(argv[i], "-cxys", 5) == 0) {
-            clusterSizeXYFound = true;
-            pXYClusterSize = atoi(argv[i + 1]);
+        } else if (strncmp(argv[i], "-ccs", 4) == 0) {
+            pCoincidentClusterSize = atoi(argv[i + 1]);
         } else if (strncmp(argv[i], "-dt", 3) == 0) {
-            deltaTimeHitsFound = true;
             pDeltaTimeHits = atoi(argv[i + 1]);
         } else if (strncmp(argv[i], "-mst", 4) == 0) {
-            missingStripsClusterFound = true;
             pMissingStripsCluster = atoi(argv[i + 1]);
         } else if (strncmp(argv[i], "-spc", 4) == 0) {
-            spanClusterTimeFound = true;
             pSpanClusterTime = atoi(argv[i + 1]);
         } else if (strncmp(argv[i], "-dp", 3) == 0) {
-            deltaTimePlanesFound = true;
             pDeltaTimePlanes = atoi(argv[i + 1]);
-        } else if (strncmp(argv[i], "-cha", 4) == 0) {
-            analyzeChannelsFound = true;
-            analyzeChannels = atoi(argv[i + 1]);
-        } else if (strncmp(argv[i], "-utpc", 5) == 0) {
-            useUTPCFound = true;
-            useUTPC = atoi(argv[i + 1]);
         } else if (strncmp(argv[i], "-hits", 5) == 0) {
-            useHitsFound = true;
-            useHits = atoi(argv[i + 1]);
-        }
-        else if (strncmp(argv[i], "-n", 2) == 0) {
-            nHitsFound = true;
+            pCreateHits = atoi(argv[i + 1]);
+        } else if (strncmp(argv[i], "-n", 2) == 0) {
             nHits = atoi(argv[i + 1]);
+        } else if (strncmp(argv[i], "-json", 5) == 0) {
+            createJSON = atoi(argv[i + 1]);
+        } else if (strncmp(argv[i], "-ratio", 6) == 0) {
+            pChargeRatio = atof(argv[i + 1]);
+        } else if (strncmp(argv[i], "-coin", 5) == 0) {
+            pConditionCoincidence = "center-of-mass";
+            if(strncmp(argv[i+1], "utpc", 4) == 0 || strncmp(argv[i+1], "charge2", 7) == 0)
+            {
+                pConditionCoincidence = argv[i + 1];
+            }              
         }
         else {
-            return printUsage("Wrong type of argument!", argv[i]);
+            return PrintUsage("Wrong type of argument!", argv[i]);
         }
     }
-
     if (!fFound) {
-        return printUsage("Data file has to be loaded with -f data.h5!", nullptr);
-
+        return PrintUsage("Data file has to be loaded with -f data.h5!", nullptr);
     }
 
-    if (fFound && fileName.find(".h5") == std::string::npos) {
-        return printUsage("Wrong extension: .h5 file required!", nullptr);
+    if (fFound && pFileName.find(".h5") == std::string::npos) {
+        return PrintUsage("Wrong extension: .h5 file required!", nullptr);
     }
-
-    channels_x = 64 * pXChips.size();
-    channels_y = 64 * pYChips.size();
-    rootFilename = fileName;
-    if (rootFilename.find(".h5") != std::string::npos) {
-        rootFilename.replace(rootFilename.size() - 3, rootFilename.size(), "");
+    if (!vmmsFound) {
+        return PrintUsage("Detectors, planes, fecs and VMMs have to be defined!", nullptr);
+    }
+    pRootFilename = pFileName;
+    if (pRootFilename.find(".h5") != std::string::npos) {
+        pRootFilename.replace(pRootFilename.size() - 3, pRootFilename.size(), "");
     }
     std::string strParams;
 
-    if (useHits) {
+    if (pCreateHits) {
         strParams += "_HITS";
     }
     strParams += ".root";
-    rootFilename = rootFilename + "_bc_" + std::to_string(pBC) + "_tac_" + std::to_string((int) pTAC) + "_cxys" + std::to_string((int) pXYClusterSize) + "_cs" + std::to_string((int) pMinClusterSize) + "_dt" + std::to_string((int) pDeltaTimeHits) + "_mst" + std::to_string((int) pMissingStripsCluster) + "_spc" + std::to_string((int) pSpanClusterTime) + "_dp" + std::to_string((int) pDeltaTimePlanes) + strParams;
+    std::string sChargeRatio = std::to_string(pChargeRatio);
+    std::replace( sChargeRatio.begin(), sChargeRatio.end(), '.', 'p');
+    sChargeRatio = std::regex_replace(sChargeRatio, std::regex("00000"), "0");
+    
+    
+    pRootFilename = pRootFilename + "_bc_" + std::to_string(pBC) + "_tac_" + std::to_string((int) pTAC) + "_cxys_" + 
+    std::to_string((int) pCoincidentClusterSize) + "_cs_" + std::to_string((int) pMinClusterSize) 
+    + "_dt_" + std::to_string((int) pDeltaTimeHits) + "_mst_" + std::to_string((int) pMissingStripsCluster) 
+    + "_spc_" + std::to_string((int) pSpanClusterTime) + "_dp_" + std::to_string((int) pDeltaTimePlanes) 
+     + "_ratio_" + sChargeRatio + "_coin_" + pConditionCoincidence
+    + strParams;
 
-    isConfigured = true;
     return true;
 
+}
+
+bool Configuration::CreateMapping() {
+    int errors = 0;
+    uint8_t idx = 0;
+    int lastChip = 0;
+    int chip = 0;
+    for (int i = 0; i < pVMMs.size(); i++) {
+        auto tuple = pVMMs[i];
+        auto det = std::get < 0 > (tuple);
+        auto plane = std::get < 1 > (tuple);
+        auto fec = std::get < 2 > (tuple);
+        auto searchFec =  std::find(std::begin(pFecs), std::end(pFecs), fec);                
+        if (searchFec == pFecs.end())
+        {
+            pFecs.push_back(fec);
+        }
+        lastChip = chip;
+        auto chip = std::get < 3 > (tuple);
+        if(i%2 == 1)
+        {
+            int flip = 0;
+            if(lastChip > chip)
+            {
+                std::string sDet = std::to_string(det);
+                std::string sPlane = std::to_string(plane);
+                std::string sVMM0 = std::to_string(lastChip);
+                std::string sVMM1 = std::to_string(chip);
+                std::string sMessage = "Detector " + sDet + ", plane " + sPlane + ", VMM id(" + sVMM0 + "," + sVMM1 + ")!";
+                return PrintUsage("Wrong VMM order for plane!\n" + sMessage,nullptr);
+            }    
+        }
+       
+        auto searchDet = pDets.find(det);
+        if (searchDet == pDets.end()) {
+            pDets.emplace(det,pDets.size());
+        }
+
+        bool found = false;
+        //Search whether there is a new det/plane/fec combination
+        for(auto const &searchDetPlaneFec: pDetectorPlane_Fec)
+        {
+            if(searchDetPlaneFec.first == std::make_pair(det, plane) && searchDetPlaneFec.second == fec)
+            {
+                found = true;
+                break;
+            }
+        }
+        if(found == false)
+        {
+            pDetectorPlane_Fec.emplace(std::make_pair(std::make_pair(det, plane),fec));
+        }
+  
+        //Search whether there is a new fec/chip combination
+        auto searchFecChip = pFecChip_DetectorPlane.find(std::make_pair(fec, chip));
+        if (searchFecChip == pFecChip_DetectorPlane.end())
+        {
+            //Add the new fec/chip pair to the list
+            pFecChip_DetectorPlane.emplace(std::make_pair(std::make_pair(fec, chip), std::make_pair(det, plane)));
+            //Search for det/plane pairs
+            auto searchDetPlane = p_DetPlane_idx.find(std::make_pair(det, plane));
+            uint32_t offset = 0;
+            if (searchDetPlane == p_DetPlane_idx.end()) {
+                //Add det/plane pair to the list and set index
+                p_DetPlane_idx.emplace(std::make_pair(std::make_pair(det, plane), offset));
+            }
+            else
+            {
+                //Increment det/plane index
+                offset = searchDetPlane->second + 1;
+                p_DetPlane_idx[std::make_pair(det, plane)] = offset;
+            }
+            //Set offset for the new fec/chip combination
+            if( pAxes[std::make_pair(det, plane)] == 0)
+            {
+                pOffsets.emplace(std::make_pair(std::make_pair(fec, chip), offset*64));
+            }
+            else
+            {
+                auto channels = pChannels[std::make_tuple(det, plane)];
+                pOffsets.emplace(std::make_pair(std::make_pair(fec, chip), channels-offset*64));    
+            }
+            
+        }
+    }
+    return true;
 }

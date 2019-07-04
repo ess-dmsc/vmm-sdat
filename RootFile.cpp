@@ -4,508 +4,314 @@
 #include <time.h>
 #include "RootFile.h"
 
-RootFile* RootFile::m_rootFile = nullptr;
+RootFile *RootFile::m_rootFile = nullptr;
 
-RootFile* RootFile::GetInstance() {
+RootFile *RootFile::GetInstance()
+{
     return m_rootFile;
 }
 
-RootFile* RootFile::GetInstance(TString fileName, std::map<uint8_t, uint8_t> dets, std::map<std::pair<uint8_t,uint8_t>, uint32_t> channels, bool analyzeChannels, bool createHits) {
-    if (!m_rootFile) {
-        m_rootFile = new RootFile(fileName, dets, channels, analyzeChannels, createHits);
+RootFile *RootFile::GetInstance(Configuration &config)
+{
+    if (!m_rootFile)
+    {
+        m_rootFile = new RootFile(config);
     }
 
     return m_rootFile;
 }
 
-void RootFile::Dispose() {
-    if (m_rootFile) {
+void RootFile::Dispose()
+{
+    if (m_rootFile)
+    {
         m_rootFile->WriteRootFile();
         delete m_rootFile;
         m_rootFile = 0;
     }
 }
 
-void RootFile::WriteRootFile() {
+void RootFile::WriteRootFile()
+{
     SaveHistograms();
     m_file->Write("", TObject::kOverwrite);
     m_file->Close();
 }
 
-RootFile::RootFile(TString fileName, std::map<uint8_t, uint8_t> dets, std::map<std::pair<uint8_t,uint8_t>, uint32_t> channels,  bool analyzeChannels,  bool createHits) :
-                                                                                                                                                                         m_fileName(fileName), m_dets(dets), m_channels(channels), m_analyzeChannels(analyzeChannels), m_createHits(createHits) {
-
+RootFile::RootFile(Configuration &config) : m_config(config)
+{
+    m_fileName = m_config.pRootFilename.c_str();
     m_file = TFile::Open(m_fileName, "RECREATE");
     m_eventNr = 0;
 
     m_tree = new TTree("events", "vmm3 events");
     m_tree->SetDirectory(m_file);
-    if (analyzeChannels) {
-        CreateChannelHistograms();
-    }
 
-
-    if (m_createHits) {
+    if (m_config.pCreateHits)
+    {
         m_tree->Branch("hits", &m_hits);
     }
-    m_tree->Branch("clusters", &m_clusters);
-    m_tree->Branch("clustersXY", &m_clustersXY);
+    m_tree->Branch("clusters_plane", &m_clusters_plane);
+    m_tree->Branch("clusters_detector", &m_clusters_detector);
+    m_tree->Branch("tracks", &m_tracks);
 
-
-    for(auto const & det: m_dets)
+    TH2D *h2;
+    TH1D *h1;
+    std::string name = "";
+    int cnt1D = 0;
+    int cnt2D = 0;
+    for (auto const &det : m_config.pDets)
     {
-        std::string name = std::to_string(det.first) + "_clusterXY";
-        int x = (m_channels[std::make_pair(det.first, 0)]+1) *64;
-        int y = (m_channels[std::make_pair(det.first, 1)]+1) *64;
-        m_TH2D_clusterXY[det.second] = new TH2D(name.c_str(), name.c_str(), x* 8, 0, x,y*8,0,y);
-        name = std::to_string(det.first) + "_clusterXYDeltaTime";
-        m_TH1D_clusterXYDeltaTime[det.second] = new TH1D(name.c_str(), name.c_str(), 2000, -1000, 1000);
-        name = std::to_string(det.first) + "_imageXY";
-        m_TH2D_imageXY[det.second] = new TH2D(name.c_str(), name.c_str(), x, 0, x,y,0,y);
-        name = std::to_string(det.first) + "_chargeX";
-        m_TH2D_chargeX[det.second] = new TH2D(name.c_str(), name.c_str(), x, 0, x,y,0,y);
-        name = std::to_string(det.first) + "_chargeY";
-        m_TH2D_chargeY[det.second] =new TH2D(name.c_str(), name.c_str(), x, 0, x,y,0,y);
-        name = std::to_string(det.first) + "_chargeXY";
-        m_TH2D_chargeXY[det.second] = new TH2D(name.c_str(), name.c_str(), x, 0, x,y,0,y);
-        name = std::to_string(det.first) + "_sizeX";
-        m_TH2D_sizeX[det.second] = new TH2D(name.c_str(), name.c_str(), x, 0, x,y,0,y);
-        name = std::to_string(det.first) + "_sizeY";
-        m_TH2D_sizeY[det.second] = new TH2D(name.c_str(), name.c_str(), x, 0, x,y,0,y);
-        name = std::to_string(det.first) + "_sizeXY";
-        m_TH2D_sizeXY[det.second] = new TH2D(name.c_str(), name.c_str(), x, 0, x,y,0,y);
+        name = std::to_string(det.first) + "_delta_time_planes";
+        h1 = new TH1D(name.c_str(), name.c_str(), 1000, -500, 500);
+        m_TH1D.push_back(h1);
+        m_map_TH1D.emplace(std::make_pair(std::make_pair(det.first, "delta_time_planes"), cnt1D));
+        cnt1D++;
+        
+        name = std::to_string(det.first) + "_delta_time_utpc_planes";
+        h1 = new TH1D(name.c_str(), name.c_str(), 1000, -500, 500);
+        m_TH1D.push_back(h1);
+        m_map_TH1D.emplace(std::make_pair(std::make_pair(det.first, "delta_time_utpc_planes"), cnt1D));
+        cnt1D++;
+
+        name = std::to_string(det.first) + "_delta_time_charge2_planes";
+        h1 = new TH1D(name.c_str(), name.c_str(), 1000, -500, 500);
+        m_TH1D.push_back(h1);
+        m_map_TH1D.emplace(std::make_pair(std::make_pair(det.first, "delta_time_charge2_planes"), cnt1D));
+        cnt1D++;
+
+        name = std::to_string(det.first) + "_dt0";
+        h1 = new TH1D(name.c_str(), name.c_str(), 11000, -500, 50000);
+        m_TH1D.push_back(h1);
+        m_map_TH1D.emplace(std::make_pair(std::make_pair(det.first, "dt0"), cnt1D));
+        cnt1D++;
+
+        name = std::to_string(det.first) + "_dt1";
+        h1 = new TH1D(name.c_str(), name.c_str(), 11000, -500, 50000);
+        m_TH1D.push_back(h1);
+        m_map_TH1D.emplace(std::make_pair(std::make_pair(det.first, "dt1"), cnt1D));
+        cnt1D++;
+
+        int n0 = m_config.pChannels[std::make_pair(det.first, 0)];
+        int n1 = m_config.pChannels[std::make_pair(det.first, 1)];
+        name = std::to_string(det.first) + "_cluster";
+        h2 = new TH2D(name.c_str(), name.c_str(), n0 * 4, 0, n0, n1 * 4, 0, n1);
+        m_TH2D.push_back(h2);
+        m_map_TH2D.emplace(std::make_pair(std::make_pair(det.first, "cluster"), cnt2D));
+        cnt2D++;
+
+        name = std::to_string(det.first) + "_cluster_utpc";
+        h2 = new TH2D(name.c_str(), name.c_str(), n0 * 4, 0, n0, n1 * 4, 0, n1);
+        m_TH2D.push_back(h2);
+        m_map_TH2D.emplace(std::make_pair(std::make_pair(det.first, "cluster_utpc"), cnt2D));
+        cnt2D++;
+
+        name = std::to_string(det.first) + "_cluster_charge2";
+        h2 = new TH2D(name.c_str(), name.c_str(), n0 * 4, 0, n0, n1 * 4, 0, n1);
+        m_TH2D.push_back(h2);
+        m_map_TH2D.emplace(std::make_pair(std::make_pair(det.first, "cluster_charge2"), cnt2D));
+        cnt2D++;
+
+        name = std::to_string(det.first) + "_size_plane0";
+        h2 = new TH2D(name.c_str(), name.c_str(), n0 * 4, 0, n0, n1 * 4, 0, n1);
+        m_TH2D.push_back(h2);
+        m_map_TH2D.emplace(std::make_pair(std::make_pair(det.first, "size_plane0"), cnt2D));
+        cnt2D++;
+
+        name = std::to_string(det.first) + "_size_plane1";
+        h2 = new TH2D(name.c_str(), name.c_str(), n0 * 4, 0, n0, n1 * 4, 0, n1);
+        m_TH2D.push_back(h2);
+        m_map_TH2D.emplace(std::make_pair(std::make_pair(det.first, "size_plane1"), cnt2D));
+        cnt2D++;
+        
+        name = std::to_string(det.first) + "_size_plane01";
+        h2 = new TH2D(name.c_str(), name.c_str(), n0 * 4, 0, n0, n1 * 4, 0, n1);
+        m_TH2D.push_back(h2);
+        m_map_TH2D.emplace(std::make_pair(std::make_pair(det.first, "size_plane01"), cnt2D));
+        cnt2D++;
+
+        name = std::to_string(det.first) + "_charge_plane0";
+        h2 = new TH2D(name.c_str(), name.c_str(), n0 * 4, 0, n0, n1 * 4, 0, n1);
+        m_TH2D.push_back(h2);
+        m_map_TH2D.emplace(std::make_pair(std::make_pair(det.first, "charge_plane0"), cnt2D));
+        cnt2D++;
+
+        name = std::to_string(det.first) + "_charge_plane1";
+        h2 = new TH2D(name.c_str(), name.c_str(), n0 * 4, 0, n0, n1 * 4, 0, n1);
+        m_TH2D.push_back(h2);
+        m_map_TH2D.emplace(std::make_pair(std::make_pair(det.first, "charge_plane1"), cnt2D));
+        cnt2D++;
+
+        name = std::to_string(det.first) + "_charge_plane01";
+        h2 = new TH2D(name.c_str(), name.c_str(), n0 * 4, 0, n0, n1 * 4, 0, n1);
+        m_TH2D.push_back(h2);
+        m_map_TH2D.emplace(std::make_pair(std::make_pair(det.first, "charge_plane01"), cnt2D));
+        cnt2D++;
 
     }
-
-
 
     std::cout << "ROOT file " << m_fileName << " created!" << std::endl;
-
 }
 
-RootFile::~RootFile() {
-
-}
-
-void RootFile::FillTree() {
-    if (m_hits.size() > 0 || m_clusters.size() > 0) {
-        m_tree->Fill();
-        m_hits.clear();
-        m_clusters.clear();
-        m_clustersXY.clear();
-    }
+RootFile::~RootFile()
+{
 }
 
 
-void RootFile::AddHits(HitNMX&& theHit) {
-    m_hits.emplace_back(theHit);
+void RootFile::AddHits(Hit &&the_hit)
+{
+    m_hits.emplace_back(the_hit);
 }
 
-void RootFile::SaveHits() {
-    if (m_hits.size() > 0) {
-        m_tree->Fill();
-        m_hits.clear();
-    }
-}
-
-
-
-void RootFile::SaveClusters(ClusterVector&& clusters) {
-    m_clusters= clusters;
-    if (m_clusters.size() > 0) {
-        m_tree->Fill();
-        m_clusters.clear();
-    }
-}
-
-
-
-void RootFile::SaveClustersXY(CommonClusterVector&& clustersXY) {
-    m_clustersXY = clustersXY;
-    for (auto & it : m_clustersXY) {
-        int x = (m_channels[std::make_pair(it.detId, 0)]+1) *64;
-        int y = (m_channels[std::make_pair(it.detId, 1)]+1) *64;
-
-        m_TH2D_clusterXY[m_dets[it.detId]]->Fill(it.positionX, it.positionY);
-        m_TH2D_imageXY[m_dets[it.detId]]->Fill(it.positionX, it.positionY);
-        m_TH1D_clusterXYDeltaTime[m_dets[it.detId]]->Fill(it.timeX - it.timeY);
-
-        m_TH2D_chargeX[m_dets[it.detId]]->Fill(it.positionX, it.positionY, it.adcX);
-        m_TH2D_chargeY[m_dets[it.detId]]->Fill(it.positionX, it.positionY, it.adcY);
-        m_TH2D_chargeXY[m_dets[it.detId]]->Fill(it.positionX, it.positionY, it.adcX + it.adcY);
-        m_TH2D_sizeX[m_dets[it.detId]]->Fill(it.positionX, it.positionY, it.sizeX);
-        m_TH2D_sizeY[m_dets[it.detId]]->Fill(it.positionX, it.positionY, it.sizeY);
-        m_TH2D_sizeXY[m_dets[it.detId]]->Fill(it.positionX, it.positionY, it.sizeX + it.sizeY);
-    }
-    if (m_clustersXY.size() > 0) {
-        m_tree->Fill();
-        m_clustersXY.clear();
-    }
-}
-
-void RootFile::SaveHistograms() {
-    if (m_analyzeChannels) {
-        AnalyzeChannels();
-    }
-    for(auto const & det: m_dets)
+void RootFile::SaveHits()
+{
+    if (m_hits.size() > 0)
     {
-        m_TH2D_clusterXY[det.second]->Write("", TObject::kOverwrite);
-        m_TH2D_imageXY[det.second]->Write("", TObject::kOverwrite);
-        m_TH1D_clusterXYDeltaTime[det.second]->Write("", TObject::kOverwrite);
+        m_tree->Fill();
+        m_hits.clear();
+    }
+}
 
-        TString jsonFilename = m_fileName;
-        jsonFilename.ReplaceAll(".root", "");
+void RootFile::SaveClustersPlane(ClusterVectorPlane &&clusters_plane)
+{
+    m_clusters_plane = clusters_plane;
+    if (m_clusters_plane.size() > 0)
+    {
+        m_tree->Fill();
+        m_clusters_plane.clear();
+    }
+}
 
-        TString json = TBufferJSON::ToJSON(m_TH2D_imageXY[det.second], 3);
-        std::ofstream f1;
-        f1.open(jsonFilename + "_imageXY.json", std::ios::out);
-        f1 << json;
-        f1.close();
+void RootFile::SaveClustersDetector(ClusterVectorDetector &&clusters_detector)
+{
+    m_clusters_detector = clusters_detector;
+    for (auto &it : m_clusters_detector)
+    {
+        int idx = m_map_TH1D[std::make_pair(it.det,"delta_time_planes")];
+        m_TH1D[idx]->Fill(it.time0 - it.time1);
 
-        json = TBufferJSON::ToJSON(m_TH2D_clusterXY[det.second], 3);
-        std::ofstream f2;
-        f2.open(jsonFilename + "_clusterXY.json", std::ios::out);
-        f2 << json;
-        f2.close();
+        idx = m_map_TH1D[std::make_pair(it.det,"delta_time_utpc_planes")];
+        m_TH1D[idx]->Fill(it.time0_utpc - it.time1_utpc);
 
-        int xm = (m_channels[std::make_pair(det.first, 0)]+1) *64;
-        int ym = (m_channels[std::make_pair(det.first, 1)]+1) *64;
+        idx = m_map_TH1D[std::make_pair(it.det,"delta_time_charge2_planes")];
+        m_TH1D[idx]->Fill(it.time0_charge2 - it.time1_charge2);
+
+        idx = m_map_TH1D[std::make_pair(it.det,"dt0")];
+        m_TH1D[idx]->Fill(it.dt0);
+
+        idx = m_map_TH1D[std::make_pair(it.det,"dt1")];
+        m_TH1D[idx]->Fill(it.dt1);
+
+        idx = m_map_TH2D[std::make_pair(it.det,"cluster")];
+        m_TH2D[idx]->Fill(it.pos0, it.pos1);
+        
+        idx = m_map_TH2D[std::make_pair(it.det,"cluster_utpc")];
+        m_TH2D[idx]->Fill(it.pos0_utpc, it.pos1_utpc);
+
+        idx = m_map_TH2D[std::make_pair(it.det,"cluster_charge2")];
+        m_TH2D[idx]->Fill(it.pos0_charge2, it.pos1_charge2);
+        
+        idx = m_map_TH2D[std::make_pair(it.det,"size_plane0")];
+        m_TH2D[idx]->Fill(it.pos0, it.pos1, it.size0);
+
+        idx = m_map_TH2D[std::make_pair(it.det,"size_plane1")];
+        m_TH2D[idx]->Fill(it.pos0, it.pos1, it.size1);
+
+        idx = m_map_TH2D[std::make_pair(it.det,"size_plane01")];
+        m_TH2D[idx]->Fill(it.pos0, it.pos1, it.size0 + it.size1);
+
+        idx = m_map_TH2D[std::make_pair(it.det,"charge_plane0")];
+        m_TH2D[idx]->Fill(it.pos0, it.pos1, it.adc0);
+
+        idx = m_map_TH2D[std::make_pair(it.det,"charge_plane1")];
+        m_TH2D[idx]->Fill(it.pos0, it.pos1, it.adc1);
+
+        idx = m_map_TH2D[std::make_pair(it.det,"charge_plane01")];
+        m_TH2D[idx]->Fill(it.pos0, it.pos1, it.adc0 + it.adc1);
+
+    }
+    if (m_clusters_detector.size() > 0)
+    {
+        m_tree->Fill();
+        m_clusters_detector.clear();
+    }
+}
+
+
+void RootFile::SaveHistograms()
+{
+    for (auto const &h1 : m_TH1D)
+    {
+        h1->Write("", TObject::kOverwrite);
+    }
+    for (auto const &det : m_config.pDets)
+    {
+        if(m_config.createJSON)
+        {
+            int id = m_map_TH2D[std::make_pair(det.first,"cluster")];
+        
+            TString jsonFilename = m_fileName;
+            jsonFilename.ReplaceAll(".root", "");
+
+            TString json = TBufferJSON::ToJSON(m_TH2D[id], 3);
+            std::ofstream f1;
+            f1.open(jsonFilename  + "_detector" + std::to_string(det.first) + "_cluster.json", std::ios::out);
+            f1 << json;
+            f1.close();
+        }
+
+        int n0 = m_config.pChannels[std::make_tuple(det.first, 0)]*4;
+        int n1 = m_config.pChannels[std::make_tuple(det.first, 1)]*4;
         int n = 0;
-
-        for (int x = 1; x <= xm; x++) {
-            for (int y = 1; y <= ym; y++) {
-                int cnt = m_TH2D_imageXY[det.second]->GetBinContent(x, y);
-                if (cnt > 0) {
+        for (int p0 = 1; p0 <= n0; p0++)
+        {
+            for (int p1 = 1; p1 <= n1; p1++)
+            {
+                int idx = m_map_TH2D[std::make_pair(det.first,"cluster")];
+                int cnt = m_TH2D[idx]->GetBinContent(p0, p1);
+                double val = 0;
+                if (cnt > 0)
+                {
                     n++;
-                    double val = m_TH2D_chargeX[det.second]->GetBinContent(x, y) / cnt;
-                    m_TH2D_chargeX[det.second]->SetBinContent(x, y, val);
+                    idx = m_map_TH2D[std::make_pair(det.first,"size_plane0")];
+                    val = m_TH2D[idx]->GetBinContent(p0, p1) / cnt;
+                    m_TH2D[idx]->SetBinContent(p0, p1,val);
 
-                    val = m_TH2D_chargeY[det.second]->GetBinContent(x, y) / cnt;
-                    m_TH2D_chargeY[det.second]->SetBinContent(x, y, val);
+                    idx = m_map_TH2D[std::make_pair(det.first,"size_plane0")];
+                    val = m_TH2D[idx]->GetBinContent(p0, p1) / cnt;
+                    m_TH2D[idx]->SetBinContent(p0, p1,val);
 
-                    val = m_TH2D_chargeXY[det.second]->GetBinContent(x, y) / cnt;
-                    m_TH2D_chargeXY[det.second]->SetBinContent(x, y, val);
+                    idx = m_map_TH2D[std::make_pair(det.first,"size_plane01")];
+                    val = m_TH2D[idx]->GetBinContent(p0, p1) / cnt;
+                    m_TH2D[idx]->SetBinContent(p0, p1,val);
 
-                    val = m_TH2D_sizeX[det.second]->GetBinContent(x, y) / cnt;
-                    m_TH2D_sizeX[det.second]->SetBinContent(x, y, val);
+                    idx = m_map_TH2D[std::make_pair(det.first,"charge_plane0")];
+                    val = m_TH2D[idx]->GetBinContent(p0, p1) / cnt;
+                    m_TH2D[idx]->SetBinContent(p0, p1,val);
 
-                    val = m_TH2D_sizeY[det.second]->GetBinContent(x, y) / cnt;
-                    m_TH2D_sizeY[det.second]->SetBinContent(x, y, val);
+                    idx = m_map_TH2D[std::make_pair(det.first,"charge_plane1")];
+                    val = m_TH2D[idx]->GetBinContent(p0, p1) / cnt;
+                    m_TH2D[idx]->SetBinContent(p0, p1,val);
 
-                    val = m_TH2D_sizeXY[det.second]->GetBinContent(x, y) / cnt;
-                    m_TH2D_sizeXY[det.second]->SetBinContent(x, y, val);
+                    idx = m_map_TH2D[std::make_pair(det.first,"charge_plane01")];
+                    val = m_TH2D[idx]->GetBinContent(p0, p1) / cnt;
+                    m_TH2D[idx]->SetBinContent(p0, p1,val);
+
                 }
-
             }
         }
-        m_TH2D_chargeX[det.second]->SetEntries(n);
-        m_TH2D_chargeY[det.second]->SetEntries(n);
-        m_TH2D_chargeXY[det.second]->SetEntries(n);
-        m_TH2D_sizeX[det.second]->SetEntries(n);
-        m_TH2D_sizeY[det.second]->SetEntries(n);
-        m_TH2D_sizeXY[det.second]->SetEntries(n);
-
-        m_TH2D_chargeX[det.second]->Write("", TObject::kOverwrite);
-        m_TH2D_chargeY[det.second]->Write("", TObject::kOverwrite);
-        m_TH2D_chargeXY[det.second]->Write("", TObject::kOverwrite);
-
-        m_TH2D_sizeX[det.second]->Write("", TObject::kOverwrite);
-        m_TH2D_sizeY[det.second]->Write("", TObject::kOverwrite);
-        m_TH2D_sizeXY[det.second]->Write("", TObject::kOverwrite);
+        int idx = m_map_TH2D[std::make_pair(det.first,"size_plane0")];
+        m_TH2D[idx]->SetEntries(n);
+        idx = m_map_TH2D[std::make_pair(det.first,"size_plane1")];
+        m_TH2D[idx]->SetEntries(n);
+        idx = m_map_TH2D[std::make_pair(det.first,"size_plane01")];
+        m_TH2D[idx]->SetEntries(n);
+        idx = m_map_TH2D[std::make_pair(det.first,"charge_plane0")];
+        m_TH2D[idx]->SetEntries(n);
+        idx = m_map_TH2D[std::make_pair(det.first,"charge_plane1")];
+        m_TH2D[idx]->SetEntries(n);
+        idx = m_map_TH2D[std::make_pair(det.first,"charge_plane01")];
+        m_TH2D[idx]->SetEntries(n);
     }
 }
 
-void RootFile::CreateChannelHistograms() {
-    for(auto const & det: m_dets)
-    {
-        int x = (m_channels[std::make_pair(det.first, 0)]+1) *64;
-        int y = (m_channels[std::make_pair(det.first, 1)]+1) *64;
-
-        std::string name = std::to_string(det.first) + "_tdc_min_x";
-        m_tdc_min_x[det.second] = new TH1D(name.c_str(), name.c_str(), x,0,x);
-
-        name = std::to_string(det.first) + "_tdc_max_x";
-        m_tdc_max_x[det.second] = new TH1D(name.c_str(), name.c_str(), x,0,x);
-
-        name = std::to_string(det.first) + "_tdc_mean_x";
-        m_tdc_mean_x[det.second] = new TH1D(name.c_str(), name.c_str(), x,0,x);
-
-        name = std::to_string(det.first) + "_tdc_stddev_x";
-        m_tdc_stddev_x[det.second] = new TH1D(name.c_str(), name.c_str(), x,0,x);
-
-        name = std::to_string(det.first) + "_tdc_range_x";
-        m_tdc_range_x[det.second] = new TH1D(name.c_str(), name.c_str(), x,0,x);
-
-        name = std::to_string(det.first) + "_tdc_totalrange_x";
-        m_tdc_totalrange_x[det.second] = new TH1D(name.c_str(), name.c_str(), x,0,x);
-
-        name = std::to_string(det.first) + "_tdc_mean_y";
-        m_tdc_mean_y[det.second] = new TH1D(name.c_str(), name.c_str(), y,0,y);
-
-        name = std::to_string(det.first) + "_tdc_max_y";
-        m_tdc_max_y[det.second] = new TH1D(name.c_str(), name.c_str(), y,0,y);
-
-        name = std::to_string(det.first) + "_tdc_min_y";
-        m_tdc_min_y[det.second] = new TH1D(name.c_str(), name.c_str(), y,0,y);
-
-        name = std::to_string(det.first) + "_tdc_stddev_y";
-        m_tdc_stddev_y[det.second] = new TH1D(name.c_str(), name.c_str(), y,0,y);
-
-        name = std::to_string(det.first) + "_tdc_range_y";
-        m_tdc_range_y[det.second] = new TH1D(name.c_str(), name.c_str(), y,0,y);
-
-        name = std::to_string(det.first) + "_tdc_totalrange_y";
-        m_tdc_totalrange_y[det.second] = new TH1D(name.c_str(), name.c_str(), y,0,y);
-
-        name = std::to_string(det.first) + "_adc_mean_x";
-        m_adc_mean_x[det.second] = new TH1D(name.c_str(), name.c_str(), x,0,x);
-
-        name = std::to_string(det.first) + "_adc_max_x";
-        m_adc_max_x[det.second] = new TH1D(name.c_str(), name.c_str(), x,0,x);
-
-        name = std::to_string(det.first) + "_adc_min_x";
-        m_adc_min_x[det.second] = new TH1D(name.c_str(), name.c_str(), x,0,x);
-
-        name = std::to_string(det.first) + "_adc_stddev_x";
-        m_adc_stddev_x[det.second] = new TH1D(name.c_str(), name.c_str(), x,0,x);
-
-        name = std::to_string(det.first) + "_adc_range_x";
-        m_adc_range_x[det.second] = new TH1D(name.c_str(), name.c_str(), x,0,x);
-
-        name = std::to_string(det.first) + "_adc_totalrange_x";
-        m_adc_totalrange_x[det.second] = new TH1D(name.c_str(), name.c_str(), x,0,x);
-
-        name = std::to_string(det.first) + "_adc_mean_y";
-        m_adc_mean_y[det.second] = new TH1D(name.c_str(), name.c_str(), y,0,y);
-
-        name = std::to_string(det.first) + "_adc_max_y";
-        m_adc_max_y[det.second] = new TH1D(name.c_str(), name.c_str(), y,0,y);
-
-        name = std::to_string(det.first) + "_adc_min_y";
-        m_adc_min_y[det.second] = new TH1D(name.c_str(), name.c_str(), y,0,y);
-
-        name = std::to_string(det.first) + "_adc_stddev_y";
-        m_adc_stddev_y[det.second] = new TH1D(name.c_str(), name.c_str(), y,0,y);
-
-        name = std::to_string(det.first) + "_adc_range_y";
-        m_adc_range_y[det.second] = new TH1D(name.c_str(), name.c_str(), y,0,y);
-        name = std::to_string(det.first) + "_adc_totalrange_y";
-        m_adc_totalrange_y[det.second] = new TH1D(name.c_str(), name.c_str(), y,0,y);
-        name = std::to_string(det.first) + "_bcid_mean_x";
-        m_bcid_mean_x[det.second] = new TH1D(name.c_str(), name.c_str(), x,0,x);
-        name = std::to_string(det.first) + "_bcid_max_x";
-        m_bcid_max_x[det.second] = new TH1D(name.c_str(), name.c_str(), x,0,x);
-        name = std::to_string(det.first) + "_bcid_min_x";
-        m_bcid_min_x[det.second] = new TH1D(name.c_str(), name.c_str(), x,0,x);
-        name = std::to_string(det.first) + "_bcid_stddev_x";
-        m_bcid_stddev_x[det.second] = new TH1D(name.c_str(), name.c_str(), x,0,x);
-        name = std::to_string(det.first) + "_bcid_range_x";
-        m_bcid_range_x[det.second] = new TH1D(name.c_str(), name.c_str(), x,0,x);
-        name = std::to_string(det.first) + "_bcid_totalrange_x";
-        m_bcid_totalrange_x[det.second] = new TH1D(name.c_str(), name.c_str(), x,0,x);
-        name = std::to_string(det.first) + "_bcid_mean_y";
-        m_bcid_mean_y[det.second] = new TH1D(name.c_str(), name.c_str(), y,0,y);
-        name = std::to_string(det.first) + "_bcid_max_y";
-        m_bcid_max_y[det.second] = new TH1D(name.c_str(), name.c_str(), y,0,y);
-        name = std::to_string(det.first) + "_bcid_min_y";
-        m_bcid_min_y[det.second] = new TH1D(name.c_str(), name.c_str(), y,0,y);
-        name = std::to_string(det.first) + "_bcid_stddev_y";
-        m_bcid_stddev_y[det.second] = new TH1D(name.c_str(), name.c_str(), y,0,y);
-        name = std::to_string(det.first) + "_bcid_range_y";
-        m_bcid_range_y[det.second] = new TH1D(name.c_str(), name.c_str(), y,0,y);
-        name = std::to_string(det.first) + "_bcid_totalrange_y";
-        m_bcid_totalrange_y[det.second] = new TH1D(name.c_str(), name.c_str(), y,0,y);
-    }
-}
-
-void RootFile::AnalyzeChannels() {
-    for(auto const & det: m_dets)
-    {
-        int x = (m_channels[std::make_pair(det.first, 0)]+1) *64;
-        int y = (m_channels[std::make_pair(det.first, 1)]+1) *64;
-        std::cout << "Detector " << (int)det.first << std::endl;
-        std::cout << "Creating TDC histograms X!" << std::endl;
-        for (int i = 0; i < x; i++) {
-            TH1D *h1 = new TH1D("h1", "h1", 256, 0, 256);
-            TString cut = "hits.position==" + std::to_string(i) + " && hits.detId ==" + std::to_string(det.first) + " && hits.planeID == " + std::to_string(1);
-            m_tree->Draw("hits.tdc>>h1", cut, "goff");
-            double mean = h1->GetMean();
-
-            double stddev = h1->GetStdDev();
-            double max = h1->FindLastBinAbove(0);
-
-            double min = h1->FindFirstBinAbove(0);
-
-            double totalrange = max - min;
-            m_tdc_mean_x[det.second]->Fill(i, mean);
-            m_tdc_min_x[det.second]->Fill(i, min);
-            m_tdc_max_x[det.second]->Fill(i, max);
-            m_tdc_stddev_x[det.second]->Fill(i, stddev);
-            m_tdc_totalrange_x[det.second]->Fill(i, totalrange);
-            double start = mean - stddev;
-            if (start < 0) {
-                start = 0;
-            }
-            double end = mean + stddev;
-            if (end > 255) {
-                end = 255;
-            }
-            m_tdc_range_x[det.second]->Fill(i, end - start);
-            delete h1;
-        }
-        std::cout << "Creating TDC histograms Y!" << std::endl;
-        for (int i = 0; i < y; i++) {
-            TH1D *h1 = new TH1D("h1", "h1", 256, 0, 256);
-            TString cut = "hits.position==" + std::to_string(i) + " && hits.detId ==" + std::to_string(det.first) + " && hits.planeID == " + std::to_string(1);
-            m_tree->Draw("hits.tdc>>h1", cut, "goff");
-            double mean = h1->GetMean();
-            double stddev = h1->GetStdDev();
-            double max = h1->FindLastBinAbove(0);
-            double min = h1->FindFirstBinAbove(0);
-            double totalrange = max - min;
-            m_tdc_mean_y[det.second]->Fill(i, mean);
-            m_tdc_min_y[det.second]->Fill(i, min);
-            m_tdc_max_y[det.second]->Fill(i, max);
-            m_tdc_stddev_y[det.second]->Fill(i, stddev);
-            m_tdc_totalrange_y[det.second]->Fill(i, totalrange);
-
-            double start = mean - stddev;
-            if (start < 0) {
-                start = 0;
-            }
-            double end = mean + stddev;
-            if (end > 255) {
-                end = 255;
-            }
-            m_tdc_range_y[det.second]->Fill(i, end - start);
-
-            delete h1;
-        }
-
-        std::cout << "Creating ADC histograms X!" << std::endl;
-        for (int i = 0; i < x; i++) {
-            TH1D *h1 = new TH1D("h1", "h1", 1024, 0, 1024);
-            TString cut = "hits.position==" + std::to_string(i) + " && hits.detId ==" + std::to_string(det.first) + " && hits.planeID == " + std::to_string(0);
-            m_tree->Draw("hits.adc>>h1", cut, "goff");
-            double mean = h1->GetMean();
-            double stddev = h1->GetStdDev();
-            double max = h1->FindLastBinAbove(0);
-            double min = h1->FindFirstBinAbove(0);
-            double totalrange = max - min;
-            m_adc_mean_x[det.second]->Fill(i, mean);
-            m_adc_min_x[det.second]->Fill(i, min);
-            m_adc_max_x[det.second]->Fill(i, max);
-            m_adc_stddev_x[det.second]->Fill(i, stddev);
-            m_adc_totalrange_x[det.second]->Fill(i, totalrange);
-            double start = mean - stddev;
-            if (start < 0) {
-                start = 0;
-            }
-            double end = mean + stddev;
-            if (end > 1023) {
-                end = 1023;
-            }
-            m_adc_range_x[det.second]->Fill(i, end - start);
-            delete h1;
-
-        }
-        std::cout << "Creating ADC histograms Y!" << std::endl;
-        for (int i = 0; i < y; i++) {
-            TH1D *h1 = new TH1D("h1", "h1", 1024, 0, 1024);
-            TString cut = "hits.position==" + std::to_string(i) + " && hits.detId ==" + std::to_string(det.first) + " && hits.planeID == " + std::to_string(1);
-
-            m_tree->Draw("hits.adc>>h1", cut, "goff");
-            double mean = h1->GetMean();
-            double stddev = h1->GetStdDev();
-            double max = h1->FindLastBinAbove(0);
-            double min = h1->FindFirstBinAbove(0);
-            double totalrange = max - min;
-            m_adc_mean_y[det.second]->Fill(i, mean);
-            m_adc_min_y[det.second]->Fill(i, min);
-            m_adc_max_y[det.second]->Fill(i, max);
-            m_adc_stddev_y[det.second]->Fill(i, stddev);
-            m_adc_totalrange_y[det.second]->Fill(i, totalrange);
-
-            double start = mean - stddev;
-            if (start < 0) {
-                start = 0;
-            }
-            double end = mean + stddev;
-            if (end > 1023) {
-                end = 1023;
-            }
-            m_adc_range_y[det.second]->Fill(i, end - start);
-
-            delete h1;
-
-        }
-        std::cout << "Creating BCID histograms X!" << std::endl;
-        for (int i = 0; i < x; i++) {
-            TH1D *h1 = new TH1D("h1", "h1", 4096, 0, 4096);
-            TString cut = "hits.position==" + std::to_string(i) + " && hits.detId ==" + std::to_string(det.first) + " && hits.planeID == " + std::to_string(0);
-
-            m_tree->Draw("hits.bcid>>h1", cut, "goff");
-            double mean = h1->GetMean();
-            double stddev = h1->GetStdDev();
-            double max = h1->FindLastBinAbove(0);
-            double min = h1->FindFirstBinAbove(0);
-            double totalrange = max - min;
-            m_bcid_mean_x[det.second]->Fill(i, mean);
-            m_bcid_min_x[det.second]->Fill(i, min);
-            m_bcid_max_x[det.second]->Fill(i, max);
-            m_bcid_stddev_x[det.second]->Fill(i, stddev);
-            m_bcid_totalrange_x[det.second]->Fill(i, totalrange);
-            double start = mean - stddev;
-            if (start < 0) {
-                start = 0;
-            }
-            double end = mean + stddev;
-            if (end > 4095) {
-                end = 4095;
-            }
-            m_bcid_range_x[det.second]->Fill(i, end - start);
-            delete h1;
-        }
-        std::cout << "Creating BCID histograms Y!" << std::endl;
-        for (int i = 0; i < y; i++) {
-            TH1D *h1 = new TH1D("h1", "h1", 4096, 0, 4096);
-            TString cut = "hits.position==" + std::to_string(i) + " && hits.detId ==" + std::to_string(det.first) + " && hits.planeID == " + std::to_string(1);
-            m_tree->Draw("hits.bcid>>h1", cut, "goff");
-            double mean = h1->GetMean();
-            double stddev = h1->GetStdDev();
-            double max = h1->FindLastBinAbove(0);
-            double min = h1->FindFirstBinAbove(0);
-            double totalrange = max - min;
-            m_bcid_mean_y[det.second]->Fill(i, mean);
-            m_bcid_min_y[det.second]->Fill(i, min);
-            m_bcid_max_y[det.second]->Fill(i, max);
-            m_bcid_stddev_y[det.second]->Fill(i, stddev);
-            m_bcid_totalrange_y[det.second]->Fill(i, totalrange);
-
-            double start = mean - stddev;
-            if (start < 0) {
-                start = 0;
-            }
-            double end = mean + stddev;
-            if (end > 4095) {
-                end = 4095;
-            }
-            m_bcid_range_y[det.second]->Fill(i, end - start);
-
-            delete h1;
-        }
-
-        m_bcid_mean_x[det.second]->Write("", TObject::kOverwrite);
-        m_bcid_min_x[det.second]->Write("", TObject::kOverwrite);
-        m_bcid_max_x[det.second]->Write("", TObject::kOverwrite);
-        m_bcid_stddev_x[det.second]->Write("", TObject::kOverwrite);
-        m_bcid_totalrange_x[det.second]->Write("", TObject::kOverwrite);
-        m_bcid_range_x[det.second]->Write("", TObject::kOverwrite);
-        m_bcid_mean_y[det.second]->Write("", TObject::kOverwrite);
-        m_bcid_min_y[det.second]->Write("", TObject::kOverwrite);
-        m_bcid_max_y[det.second]->Write("", TObject::kOverwrite);
-        m_bcid_stddev_y[det.second]->Write("", TObject::kOverwrite);
-        m_bcid_totalrange_y[det.second]->Write("", TObject::kOverwrite);
-        m_bcid_range_y[det.second]->Write("", TObject::kOverwrite);
-    }
-}
