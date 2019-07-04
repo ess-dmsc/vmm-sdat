@@ -41,22 +41,27 @@ Complete command line:
   
     -f: h5 data file with the extension .h5. The data file was created by ESS DAQ tool
     
-    -vmm: mapping of detectors, plane, fecs and chips starting and ending with \" and separated by brackets and comma {{det, plane, fec,chip}, {det, plane, fec, chip}, etc.}
+    -vmm: mapping of detectors, plane, fecs and chips starting and ending with " and separated by brackets
+        and comma {{det, plane, fec,chip}, {det, plane, fec, chip}, etc.}
         The tuples for the VMMs are defined as follows:
             detector (choose a number between 0 and 255)
             plane (0 or 1)
             fec (fecID set in firmware based on IP address, 10.0.0.1 is fecID 1, 10.0.0.2 is fecID 2 and so on)
-            vmm (depends on connection of hybrid to FEC, FEC channel 1 equals VMMs 0 and 1, FEC channel 2 VMMs 2 and 3, FEC channel 8 VMMs 14 and 15)
+            vmm (depends on connection of hybrid to FEC, FEC channel 1 equals VMMs 0 and 1, FEC channel 2 
+                VMMs 2 and 3, FEC channel 8 VMMs 14 and 15)
         When looking at the detector, the following conventions are used:
             - top side of the hybrids is visible (if the hybrids are mounted in the readout plane)
-            - side of the Hirose connector (bottom of the hybird) is visible (if hybrids are mounted on the side of the detector)
+            - side of the Hirose connector (bottom of the hybird) is visible (hybrids mounted on detector side)
             - plane 0 is at the bottom (HDMI cables go downwards)
             - plane 1 is at the right side (HDMI cables go to the right)
-        If one looks at a VMM3a hybrid (connector to detector readout is on the bottom side), the channel 0 of the VMM 0 is always where the HDMI cable is connected
-        If the planes are correctly used as described above, the VMM IDs are always in icreasing order PER HYBRID (e.g. 14, 15 or e.g. 0, 1)
+        If one looks at a VMM3a hybrid (connector to detector readout is on the bottom side), 
+            the channel 0 of the VMM 0 is always where the HDMI cable is connected
+        If the planes are correctly used as described above, the VMM IDs are always in icreasing order 
+            PER HYBRID (e.g. 14, 15 or e.g. 0, 1)
 
-    -axis: direction of axis. Detector, plane and direction flag (if direction flag = 1, axis direction is flipped). Detector, plane and direction flag starting 
-        and ending with \" and separated by bracket and comma {{{det,plane},flag}, {{det, plane},flag}}
+    -axis: direction of axis. Detector, plane and direction flag (if direction flag = 1, axis direction is flipped). 
+        Detector, plane and direction flag starting and ending with " and separated by bracket and comma 
+            [[[det,plane],flag], [[det, plane],flag]]
         The tuples for the axes are defined as follows:
             - detector (choose a number between 0 and 255)
             - plane (0 or 1)
@@ -82,17 +87,23 @@ Complete command line:
 
     -mst: maximum missing strips in strip sorted vector. Optional argument (default 2)
 
-    -spc: maximum time span of cluster in one dimension (determined by drift size and speed). Optional argument (default 500)
+    -spc: maximum time span of cluster in one dimension (determined by drift size and speed). 
+        Optional argument (default 500)
 
     -dp: maximum time between matched clusters in x and y. Optional argument (default 200)
 
-    -coin: Valid clusters normally occur at the same time in plane 0 and plane 1 of a detctor. The parameter -dp determines the permitted time difference between the planes
-        The time can be calculated with the center-of-mass algorithm (center-of-mass), the uTPC method (utpc) or the center-of-mass squared method (charge2). Optional argument (default center-of-mass)
+    -coin: Valid clusters normally occur at the same time in plane 0 and plane 1 of a detctor. 
+        The parameter -dp determines the permitted time difference between the planes
+        The time can be calculated with the center-of-mass algorithm (center-of-mass), the uTPC method (utpc) 
+        or the center-of-mass squared method (charge2). Optional argument (default center-of-mass)
 
-    -ratio: Valid clusters normally have the same amount of charge in both detector planes (ratio of (charge plane 0 / charge plane 1) is 100\% or 1
-        The desired ratio for the matching can be set as optional argument, the default is 2 or 200\%, i.e. the charge in plane 0 has to be between 50\% and 200\% of the charge in plane 1
+    -ratio: Valid clusters normally have the same amount of charge in both detector planes 
+        (ratio of (charge plane 0 / charge plane 1) is 100\% or 1
+        The desired ratio for the matching can be set as optional argument, the default is 2 or 200\%, 
+        i.e. the charge in plane 0 has to be between 50\% and 200\% of the charge in plane 1
 
-    -hits: store not only clusters but all hits (a hit is a VMM3 channel over threshold). Creates large files. Optional argument (default 1)
+    -hits: store not only clusters but all hits (a hit is a VMM3 channel over threshold). 
+        Creates large files. Optional argument (default 1)
 
     -json: create a json file of the detector images. Optional argument (default 1)
 

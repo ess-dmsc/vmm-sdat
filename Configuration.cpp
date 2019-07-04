@@ -18,14 +18,14 @@ bool Configuration::PrintUsage(const std::string & errorMessage, char* argv)
  
     std::cout << "\nUsage:" << std::endl; 
     std::cout << "./convertFile -f ../../FAN0_gdgem_readouts_20190528-165706_00000.h5 " << 
-         "-vmm \"{1,0,2,0},{1,0,2,1},{1,0,2,2},{1,0,2,3},{1,1,2,6},{1,1,2,7},{1,1,2,8},{1,1,2,9}\" " <<
-         "-axis \"{{1,0},0},{{1,1},0}\" " << 
+         "-vmm \"[[1,0,2,0],[1,0,2,1],[1,0,2,2],[1,0,2,3],[1,1,2,6],[1,1,2,7],[1,1,2,8],[1,1,2,9]]\" " <<
+         "-axis \"[[1,0],0],[[1,1],0]\" " << 
          "-bc 40 -tac 60 -th 0 -cs 1 -ccs 2 -dt 200 -mst 1 -spc 500 -dp 200 -coin center-of-mass -ratio 2 -hits 1 -json 0 -n 0 " << std::endl;
 
     std::cout << "\n\nFlags:\n" << std::endl;
     std::cout << "-f: h5 data file with the extension .h5. The data file was created by ESS DAQ tool.\n" << std::endl;
     
-    std::cout << "-vmm: mapping of detectors, plane, fecs and chips starting and ending with \" and separated by brackets and comma {{det, plane, fec,chip}, {det, plane, fec, chip}, etc.}.\n" << std::endl;
+    std::cout << "-vmm: mapping of detectors, plane, fecs and chips starting and ending with \" and separated by brackets and comma [[det, plane, fec,chip], [det, plane, fec, chip], etc.].\n" << std::endl;
     std::cout << "    The tuples for the VMMs are defined as follows:" << std::endl;
     std::cout << "        detector (choose a number between 0 and 255)" << std::endl;
     std::cout << "        plane (0 or 1)" << std::endl;
@@ -39,7 +39,8 @@ bool Configuration::PrintUsage(const std::string & errorMessage, char* argv)
     std::cout << "    If one looks at a VMM3a hybrid (connector to detector readout is on the bottom side), the channel 0 of the VMM 0 is always where the HDMI cable is connected" << std::endl;
     std::cout << "    If the planes are correctly used as described above, the VMM IDs are always in icreasing order PER HYBRID (e.g. 14, 15 or e.g. 0, 1)" << std::endl;
     
-    std::cout << "-axis: direction of axis. Detector, plane and direction flag (if direction flag = 1, axis direction is flipped). Detector, plane and direction flag starting and ending with \" and separated by bracket and comma {{{det,plane},flag}, {{det, plane},flag}}.\n" << std::endl;
+    std::cout << "-axis: direction of axis. Detector, plane and direction flag (if direction flag = 1, axis direction is flipped)." << std::endl;
+    std::cout << "    Detector, plane and direction flag starting and ending with \" and separated by bracket and comma [[[det,plane],flag], [[det, plane],flag]].\n" << std::endl;
     std::cout << "    The tuples for the axes are defined as follows:" << std::endl;
     std::cout << "        - detector (choose a number between 0 and 255)" << std::endl;
     std::cout << "        - plane (0 or 1)" << std::endl;
@@ -90,7 +91,7 @@ bool Configuration::ParseCommandLine(int argc, char**argv)
         } else if (strncmp(argv[i], "-vmm", 4) == 0) {
             vmmsFound = true;
             std::string vmmString = argv[i + 1];
-            char removeChars[] = "{}";
+            char removeChars[] = "[]";
             for (unsigned int i = 0; i < strlen(removeChars); ++i)
             {
                 vmmString.erase (std::remove(vmmString.begin(), vmmString.end(), removeChars[i]), vmmString.end());
@@ -147,7 +148,7 @@ bool Configuration::ParseCommandLine(int argc, char**argv)
         }
         else if (strncmp(argv[i], "-axis", 5) == 0) {
             std::string axisString = argv[i + 1];
-            char removeChars[] = "{}";
+            char removeChars[] = "[]";
             for (unsigned int i = 0; i < strlen(removeChars); ++i)
             {
                 axisString.erase (std::remove(axisString.begin(), axisString.end(), removeChars[i]), axisString.end());
