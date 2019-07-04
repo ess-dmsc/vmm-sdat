@@ -68,7 +68,7 @@ struct ClusterDetector {
     double dt0_charge2;
     double dt1_charge2;
     */
-    int16_t delta_plane;
+    double delta_plane;
     uint16_t span_cluster0;
     uint16_t span_cluster1;
     uint16_t max_delta_time0;

@@ -521,7 +521,7 @@ void Clusterer::MatchClustersDetector(uint8_t det)
             DTRACE(DEB, "\ttime x/time y: : %llu/%llu", (uint64_t)clusterDetector.time0, (uint64_t)clusterDetector.time1);
             DTRACE(DEB, "\tadc x/adc y: %u/%u", clusterDetector.adc0, clusterDetector.adc1);
             DTRACE(DEB, "\tsize x/size y: %u/%u", clusterDetector.size0, clusterDetector.size1);
-            DTRACE(DEB, "\tdelta time planes: %d", clusterDetector.delta_plane);
+            DTRACE(DEB, "\tdelta time planes: %d", (int)clusterDetector.delta_plane);
             m_clusters_detector[det].emplace_back(std::move(clusterDetector));
         }
     }
