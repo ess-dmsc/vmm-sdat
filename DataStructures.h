@@ -50,24 +50,21 @@ struct ClusterDetector {
     uint32_t adc1;
     double pos0;
     double pos1;
+    double pos2;
     double time0;
     double time1;
     double pos0_utpc;
     double pos1_utpc;
+    double pos2_utpc;
     double time0_utpc;
     double time1_utpc;
     double pos0_charge2;
     double pos1_charge2;
+    double pos2_charge2;
     double time0_charge2;
     double time1_charge2;
     double dt0;
     double dt1;
-    /*
-    double dt0_utpc;
-    double dt1_utpc;
-    double dt0_charge2;
-    double dt1_charge2;
-    */
     double delta_plane;
     uint16_t span_cluster0;
     uint16_t span_cluster1;
@@ -80,6 +77,8 @@ struct ClusterDetector {
     std::vector<double> strips1;
     std::vector<double> times1;
 };
+
+
 
 struct Track {
     uint32_t id;

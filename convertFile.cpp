@@ -19,7 +19,14 @@ int main(int argc, char**argv) {
     Statistics m_stats;
 
     if (m_configuration.ParseCommandLine(argc, argv)) {
-        m_configuration.CreateMapping();
+        if(!m_configuration.CreateMapping())
+        {
+            return -1;
+        }
+        if(!m_configuration.CalculateTransform())
+        {
+            return -1;
+        }
         m_stats.CreateStats(m_configuration);
         timeStart = std::chrono::system_clock::now();
        

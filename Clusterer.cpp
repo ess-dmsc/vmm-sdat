@@ -54,17 +54,17 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId, u
         return true;
     }
     m_stats.SetDeltaTriggerTimestamp(fecId, 0);
-    if(srsTimestamp > 0xFFFFFFFFFFF)
+    if (srsTimestamp > 0xFFFFFFFFFFF)
     {
-        m_stats.IncrementTimestampTooLarge(fecId);  
+        m_stats.IncrementTimestampTooLarge(fecId);
         DTRACE(DEB, "\t\tTimestamp %llu larger than 42 bit and 31 times trigger periodd for FEC %d and vmmId %d!\n", static_cast<uint64_t>(srsTimestamp), (int)fecId, (int)vmmId);
-        return true;  
+        return true;
     }
     if (srsTimestamp < m_stats.oldTriggerTimestamp(fecId))
     {
         if (m_stats.oldTriggerTimestamp(fecId) - srsTimestamp > 0x7FFFFFFFFFF)
         {
-            m_stats.IncrementOverflow(fecId);  
+            m_stats.IncrementOverflow(fecId);
             DTRACE(DEB, "\n*********************************** OVERFLOW  fecId %d, m_lineNr %d, eventNr  %d, "
                         "srsTimestamp %llu, old srsTimestamp %llu\n",
                    fecId, m_lineNr, m_eventNr, static_cast<uint64_t>(srsTimestamp), static_cast<uint64_t>(m_stats.oldTriggerTimestamp(fecId)));
@@ -83,8 +83,8 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId, u
     {
         uint64_t offset = m_stats.deltaTriggerTimestamp(fecId) / m_config.pTriggerPeriod;
         printf("\n******* ABORT ANALYSIS: SRS timestamp wrong increment: fec %d,vmmId %d, chNo %d, line %d, "
-                    "trigger period %d, offset %llu, remainder %llu, new time %llu, old time %llu\n",
-               fecId, vmmId, chNo, m_lineNr, m_config.pTriggerPeriod, offset, static_cast<uint64_t>(remainder), 
+               "trigger period %d, offset %llu, remainder %llu, new time %llu, old time %llu\n",
+               fecId, vmmId, chNo, m_lineNr, m_config.pTriggerPeriod, offset, static_cast<uint64_t>(remainder),
                static_cast<uint64_t>(srsTimestamp), static_cast<uint64_t>(m_stats.oldTriggerTimestamp(fecId)));
         return false;
     }
@@ -107,13 +107,13 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId, u
             auto det_plane = searchDetPlaneFec.first;
             auto det = std::get<0>(det_plane);
             auto plane = std::get<1>(det_plane);
-            auto dp0 = std::make_pair(det,0);
-            auto dp1 = std::make_pair(det,1);
+            auto dp0 = std::make_pair(det, 0);
+            auto dp1 = std::make_pair(det, 1);
             if (m_stats.oldTriggerTimestamp(fecId) > factor * m_config.pTriggerPeriod && m_stats.lowestCommonTriggerTimestampPlane(det_plane) < m_stats.oldTriggerTimestamp(fecId))
             {
                 m_stats.SetLowestCommonTriggerTimestampPlane(det_plane, m_stats.oldTriggerTimestamp(fecId) - factor * m_config.pTriggerPeriod);
             }
-             m_stats.SetLowestCommonTriggerTimestampDet(det, std::min(m_stats.lowestCommonTriggerTimestampPlane(dp0), m_stats.lowestCommonTriggerTimestampPlane(dp1)));
+            m_stats.SetLowestCommonTriggerTimestampDet(det, std::min(m_stats.lowestCommonTriggerTimestampPlane(dp0), m_stats.lowestCommonTriggerTimestampPlane(dp1)));
         }
         for (auto const &searchDet : m_config.pDets)
         {
@@ -393,7 +393,7 @@ void Clusterer::StoreClusters(uint8_t det, uint8_t plane, std::vector<double> &s
     clusterPlane.times = std::move(times);
     if (clusterPlane.pos > -1.0)
     {
-        auto dp = std::make_pair(det,plane);
+        auto dp = std::make_pair(det, plane);
         m_stats.SetClusterStatsPlane(dp, maxDeltaTime, maxMissingStrip, deltaSpan);
         m_clusters_new[dp].emplace_back(std::move(clusterPlane));
     }
@@ -430,13 +430,12 @@ void Clusterer::MatchClustersDetector(uint8_t det)
                 {
                     delta_t = (*c1).time_charge2 - c0.time_charge2;
                 }
-                if (chargeRatio >= 1 / m_config.pChargeRatio && chargeRatio <= m_config.pChargeRatio && std::abs(delta_t) < minDelta 
-                && std::abs(delta_t) <= m_config.pDeltaTimePlanes && (c0.size + (*c1).size >= m_config.pCoincidentClusterSize))
+                if (chargeRatio >= 1 / m_config.pChargeRatio && chargeRatio <= m_config.pChargeRatio && std::abs(delta_t) < minDelta && std::abs(delta_t) <= m_config.pDeltaTimePlanes && (c0.size + (*c1).size >= m_config.pCoincidentClusterSize))
                 {
                     minDelta = std::abs(delta_t);
                     it = c1;
                 }
-                if(std::abs(delta_t) > std::abs(lastDelta_t))
+                if (std::abs(delta_t) > std::abs(lastDelta_t))
                 {
                     break;
                 }
@@ -457,16 +456,45 @@ void Clusterer::MatchClustersDetector(uint8_t det)
             clusterDetector.size1 = (*it).size;
             clusterDetector.adc0 = c0.adc;
             clusterDetector.adc1 = (*it).adc;
-            clusterDetector.pos0 = c0.pos;
-            clusterDetector.pos1 = (*it).pos;
+
+            if (m_config.pTransform.size() == m_config.pDets.size())
+            {
+                auto tx = m_config.pTransformX[m_config.pDets[det]];
+                auto ty = m_config.pTransformY[m_config.pDets[det]];
+                auto tz = m_config.pTransformZ[m_config.pDets[det]];
+
+                clusterDetector.pos0 = c0.pos * std::get<0>(tx) + (*it).pos * std::get<1>(tx) + std::get<3>(tx);
+                clusterDetector.pos1 = c0.pos * std::get<0>(ty) + (*it).pos * std::get<1>(ty) + std::get<3>(ty);
+                clusterDetector.pos2 = c0.pos * std::get<0>(tz) + (*it).pos * std::get<1>(tz) + std::get<3>(tz);
+
+                clusterDetector.pos0_utpc = c0.pos_utpc * std::get<0>(tx) + (*it).pos_utpc * std::get<1>(tx) + std::get<3>(tx);
+                clusterDetector.pos1_utpc = c0.pos_utpc * std::get<0>(ty) + (*it).pos_utpc * std::get<1>(ty) + std::get<3>(ty);
+                clusterDetector.pos2_utpc = c0.pos_utpc * std::get<0>(tz) + (*it).pos_utpc * std::get<1>(tz) + std::get<3>(tz);
+
+                clusterDetector.pos0_charge2 = c0.pos_charge2 * std::get<0>(tx) + (*it).pos_charge2 * std::get<1>(tx) + std::get<3>(tx);
+                clusterDetector.pos1_charge2 = c0.pos_charge2 * std::get<0>(ty) + (*it).pos_charge2 * std::get<1>(ty) + std::get<3>(ty);
+                clusterDetector.pos2_charge2 = c0.pos_charge2 * std::get<0>(tz) + (*it).pos_charge2 * std::get<1>(tz) + std::get<3>(tz);
+            }
+            else
+            {
+                clusterDetector.pos0 = c0.pos;
+                clusterDetector.pos1 = (*it).pos;
+                clusterDetector.pos2 = 0;
+
+                clusterDetector.pos0_utpc = c0.pos_utpc;
+                clusterDetector.pos1_utpc = (*it).pos_utpc;
+                clusterDetector.pos0_utpc = 0;
+
+                clusterDetector.pos0_charge2 = c0.pos_charge2;
+                clusterDetector.pos1_charge2 = (*it).pos_charge2;
+                clusterDetector.pos2_charge2 = 0;
+
+            }
+
             clusterDetector.time0 = c0.time;
             clusterDetector.time1 = (*it).time;
-            clusterDetector.pos0_utpc = c0.pos_utpc;
-            clusterDetector.pos1_utpc = (*it).pos_utpc;
             clusterDetector.time0_utpc = c0.time_utpc;
-            clusterDetector.time1_utpc = (*it).time_utpc;
-            clusterDetector.pos0_charge2 = c0.pos_charge2;
-            clusterDetector.pos1_charge2 = (*it).pos_charge2;
+            clusterDetector.time1_utpc = (*it).time_utpc;  
             clusterDetector.time0_charge2 = c0.time_charge2;
             clusterDetector.time1_charge2 = (*it).time_charge2;
             clusterDetector.dt0 = clusterDetector.time0 - last_time0;
@@ -494,16 +522,16 @@ void Clusterer::MatchClustersDetector(uint8_t det)
             {
                 clusterDetector.delta_plane = clusterDetector.time1_charge2 - clusterDetector.time0_charge2;
             }
-            
+
             double ratio = (double)clusterDetector.adc0 / (double)clusterDetector.adc1;
-            if(ratio > 1.0)
+            if (ratio > 1.0)
             {
-                ratio = (double)clusterDetector.adc1 / (double)clusterDetector.adc0;  
-                m_stats.SetStatsDetector(det, clusterDetector.delta_plane, ratio,1);                
+                ratio = (double)clusterDetector.adc1 / (double)clusterDetector.adc0;
+                m_stats.SetStatsDetector(det, clusterDetector.delta_plane, ratio, 1);
             }
             else
             {
-                m_stats.SetStatsDetector(det, clusterDetector.delta_plane, ratio,0);
+                m_stats.SetStatsDetector(det, clusterDetector.delta_plane, ratio, 0);
             }
             clusterDetector.max_delta_time0 = c0.max_delta_time;
             clusterDetector.max_delta_time1 = (*it).max_delta_time;
@@ -639,13 +667,13 @@ bool Clusterer::ChooseClustersToBeMatched(uint8_t det, uint8_t plane)
     int index = 0;
     std::pair<uint8_t, uint8_t> dp = std::make_pair(det, plane);
     double timeReadyToMatch = m_stats.lowestCommonTriggerTimestampPlane(dp);
-    
+
     //Nothing to match, newClusters vector empty
     if (m_clusters_new[dp].empty())
     {
         return false;
     }
-    if(m_config.pConditionCoincidence == "utpc")
+    if (m_config.pConditionCoincidence == "utpc")
     {
         auto theMin = std::min_element(m_clusters_new[dp].begin(), m_clusters_new[dp].end(), [](const ClusterPlane &t1, const ClusterPlane &t2) {
             return t1.time_utpc < t2.time_utpc;
@@ -686,7 +714,7 @@ bool Clusterer::ChooseClustersToBeMatched(uint8_t det, uint8_t plane)
         }
         index = std::distance(m_clusters_new[dp].begin(), it);
     }
-    else if(m_config.pConditionCoincidence == "charge2")
+    else if (m_config.pConditionCoincidence == "charge2")
     {
         auto theMin = std::min_element(m_clusters_new[dp].begin(), m_clusters_new[dp].end(), [](const ClusterPlane &t1, const ClusterPlane &t2) {
             return t1.time_charge2 < t2.time_charge2;
@@ -769,8 +797,6 @@ bool Clusterer::ChooseClustersToBeMatched(uint8_t det, uint8_t plane)
         index = std::distance(m_clusters_new[dp].begin(), it);
     }
 
-    
-
     //Insert the clusters that are ready to be matched from newClusters into clusters
     m_clusters[dp].insert(m_clusters[dp].end(), std::make_move_iterator(m_clusters_new[dp].begin()), std::make_move_iterator(m_clusters_new[dp].begin() + index));
     //Delete the clusters from newClusters
@@ -791,12 +817,11 @@ void Clusterer::PrintStats()
         std::cout << "*******************************************************************" << std::endl;
         auto dp0 = std::make_pair(searchDet.first, 0);
         auto dp1 = std::make_pair(searchDet.first, 1);
-        
-        m_stats.SetLowestCommonTriggerTimestampPlane(dp0, 100 * m_config.pTriggerPeriod 
-        + std::max(m_stats.lowestCommonTriggerTimestampPlane(dp0), m_stats.lowestCommonTriggerTimestampPlane(dp1)));
-        m_stats.SetLowestCommonTriggerTimestampPlane(dp1,m_stats.lowestCommonTriggerTimestampPlane(dp0));
-        m_stats.SetLowestCommonTriggerTimestampDet(searchDet.first,m_stats.lowestCommonTriggerTimestampPlane(dp0));
-        
+
+        m_stats.SetLowestCommonTriggerTimestampPlane(dp0, 100 * m_config.pTriggerPeriod + std::max(m_stats.lowestCommonTriggerTimestampPlane(dp0), m_stats.lowestCommonTriggerTimestampPlane(dp1)));
+        m_stats.SetLowestCommonTriggerTimestampPlane(dp1, m_stats.lowestCommonTriggerTimestampPlane(dp0));
+        m_stats.SetLowestCommonTriggerTimestampDet(searchDet.first, m_stats.lowestCommonTriggerTimestampPlane(dp0));
+
         AnalyzeClustersPlane(searchDet.first, 0);
         AnalyzeClustersPlane(searchDet.first, 1);
         AnalyzeClustersDetector(searchDet.first);
@@ -806,7 +831,7 @@ void Clusterer::PrintStats()
         std::cout << "*******************************************************************" << std::endl;
         for (unsigned int n = 0; n <= static_cast<unsigned int>(m_config.pDeltaTimeHits / 50); n++)
         {
-            std::cout << n * 50 << "-" << n * 50 + 49 << " ns:  " << m_stats.maxDeltaTime(dp0,n) << std::endl;
+            std::cout << n * 50 << "-" << n * 50 + 49 << " ns:  " << m_stats.maxDeltaTime(dp0, n) << std::endl;
         }
         std::cout << "*******************************************************************" << std::endl;
 
@@ -815,7 +840,7 @@ void Clusterer::PrintStats()
         std::cout << "*******************************************************************" << std::endl;
         for (unsigned int n = 0; n <= static_cast<int>(m_config.pDeltaTimeHits / 50); n++)
         {
-            std::cout << n * 50 << "-" << n * 50 + 49 << " ns:  " << m_stats.maxDeltaTime(dp1,n) << std::endl;
+            std::cout << n * 50 << "-" << n * 50 + 49 << " ns:  " << m_stats.maxDeltaTime(dp1, n) << std::endl;
         }
         std::cout << "*******************************************************************" << std::endl;
 
@@ -824,7 +849,7 @@ void Clusterer::PrintStats()
         std::cout << "*******************************************************************" << std::endl;
         for (unsigned int n = 0; n <= m_config.pMissingStripsCluster; n++)
         {
-            std::cout << n << ": " << m_stats.maxMissingStrip(dp0,n) << std::endl;
+            std::cout << n << ": " << m_stats.maxMissingStrip(dp0, n) << std::endl;
         }
         std::cout << "*******************************************************************" << std::endl;
 
@@ -833,7 +858,7 @@ void Clusterer::PrintStats()
         std::cout << "*******************************************************************" << std::endl;
         for (unsigned int n = 0; n <= m_config.pMissingStripsCluster; n++)
         {
-            std::cout << n << ": " << m_stats.maxMissingStrip(dp1,n) << std::endl;
+            std::cout << n << ": " << m_stats.maxMissingStrip(dp1, n) << std::endl;
         }
         std::cout << "*******************************************************************" << std::endl;
 
@@ -842,7 +867,7 @@ void Clusterer::PrintStats()
         std::cout << "*******************************************************************" << std::endl;
         for (unsigned int n = 0; n <= static_cast<unsigned int>(m_config.pSpanClusterTime / 50); n++)
         {
-            std::cout << n * 50 << "-" << n * 50 + 49 << " ns:  " << m_stats.deltaSpan(dp0,n) << std::endl;
+            std::cout << n * 50 << "-" << n * 50 + 49 << " ns:  " << m_stats.deltaSpan(dp0, n) << std::endl;
         }
         std::cout << "*******************************************************************" << std::endl;
 
@@ -851,7 +876,7 @@ void Clusterer::PrintStats()
         std::cout << "*******************************************************************" << std::endl;
         for (unsigned int n = 0; n <= static_cast<unsigned int>(m_config.pSpanClusterTime / 50); n++)
         {
-            std::cout << n * 50 << "-" << n * 50 + 49 << " ns:  " << m_stats.deltaSpan(dp1,n) << std::endl;
+            std::cout << n * 50 << "-" << n * 50 + 49 << " ns:  " << m_stats.deltaSpan(dp1, n) << std::endl;
         }
         std::cout << "*******************************************************************" << std::endl;
 
@@ -860,7 +885,7 @@ void Clusterer::PrintStats()
         std::cout << "*******************************************************************" << std::endl;
         for (unsigned int n = 0; n <= static_cast<unsigned int>(m_config.pDeltaTimePlanes / 50); n++)
         {
-            std::cout << n * 50 << "-" << n * 50 + 49 << " ns:  " << m_stats.deltaPlane(searchDet.first,n) << std::endl;
+            std::cout << n * 50 << "-" << n * 50 + 49 << " ns:  " << m_stats.deltaPlane(searchDet.first, n) << std::endl;
         }
         std::cout << "*******************************************************************" << std::endl;
 
@@ -869,10 +894,10 @@ void Clusterer::PrintStats()
         std::cout << "*******************************************************************" << std::endl;
         for (unsigned int n = 0; n <= 9; n++)
         {
-            std::cout << n *10 << "-" << n * 10 + 9 << " %:  " << m_stats.chargeRatio(searchDet.first,n,0) << std::endl;
+            std::cout << n * 10 << "-" << n * 10 + 9 << " %:  " << m_stats.chargeRatio(searchDet.first, n, 0) << std::endl;
         }
-        std::cout << "100 %   :  " << m_stats.chargeRatio(searchDet.first,10,0) << std::endl;
-            
+        std::cout << "100 %   :  " << m_stats.chargeRatio(searchDet.first, 10, 0) << std::endl;
+
         std::cout << "*******************************************************************" << std::endl;
 
         std::cout << "\n*******************************************************************" << std::endl;
@@ -880,7 +905,7 @@ void Clusterer::PrintStats()
         std::cout << "*******************************************************************" << std::endl;
         for (unsigned int n = 0; n <= 9; n++)
         {
-            std::cout << n *10 << "-" << n * 10 + 9 << " %:  " << m_stats.chargeRatio(searchDet.first,n, 1) << std::endl;
+            std::cout << n * 10 << "-" << n * 10 + 9 << " %:  " << m_stats.chargeRatio(searchDet.first, n, 1) << std::endl;
         }
         std::cout << "*******************************************************************" << std::endl;
 
@@ -930,7 +955,7 @@ int Clusterer::GetChannel(std::pair<uint8_t, uint8_t> fecChip, int chNo)
     if (search != end(m_config.pOffsets))
     {
         uint32_t ch = chNo + search->second;
-        if(flag == 1)
+        if (flag == 1)
         {
             ch = search->second - chNo;
         }

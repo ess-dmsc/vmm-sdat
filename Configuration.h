@@ -15,6 +15,7 @@ public:
 
     bool PrintUsage(const std::string &errorMessage, char *argv);
     bool CreateMapping();
+    bool CalculateTransform();
     
     //**************************************************************
     // BEGIN INPUT PARAMETERS
@@ -45,6 +46,18 @@ public:
     //  - plane 0 is at the bottom and goes from right (255) to left (0)
     //  - plane 1 is at the right and goes from top (0) to bottom (255)
     std::map<std::pair<uint8_t, uint8_t>, uint8_t> pAxes{{{1,0},0},{{1,1},0}};
+
+    std::vector<std::tuple<double, double, double>> pTranslation;
+
+    std::vector<std::tuple<double, double, double>> pScale;
+
+    std::vector<std::tuple<double, double, double>> pRotation;
+    
+    std::vector<std::vector<std::string>> pTransform;
+
+    std::vector<std::tuple<double,double,double, double>> pTransformX;
+    std::vector<std::tuple<double,double,double, double>> pTransformY;
+    std::vector<std::tuple<double,double,double, double>> pTransformZ;
 
     std::string pFileName = "";
    
