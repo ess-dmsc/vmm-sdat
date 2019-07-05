@@ -73,14 +73,21 @@ Complete command line:
             - plane 0 is at the bottom and goes from right (255) to left (0)
             - plane 1 is at the right and goes from top (0) to bottom (255)
     
-    -sc: Scale coordinates. Per detector a tuple with three values in mm, e.g for two detectors [[s0,s1,s2], [s0,s1,s2]]
+    -sc: Scale coordinates. Per detector a tuple with three values in mm, 
+        e.g for two detectors [[s0,s1,s2], [s0,s1,s2]]
     
-    -tl: Translate coordinates. Per detector a tuple with three values in mm, e.g for two detectors [[t0,t1,t2], [t0,t1,t2]]
+    -tl: Translate coordinates. Per detector a tuple with three values in mm, 
+        e.g for two detectors [[t0,t1,t2], [t0,t1,t2]]
     
-    -ro: Rotate around plane 0, plane 1, plane 2. Per detector a tuple with three angles in degrees, e.g for two detectors [[r0,r1,r2], [r0,r1,r2]]
+    -ro: Rotate around plane 0, plane 1, plane 2. Per detector a tuple with three angles in degrees, 
+        e.g for two detectors [[r0,r1,r2], [r0,r1,r2]]
     
-    -tr: Transform detector coordinates. S=scale, T=translate, R0=rotation plane 0, R1=rotation plane1, R2=rotation plane2
-        example (two detectors): -tr [[S,T,R2], [S,T, R2]]. First scaling, then translation, then rotation around normal axis to plane0 and plane 1.
+    -tr: Transform detector coordinates. 
+        S=scale, T=translate, R0=rotation plane 0, R1=rotation plane1, R2=rotation plane2
+        example (two detectors): -tr [[S,T,R2], [S,T,R0]]. 
+        First detector scaling, then translation, then rotation around normal axis to plane0 and plane 1.
+        Second detector scaling, then translation, then rotation around plane0 axis
+        Normally beam in direction of plane 2 or z, hence: Plane 0 (x), plane 1 (y), plane 2 (z)
    
     -bc: bunch crossing clock. Optional argument (default 40 MHz)
 
