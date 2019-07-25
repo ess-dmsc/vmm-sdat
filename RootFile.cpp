@@ -121,8 +121,10 @@ RootFile::RootFile(Configuration &config) : m_config(config)
        
         name = std::to_string(det.first) + "_cluster";
         h2 = new TH2D(name.c_str(), name.c_str(), n0 * 4, r0, n0, n1 * 4, r1, n1);
+        h2->GetXaxis()->SetTitle("x");
         m_TH2D.push_back(h2);
         m_map_TH2D.emplace(std::make_pair(std::make_pair(det.first, "cluster"), cnt2D));
+     
         cnt2D++;
 
         name = std::to_string(det.first) + "_cluster_utpc";
