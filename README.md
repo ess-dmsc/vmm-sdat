@@ -34,7 +34,7 @@ For help concerning the possible parameters, type:
 
 Complete command line:
 ```
-./convertFile -f data.h5 -vmm \"{1,0,2,0},{1,0,2,1},{1,0,2,2},{1,0,2,3},{1,1,2,6},{1,1,2,7},{1,1,2,8},{1,1,2,9}\" -axis \"{{1,0},0},{{1,1},0}\" -bc 40 -tac 60 -th 0 -cs 1 -ccs 2 -dt 200 -mst 1 -spc 500 -dp 200 -coin center-of-mass -ratio -hits 1 -json 0 -n 0
+./convertFile -f data.h5 -vmm "[1,0,2,0],[1,0,2,1],[1,0,2,2],[1,0,2,3],[1,1,2,6],[1,1,2,7],[1,1,2,8],[1,1,2,9]" -axis "[[1,0],0],[[1,1],0]" -bc 40 -tac 60 -th 0 -cs 1 -ccs 2 -dt 200 -mst 1 -spc 500 -dp 200 -coin center-of-mass -ratio -hits 1 -json 0 -n 0
 
 ```
 ### Explanation of parameters
@@ -42,7 +42,7 @@ Complete command line:
     -f: h5 data file with the extension .h5. The data file was created by ESS DAQ tool
     
     -vmm: mapping of detectors, plane, fecs and chips starting and ending with " and separated by brackets
-        and comma {{det, plane, fec,chip}, {det, plane, fec, chip}, etc.}
+        and comma [[det, plane, fec,chip], [det, plane, fec, chip], etc.]
         The tuples for the VMMs are defined as follows:
             detector (choose a number between 0 and 255)
             plane (0 or 1)
