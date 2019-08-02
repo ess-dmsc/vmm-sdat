@@ -193,6 +193,7 @@ void RootFile::SaveHits()
     if (m_hits.size() > 0)
     {
         m_tree->Fill();
+        
         m_hits.clear();
     }
 }
@@ -209,7 +210,7 @@ void RootFile::SaveClustersPlane(ClusterVectorPlane &&clusters_plane)
 
 void RootFile::SaveClustersDetector(ClusterVectorDetector &&clusters_detector)
 {
-    m_clusters_detector = clusters_detector;
+     m_clusters_detector = clusters_detector;
     for (auto &it : m_clusters_detector)
     {
         int idx = m_map_TH1D[std::make_pair(it.det, "delta_time_planes")];

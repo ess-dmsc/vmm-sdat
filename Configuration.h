@@ -65,7 +65,7 @@ public:
     uint16_t pBC = 40;
     uint16_t pADCThreshold = 0;
     uint16_t pMinClusterSize = 1;
-    uint16_t pCoincidentClusterSize = 2;
+    uint16_t pCoincidentClusterSize = 3;
     //Maximum time difference between strips in time sorted cluster (x or y)
     uint16_t pDeltaTimeHits = 200;
     //Number of missing strips in strip sorted cluster (x or y)

@@ -34,7 +34,6 @@ Clusterer::~Clusterer()
 //====================================================================================================================
 bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId, uint16_t chNo, uint16_t bcid, uint16_t tdc, uint16_t adc, bool overThresholdFlag, float chipTime)
 {
-
     auto searchFecChip = m_config.pFecChip_DetectorPlane.find(std::make_pair(fecId, vmmId));
     if (searchFecChip == m_config.pFecChip_DetectorPlane.end())
     {
@@ -120,6 +119,7 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId, u
             AnalyzeClustersPlane(searchDet.first, 0);
             AnalyzeClustersPlane(searchDet.first, 1);
             AnalyzeClustersDetector(searchDet.first);
+            
         }
     }
 
@@ -409,6 +409,7 @@ void Clusterer::StoreClusters(uint8_t det, uint8_t plane, std::vector<double> &s
 //====================================================================================================================
 void Clusterer::MatchClustersDetector(uint8_t det)
 {
+
     ClusterVectorPlane::iterator itStartPlane1 = begin(m_clusters[std::make_pair(det, 1)]);
 
     for (auto &c0 : m_clusters[std::make_pair(det, 0)])
@@ -418,12 +419,13 @@ void Clusterer::MatchClustersDetector(uint8_t det)
         double delta_t = 99999999;
         bool isFirstMatch = true; 
         ClusterVectorPlane::iterator bestMatchPlane1 = end(m_clusters[std::make_pair(det, 1)]);
-        
+    
         for (ClusterVectorPlane::iterator c1 = itStartPlane1;
              c1 != end(m_clusters[std::make_pair(det, 1)]); ++c1)
         {
             if ((*c1).plane_coincidence == false)
             {
+           
                 double chargeRatio = (double)(*c1).adc / (double)c0.adc;
                 lastDelta_t = delta_t;
                 delta_t = (*c1).time - c0.time;
@@ -451,7 +453,7 @@ void Clusterer::MatchClustersDetector(uint8_t det)
                 }
             }
         }
-
+      
         if (bestMatchPlane1 != end(m_clusters[std::make_pair(det, 1)]))
         {
             c0.plane_coincidence = true;
@@ -524,6 +526,7 @@ void Clusterer::MatchClustersDetector(uint8_t det)
             last_time1_charge2 = clusterDetector.time1_charge2;
             */
             clusterDetector.delta_plane = clusterDetector.time1 - clusterDetector.time0;
+       
             if (m_config.pConditionCoincidence == "utpc")
             {
                 clusterDetector.delta_plane = clusterDetector.time1_utpc - clusterDetector.time0_utpc;
@@ -554,6 +557,7 @@ void Clusterer::MatchClustersDetector(uint8_t det)
             clusterDetector.strips1 = (*bestMatchPlane1).strips;
             clusterDetector.times1 = (*bestMatchPlane1).times;
 
+
             DTRACE(DEB, "\ncommon cluster det %d x/y: %d/%d", (int)det, clusterDetector.id0, clusterDetector.id1);
             DTRACE(DEB, "\tpos x/pos y: %f/%f", clusterDetector.pos0, clusterDetector.pos1);
             DTRACE(DEB, "\ttime x/time y: : %llu/%llu", (uint64_t)clusterDetector.time0, (uint64_t)clusterDetector.time1);
@@ -561,7 +565,9 @@ void Clusterer::MatchClustersDetector(uint8_t det)
             DTRACE(DEB, "\tsize x/size y: %u/%u", clusterDetector.size0, clusterDetector.size1);
             DTRACE(DEB, "\tdelta time planes: %d", (int)clusterDetector.delta_plane);
             m_clusters_detector[det].emplace_back(std::move(clusterDetector));
+             
         }
+
     }
 }
 
@@ -612,6 +618,7 @@ void Clusterer::AnalyzeClustersDetector(uint8_t det)
     m_clusters[std::make_pair(det, 0)].clear();
     m_clusters[std::make_pair(det, 1)].clear();
     m_clusters_detector[det].clear();
+   
 }
 
 //====================================================================================================================
@@ -706,7 +713,7 @@ bool Clusterer::ChooseClustersToBeMatched(uint8_t det, uint8_t plane)
         ClusterPlane theCluster;
         theCluster.time_utpc = timeReadyToMatch;
 
-        //First ClusterPlane with time that bigger than timeReadyToMatch
+        //First ClusterPlane with time bigger than timeReadyToMatch
         auto it = std::upper_bound(m_clusters_new[dp].begin(), m_clusters_new[dp].end(), theCluster, [](const ClusterPlane &t1, const ClusterPlane &t2) {
             return t1.time_utpc < t2.time_utpc;
         });

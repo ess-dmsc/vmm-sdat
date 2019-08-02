@@ -23,7 +23,7 @@ bool Configuration::PrintUsage(const std::string &errorMessage, char *argv)
     std::cout << "./convertFile -f ../../FAN0_gdgem_readouts_20190528-165706_00000.h5 "
               << "-vmm \"[[1,0,2,0],[1,0,2,1],[1,0,2,2],[1,0,2,3],[1,1,2,6],[1,1,2,7],[1,1,2,8],[1,1,2,9]]\" "
               << "-axis \"[[1,0],0],[[1,1],0]\" -sc \"[[0.4,0.4,1]]\" -tl \"[[-51.2, -51.2, 100]]\" -ro \"[[0,0,45]]\" -tr \"[[S,T,R2]]\" "
-              << "-bc 40 -tac 60 -th 0 -cs 1 -ccs 2 -dt 200 -mst 1 -spc 500 -dp 200 -coin center-of-mass -ratio 2 -hits 1 -json 0 -n 0 " << std::endl;
+              << "-bc 40 -tac 60 -th 0 -cs 1 -ccs 3 -dt 200 -mst 1 -spc 500 -dp 200 -coin center-of-mass -ratio 2 -hits 1 -json 0 -n 0 " << std::endl;
 
     std::cout << "\n\nFlags:\n"
               << std::endl;
