@@ -30,7 +30,7 @@ find_package(ROOT REQUIRED)
 #---Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
 include(${ROOT_USE_FILE})
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 ROOT_GENERATE_DICTIONARY(vmm-hdf5-to-rootDict Clusterer.h RootFile.h Readout.h DataStructures.h Configuration.h Statistics.h LINKDEF convertLinkDef.h MODULE vmm-hdf5-to-root)
 
 #---Create a shared library with geneated dictionary
