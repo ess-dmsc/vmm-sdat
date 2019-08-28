@@ -34,7 +34,7 @@ For help concerning the possible parameters, type:
 
 Complete command line:
 ```
-./convertFile -f data.h5 -vmm "[[1,0,2,0],[1,0,2,1],[1,0,2,2],[1,0,2,3],[1,1,2,6],[1,1,2,7],[1,1,2,8],[1,1,2,9]]" -axis "[[1,0],0],[[1,1],0]" -bc 40 -tac 60 -th 0 -cs 1 -ccs 2 -dt 200 -mst 1 -spc 500 -dp 200 -coin center-of-mass -ratio -hits 1 -json 0 -n 0
+./convertFile -f data.h5 -vmm "[[1,0,2,2],[1,0,2,3],[1,0,2,0],[1,0,2,1],[1,1,2,8],[1,1,2,9],[1,1,2,6],[1,1,2,7]]" -axis "[[1,0],0],[[1,1],0]" -bc 40 -tac 60 -th 0 -cs 1 -ccs 2 -dt 200 -mst 1 -spc 500 -dp 200 -coin center-of-mass -ratio -hits 1 -json 0 -n 0
 
 ```
 ### Explanation of parameters
@@ -60,6 +60,7 @@ Complete command line:
             PER HYBRID (e.g. 14, 15 or e.g. 0, 1)
 
     -axis: direction of axis. Detector, plane and direction flag (if direction flag = 1, axis direction is flipped). 
+   	For a 1D detector,  only axis 0 is defined, for a 2D detector axis 0 and 1 have to be defined.
         Detector, plane and direction flag starting and ending with " and separated by bracket and comma 
             [[[det,plane],flag], [[det, plane],flag]]
         The tuples for the axes are defined as follows:

@@ -16,7 +16,7 @@ public:
     bool PrintUsage(const std::string &errorMessage, char *argv);
     bool CreateMapping();
     bool CalculateTransform();
-    
+    bool GetAxes(uint8_t det, uint8_t plane);
     //**************************************************************
     // BEGIN INPUT PARAMETERS
     //**************************************************************

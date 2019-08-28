@@ -89,7 +89,6 @@ private:
         std::map<std::pair<uint8_t,uint8_t>,int> m_clusters_cnt;
         std::map<uint8_t,int> m_clusters_detector_cnt;
 
-
         RootFile* m_rootFile;
 
 	

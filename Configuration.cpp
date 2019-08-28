@@ -626,6 +626,16 @@ bool Configuration::CalculateTransform()
     return true;
 }
 
+bool Configuration::GetAxes(uint8_t det, uint8_t plane) {
+    auto searchMap = pAxes.find(std::make_pair(det, plane));
+    if (searchMap == pAxes.end()) {
+        return false;
+    }
+    return true;
+}
+
+
+
 bool Configuration::CreateMapping()
 {
     int errors = 0;

@@ -99,7 +99,7 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId, u
     {
         m_eventNr++;
 
-        int factor = 4;
+        int factor = 10;
         for (auto const &searchDetPlaneFec : m_config.pDetectorPlane_Fec)
         {
             auto fec = searchDetPlaneFec.second;
@@ -119,7 +119,6 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId, u
             AnalyzeClustersPlane(searchDet.first, 0);
             AnalyzeClustersPlane(searchDet.first, 1);
             AnalyzeClustersDetector(searchDet.first);
-            
         }
     }
 
@@ -217,7 +216,7 @@ int Clusterer::ClusterByTime(uint8_t det, uint8_t plane)
         time1 = (double)std::get<0>(itHits);
         strip1 = std::get<1>(itHits);
         adc1 = std::get<2>(itHits);
-        if(!cluster.empty())
+        if (!cluster.empty())
         {
             if (abs(time1 - time2) > m_config.pDeltaTimeHits)
             {
@@ -232,7 +231,6 @@ int Clusterer::ClusterByTime(uint8_t det, uint8_t plane)
                     maxDeltaTime = (time1 - time2);
                 }
             }
-            
         }
         cluster.emplace_back(strip1, time1, adc1);
     }
@@ -417,15 +415,15 @@ void Clusterer::MatchClustersDetector(uint8_t det)
         double minDelta = 99999999;
         double lastDelta_t = 99999999;
         double delta_t = 99999999;
-        bool isFirstMatch = true; 
+        bool isFirstMatch = true;
         ClusterVectorPlane::iterator bestMatchPlane1 = end(m_clusters[std::make_pair(det, 1)]);
-    
+
         for (ClusterVectorPlane::iterator c1 = itStartPlane1;
              c1 != end(m_clusters[std::make_pair(det, 1)]); ++c1)
         {
             if ((*c1).plane_coincidence == false)
             {
-           
+
                 double chargeRatio = (double)(*c1).adc / (double)c0.adc;
                 lastDelta_t = delta_t;
                 delta_t = (*c1).time - c0.time;
@@ -441,7 +439,7 @@ void Clusterer::MatchClustersDetector(uint8_t det)
                 {
                     minDelta = std::abs(delta_t);
                     bestMatchPlane1 = c1;
-                    if(isFirstMatch)
+                    if (isFirstMatch)
                     {
                         itStartPlane1 = c1;
                         isFirstMatch = false;
@@ -453,7 +451,7 @@ void Clusterer::MatchClustersDetector(uint8_t det)
                 }
             }
         }
-      
+
         if (bestMatchPlane1 != end(m_clusters[std::make_pair(det, 1)]))
         {
             c0.plane_coincidence = true;
@@ -500,13 +498,12 @@ void Clusterer::MatchClustersDetector(uint8_t det)
                 clusterDetector.pos0_charge2 = c0.pos_charge2;
                 clusterDetector.pos1_charge2 = (*bestMatchPlane1).pos_charge2;
                 clusterDetector.pos2_charge2 = 0;
-
             }
 
             clusterDetector.time0 = c0.time;
             clusterDetector.time1 = (*bestMatchPlane1).time;
             clusterDetector.time0_utpc = c0.time_utpc;
-            clusterDetector.time1_utpc = (*bestMatchPlane1).time_utpc;  
+            clusterDetector.time1_utpc = (*bestMatchPlane1).time_utpc;
             clusterDetector.time0_charge2 = c0.time_charge2;
             clusterDetector.time1_charge2 = (*bestMatchPlane1).time_charge2;
             clusterDetector.dt0 = clusterDetector.time0 - last_time0;
@@ -526,7 +523,7 @@ void Clusterer::MatchClustersDetector(uint8_t det)
             last_time1_charge2 = clusterDetector.time1_charge2;
             */
             clusterDetector.delta_plane = clusterDetector.time1 - clusterDetector.time0;
-       
+
             if (m_config.pConditionCoincidence == "utpc")
             {
                 clusterDetector.delta_plane = clusterDetector.time1_utpc - clusterDetector.time0_utpc;
@@ -557,7 +554,6 @@ void Clusterer::MatchClustersDetector(uint8_t det)
             clusterDetector.strips1 = (*bestMatchPlane1).strips;
             clusterDetector.times1 = (*bestMatchPlane1).times;
 
-
             DTRACE(DEB, "\ncommon cluster det %d x/y: %d/%d", (int)det, clusterDetector.id0, clusterDetector.id1);
             DTRACE(DEB, "\tpos x/pos y: %f/%f", clusterDetector.pos0, clusterDetector.pos1);
             DTRACE(DEB, "\ttime x/time y: : %llu/%llu", (uint64_t)clusterDetector.time0, (uint64_t)clusterDetector.time1);
@@ -565,9 +561,7 @@ void Clusterer::MatchClustersDetector(uint8_t det)
             DTRACE(DEB, "\tsize x/size y: %u/%u", clusterDetector.size0, clusterDetector.size1);
             DTRACE(DEB, "\tdelta time planes: %d", (int)clusterDetector.delta_plane);
             m_clusters_detector[det].emplace_back(std::move(clusterDetector));
-             
         }
-
     }
 }
 
@@ -598,14 +592,15 @@ void Clusterer::AnalyzeClustersDetector(uint8_t det)
     {
         return;
     }
+    if (m_config.GetAxes(det, 0) && m_config.GetAxes(det, 1))
+    {  
+        if (ChooseClustersToBeMatched(det, 1) == false)
+        {
+            return;
+        }
 
-    if (ChooseClustersToBeMatched(det, 1) == false)
-    {
-        return;
+        MatchClustersDetector(det);
     }
-
-    MatchClustersDetector(det);
-
     m_clusters_detector_cnt[det] += m_clusters_detector[det].size();
     m_clusters_cnt[std::make_pair(det, 0)] += m_clusters[std::make_pair(det, 0)].size();
     m_clusters_cnt[std::make_pair(det, 1)] += m_clusters[std::make_pair(det, 1)].size();
@@ -618,7 +613,6 @@ void Clusterer::AnalyzeClustersDetector(uint8_t det)
     m_clusters[std::make_pair(det, 0)].clear();
     m_clusters[std::make_pair(det, 1)].clear();
     m_clusters_detector[det].clear();
-   
 }
 
 //====================================================================================================================
@@ -827,18 +821,21 @@ void Clusterer::PrintStats()
     int totalPlane0 = 0;
     int totalPlane1 = 0;
     int totalDetector = 0;
+    bool bothPlanes = false;
     for (auto const &searchDet : m_config.pDets)
     {
+        if (m_config.GetAxes(searchDet.first, 0) && m_config.GetAxes(searchDet.first, 1))
+        {
+            bothPlanes = true;
+        }
         std::cout << "\n\n*******************************************************************" << std::endl;
-        std::cout << "*********************        Stats detector " << (int)searchDet.first << "******************" << std::endl;
+        std::cout << "*********************        Stats detector " << (int)searchDet.first << " ******************" << std::endl;
         std::cout << "*******************************************************************" << std::endl;
         auto dp0 = std::make_pair(searchDet.first, 0);
         auto dp1 = std::make_pair(searchDet.first, 1);
-
-        m_stats.SetLowestCommonTriggerTimestampPlane(dp0, 100 * m_config.pTriggerPeriod + std::max(m_stats.lowestCommonTriggerTimestampPlane(dp0), m_stats.lowestCommonTriggerTimestampPlane(dp1)));
         m_stats.SetLowestCommonTriggerTimestampPlane(dp1, m_stats.lowestCommonTriggerTimestampPlane(dp0));
         m_stats.SetLowestCommonTriggerTimestampDet(searchDet.first, m_stats.lowestCommonTriggerTimestampPlane(dp0));
-
+        m_stats.SetLowestCommonTriggerTimestampPlane(dp0, 100 * m_config.pTriggerPeriod + std::max(m_stats.lowestCommonTriggerTimestampPlane(dp0), m_stats.lowestCommonTriggerTimestampPlane(dp1)));
         AnalyzeClustersPlane(searchDet.first, 0);
         AnalyzeClustersPlane(searchDet.first, 1);
         AnalyzeClustersDetector(searchDet.first);
@@ -852,15 +849,17 @@ void Clusterer::PrintStats()
         }
         std::cout << "*******************************************************************" << std::endl;
 
-        std::cout << "\n*******************************************************************" << std::endl;
-        std::cout << "Plane 1: Max delta time" << std::endl;
-        std::cout << "*******************************************************************" << std::endl;
-        for (unsigned int n = 0; n <= static_cast<int>(m_config.pDeltaTimeHits / 50); n++)
+        if (bothPlanes)
         {
-            std::cout << n * 50 << "-" << n * 50 + 49 << " ns:  " << m_stats.maxDeltaTime(dp1, n) << std::endl;
+            std::cout << "\n*******************************************************************" << std::endl;
+            std::cout << "Plane 1: Max delta time" << std::endl;
+            std::cout << "*******************************************************************" << std::endl;
+            for (unsigned int n = 0; n <= static_cast<int>(m_config.pDeltaTimeHits / 50); n++)
+            {
+                std::cout << n * 50 << "-" << n * 50 + 49 << " ns:  " << m_stats.maxDeltaTime(dp1, n) << std::endl;
+            }
+            std::cout << "*******************************************************************" << std::endl;
         }
-        std::cout << "*******************************************************************" << std::endl;
-
         std::cout << "\n*******************************************************************" << std::endl;
         std::cout << "Plane 0: Max missing strip" << std::endl;
         std::cout << "*******************************************************************" << std::endl;
@@ -870,15 +869,17 @@ void Clusterer::PrintStats()
         }
         std::cout << "*******************************************************************" << std::endl;
 
-        std::cout << "\n*******************************************************************" << std::endl;
-        std::cout << "Plane 1: Max missing strip" << std::endl;
-        std::cout << "*******************************************************************" << std::endl;
-        for (unsigned int n = 0; n <= m_config.pMissingStripsCluster; n++)
+        if (bothPlanes)
         {
-            std::cout << n << ": " << m_stats.maxMissingStrip(dp1, n) << std::endl;
+            std::cout << "\n*******************************************************************" << std::endl;
+            std::cout << "Plane 1: Max missing strip" << std::endl;
+            std::cout << "*******************************************************************" << std::endl;
+            for (unsigned int n = 0; n <= m_config.pMissingStripsCluster; n++)
+            {
+                std::cout << n << ": " << m_stats.maxMissingStrip(dp1, n) << std::endl;
+            }
+            std::cout << "*******************************************************************" << std::endl;
         }
-        std::cout << "*******************************************************************" << std::endl;
-
         std::cout << "\n*******************************************************************" << std::endl;
         std::cout << "Plane 0: Span cluster time" << std::endl;
         std::cout << "*******************************************************************" << std::endl;
@@ -888,52 +889,59 @@ void Clusterer::PrintStats()
         }
         std::cout << "*******************************************************************" << std::endl;
 
-        std::cout << "\n*******************************************************************" << std::endl;
-        std::cout << "Plane 1: Span cluster time" << std::endl;
-        std::cout << "*******************************************************************" << std::endl;
-        for (unsigned int n = 0; n <= static_cast<unsigned int>(m_config.pSpanClusterTime / 50); n++)
+        if (bothPlanes)
         {
-            std::cout << n * 50 << "-" << n * 50 + 49 << " ns:  " << m_stats.deltaSpan(dp1, n) << std::endl;
-        }
-        std::cout << "*******************************************************************" << std::endl;
+            std::cout << "\n*******************************************************************" << std::endl;
+            std::cout << "Plane 1: Span cluster time" << std::endl;
+            std::cout << "*******************************************************************" << std::endl;
+            for (unsigned int n = 0; n <= static_cast<unsigned int>(m_config.pSpanClusterTime / 50); n++)
+            {
+                std::cout << n * 50 << "-" << n * 50 + 49 << " ns:  " << m_stats.deltaSpan(dp1, n) << std::endl;
+            }
+            std::cout << "*******************************************************************" << std::endl;
 
-        std::cout << "\n*******************************************************************" << std::endl;
-        std::cout << "Plane 0/plane 1: Max delta place" << std::endl;
-        std::cout << "*******************************************************************" << std::endl;
-        for (unsigned int n = 0; n <= static_cast<unsigned int>(m_config.pDeltaTimePlanes / 50); n++)
-        {
-            std::cout << n * 50 << "-" << n * 50 + 49 << " ns:  " << m_stats.deltaPlane(searchDet.first, n) << std::endl;
-        }
-        std::cout << "*******************************************************************" << std::endl;
+            std::cout << "\n*******************************************************************" << std::endl;
+            std::cout << "Plane 0/plane 1: Max delta plane" << std::endl;
+            std::cout << "*******************************************************************" << std::endl;
+            for (unsigned int n = 0; n <= static_cast<unsigned int>(m_config.pDeltaTimePlanes / 50); n++)
+            {
+                std::cout << n * 50 << "-" << n * 50 + 49 << " ns:  " << m_stats.deltaPlane(searchDet.first, n) << std::endl;
+            }
+            std::cout << "*******************************************************************" << std::endl;
 
-        std::cout << "\n*******************************************************************" << std::endl;
-        std::cout << "Plane 0/plane 1: charge ratio" << std::endl;
-        std::cout << "*******************************************************************" << std::endl;
-        for (unsigned int n = 0; n <= 9; n++)
-        {
-            std::cout << n * 10 << "-" << n * 10 + 9 << " %:  " << m_stats.chargeRatio(searchDet.first, n, 0) << std::endl;
-        }
-        std::cout << "100 %   :  " << m_stats.chargeRatio(searchDet.first, 10, 0) << std::endl;
+            std::cout << "\n*******************************************************************" << std::endl;
+            std::cout << "Plane 0/plane 1: charge ratio" << std::endl;
+            std::cout << "*******************************************************************" << std::endl;
+            for (unsigned int n = 0; n <= 9; n++)
+            {
+                std::cout << n * 10 << "-" << n * 10 + 9 << " %:  " << m_stats.chargeRatio(searchDet.first, n, 0) << std::endl;
+            }
+            std::cout << "100 %   :  " << m_stats.chargeRatio(searchDet.first, 10, 0) << std::endl;
 
-        std::cout << "*******************************************************************" << std::endl;
+            std::cout << "*******************************************************************" << std::endl;
 
-        std::cout << "\n*******************************************************************" << std::endl;
-        std::cout << "Plane 1/plane 0: charge ratio" << std::endl;
-        std::cout << "*******************************************************************" << std::endl;
-        for (unsigned int n = 0; n <= 9; n++)
-        {
-            std::cout << n * 10 << "-" << n * 10 + 9 << " %:  " << m_stats.chargeRatio(searchDet.first, n, 1) << std::endl;
+            std::cout << "\n*******************************************************************" << std::endl;
+            std::cout << "Plane 1/plane 0: charge ratio" << std::endl;
+            std::cout << "*******************************************************************" << std::endl;
+            for (unsigned int n = 0; n <= 9; n++)
+            {
+                std::cout << n * 10 << "-" << n * 10 + 9 << " %:  " << m_stats.chargeRatio(searchDet.first, n, 1) << std::endl;
+            }
+            std::cout << "*******************************************************************" << std::endl;
         }
-        std::cout << "*******************************************************************" << std::endl;
 
         std::cout << "\n*******************************************************************" << std::endl;
         std::cout << "Clusters in plane 0: " << m_clusters_cnt[dp0] << std::endl;
-        std::cout << "Clusters in plane 1: " << m_clusters_cnt[dp1] << std::endl;
-        std::cout << "Common clusters in plane 0 / plane 1: " << m_clusters_detector_cnt[searchDet.first] << std::endl;
+        if (bothPlanes)
+        {
+            std::cout << "Clusters in plane 1: " << m_clusters_cnt[dp1] << std::endl;
+            std::cout << "Common clusters in plane 0 / plane 1: " << m_clusters_detector_cnt[searchDet.first] << std::endl;
+        }
         std::cout << "*******************************************************************" << std::endl;
         totalPlane0 += m_clusters_cnt[dp0];
         totalPlane1 += m_clusters_cnt[dp1];
         totalDetector += m_clusters_detector_cnt[searchDet.first];
+        bothPlanes = false;
     }
 
     for (auto const &fec : m_config.pFecs)
@@ -946,7 +954,7 @@ void Clusterer::PrintStats()
     }
     std::cout << "\n*******************************************************************" << std::endl;
     std::cout << "Total clusters in plane 0: " << totalPlane0 << std::endl;
-    std::cout << "Toltal clusters in plane 1: " << totalPlane1 << std::endl;
+    std::cout << "Total clusters in plane 1: " << totalPlane1 << std::endl;
     std::cout << "Total common clusters in plane 0 / plane 1: " << totalDetector << std::endl;
     std::cout << "*******************************************************************" << std::endl;
 }
