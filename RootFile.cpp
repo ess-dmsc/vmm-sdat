@@ -215,7 +215,7 @@ void RootFile::SaveClustersDetector(ClusterVectorDetector &&clusters_detector)
     m_clusters_detector = clusters_detector;
     for (auto &it : m_clusters_detector)
     {
-        if (m_config.GetAxes(it.det, 0) && m_config.GetAxes(it.det, 1))
+        //if (m_config.GetAxes(it.det, 0) && m_config.GetAxes(it.det, 1))
         {
             int idx = m_map_TH1D[std::make_pair(it.det, "delta_time_planes")];
             m_TH1D[idx]->Fill(it.time0 - it.time1);

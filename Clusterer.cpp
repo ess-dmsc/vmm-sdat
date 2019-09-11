@@ -466,7 +466,7 @@ void Clusterer::MatchClustersDetector(uint8_t det)
             clusterDetector.size1 = (*bestMatchPlane1).size;
             clusterDetector.adc0 = c0.adc;
             clusterDetector.adc1 = (*bestMatchPlane1).adc;
-
+ 
             if (m_config.pTransform.size() == m_config.pDets.size())
             {
                 auto tx = m_config.pTransformX[m_config.pDets[det]];
@@ -490,11 +490,9 @@ void Clusterer::MatchClustersDetector(uint8_t det)
                 clusterDetector.pos0 = c0.pos;
                 clusterDetector.pos1 = (*bestMatchPlane1).pos;
                 clusterDetector.pos2 = 0;
-
                 clusterDetector.pos0_utpc = c0.pos_utpc;
                 clusterDetector.pos1_utpc = (*bestMatchPlane1).pos_utpc;
-                clusterDetector.pos0_utpc = 0;
-
+                clusterDetector.pos2_utpc = 0;
                 clusterDetector.pos0_charge2 = c0.pos_charge2;
                 clusterDetector.pos1_charge2 = (*bestMatchPlane1).pos_charge2;
                 clusterDetector.pos2_charge2 = 0;
