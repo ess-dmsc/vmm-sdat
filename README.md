@@ -34,7 +34,10 @@ For help concerning the possible parameters, type:
 
 Complete command line:
 ```
-./convertFile -f data.h5 -vmm "[[1,0,2,2],[1,0,2,3],[1,0,2,0],[1,0,2,1],[1,1,2,8],[1,1,2,9],[1,1,2,6],[1,1,2,7]]" -axis "[[1,0],0],[[1,1],0]" -bc 40 -tac 60 -th 0 -cs 1 -ccs 2 -dt 200 -mst 1 -spc 500 -dp 200 -coin center-of-mass -ratio 2 -save 0 -json 0 -n 0 -algo 0
+./convertFile -f data.h5 
+-vmm "[[1,0,2,2],[1,0,2,3],[1,0,2,0],[1,0,2,1],[1,1,2,8],[1,1,2,9],[1,1,2,6],[1,1,2,7]]" 
+-axis "[[1,0],0],[[1,1],0]" -bc 40 -tac 60 -th 0 -cs 1 -ccs 2 -dt 200 -mst 1 -spc 500 
+-dp 200 -coin center-of-mass -ratio 2 -save 0 -json 0 -n 0 -algo 0
 
 ```
 
@@ -81,7 +84,7 @@ For the ADC, the formula is:
 If the data has been saved to file without the use of calibration files in the ESS DAQ, then the calibration
 can be loaded during the analysis by convertFile using the parameter -cal.
 
-### Hits
+#### Hits
 As first step, the hits are stored in vectors (optionally also in a branch of the root tree), depending on the 
 mapping of the VMM ASICs to the detectors and detector planes. Then, to create clusters for each detector plane, 
 the hits are first sorted in time (which is the sum of srs_time and chiptime). 
