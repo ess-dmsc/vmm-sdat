@@ -38,6 +38,7 @@ Complete command line:
 -vmm "[[1,0,2,2],[1,0,2,3],[1,0,2,0],[1,0,2,1],[1,1,2,8],[1,1,2,9],[1,1,2,6],[1,1,2,7]]" 
 -axis "[[1,0],0],[[1,1],0]" -bc 40 -tac 60 -th 0 -cs 1 -ccs 2 -dt 200 -mst 1 -spc 500 
 -dp 200 -coin center-of-mass -ratio 2 -save 0 -json 0 -n 0 -algo 0
+-cal CalibrationFile.json
 
 ```
 
@@ -84,17 +85,17 @@ For the ADC, the formula is:
 If the data has been saved to file without the use of calibration files in the ESS DAQ, then the calibration
 can be loaded during the analysis by convertFile using the parameter -cal.
 
-#### Hits
+### Hits
 As first step, the hits are stored in vectors (optionally also in a branch of the root tree), depending on the 
 mapping of the VMM ASICs to the detectors and detector planes. Then, to create clusters for each detector plane, 
 the hits are first sorted in time (which is the sum of srs_time and chiptime). 
 
-#### Time clusters
+### Time clusters
 A time cluster contains all hits with subsequent timestamps, that have a time difference smaller or equal than 
 the value defined in the -dt (delta t) parameter. Further, the time difference between the first and the last hit 
 has to be smaller than the time span defined in the -spc (span cluster) parameter. 
 
-#### Plane clusters
+### Plane clusters
 The time clusters are then sorted by strip to create the plane clusters. For hits to belong to one cluster, the gap 
 between neighbouring strips cannot be larger than the -mst (missing strips) parameter. For each of the plane clusters,
 a position and a time is calculated using three different algorithms:
@@ -113,7 +114,7 @@ parameter, the cluster is valid. For X-ray data the cluster size parameter is us
 alpha tracks it can be 3 or larger. 
 Valid plane clusters are stored in vectors (optionally also in a branch of the root tree). 
 
-#### Detector clusters
+### Detector clusters
 To determine now the detector clusters, the plane clusters in the two detector planes are matched depending on their
 cluster times. The time difference between the cluster times of two plane clusters has to be smaller or equal than the 
 value specified in the -dp (delta planes) value. The user has to choose in the -coin (coincidence) parameter, which of 
@@ -124,7 +125,7 @@ identical in the two detector planes. The -ratio (charge ratio) parameter define
 the two planes (charge plane 0 / charge plane 1) or (charge plane 1 / charge plane 0).
 
 
-### Explanation of parameters
+## Explanation of parameters
   
     -f: h5 data file with the extension .h5. The data file was created by ESS DAQ tool
     
