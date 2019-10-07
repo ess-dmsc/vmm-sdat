@@ -47,13 +47,15 @@ RootFile::RootFile(Configuration &config) : m_config(config)
     m_tree = new TTree("events", "vmm3 events");
     m_tree->SetDirectory(m_file);
 
-    if (m_config.pCreateHits)
-    {
+    if (m_config.pSaveWhat > 1) {
         m_tree->Branch("hits", &m_hits);
+        m_tree->Branch("tracks", &m_tracks);
     }
-    m_tree->Branch("clusters_plane", &m_clusters_plane);
+    if (m_config.pSaveWhat > 0) {
+        m_tree->Branch("clusters_plane", &m_clusters_plane);
+    }
     m_tree->Branch("clusters_detector", &m_clusters_detector);
-    m_tree->Branch("tracks", &m_tracks);
+    
 
     TH2D *h2;
     TH1D *h1;
@@ -200,12 +202,14 @@ void RootFile::SaveHits()
     }
 }
 
-void RootFile::SaveClustersPlane(ClusterVectorPlane &&clusters_plane)
+void RootFile::SaveClustersPlane(ClusterVectorPlane &&clusters_plane, int saveWhat)
 {
     m_clusters_plane = clusters_plane;
     if (m_clusters_plane.size() > 0)
     {
-        m_tree->Fill();
+        if(saveWhat > 0) {
+            m_tree->Fill();
+        }
         m_clusters_plane.clear();
     }
 }
@@ -286,9 +290,19 @@ void RootFile::SaveHistograms()
 
                 TString json = TBufferJSON::ToJSON(m_TH2D[id], 3);
                 std::ofstream f1;
-                f1.open(jsonFilename + "_detector" + std::to_string(det.first) + "_cluster.json", std::ios::out);
+                f1.open(jsonFilename + "_detector" + std::to_string(det.first) 
+                + "_cluster.json", std::ios::out);
                 f1 << json;
                 f1.close();
+
+                id = m_map_TH2D[std::make_pair(det.first, "cluster_utpc")];
+
+                json = TBufferJSON::ToJSON(m_TH2D[id], 3);
+                std::ofstream f2;
+                f2.open(jsonFilename + "_detector" + std::to_string(det.first) 
+                + "_cluster_utpc.json", std::ios::out);
+                f2 << json;
+                f2.close();
             }
             int n0 = m_config.pChannels[std::make_tuple(det.first, 0)] * 4;
             int n1 = m_config.pChannels[std::make_tuple(det.first, 1)] * 4;

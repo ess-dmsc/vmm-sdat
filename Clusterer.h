@@ -22,7 +22,7 @@ public:
 	~Clusterer();
 
 	// Analyzing and storing the hits
-        bool AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId, uint16_t chNo, uint16_t bcid, uint16_t tdc, uint16_t adc, bool overThresholdFlag, float chipTime);
+        bool AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId, uint16_t chNo, uint16_t bcid, uint16_t tdc, double adc, bool overThresholdFlag, float chipTime);
         void StoreHits(uint8_t det, uint8_t plane, int pos, uint16_t adc, double chipTime, bool overThresholdFlag);
 
         // Analyzing and storing the clusters in plane 0 and 1
@@ -38,16 +38,13 @@ public:
 
         int ClusterByTime(uint8_t det,uint8_t plane);
         int ClusterByStrip(uint8_t det,uint8_t plane,ClusterContainer &cluster, uint16_t maxDeltaTime);
-
-        void StoreClusters(uint8_t det, uint8_t plane, std::vector<double>& strips, std::vector<double>& times,
-			double pos_utpc, double time_utpc, 
-                        double pos_center_charge, double time_center_charge, 
-                        double pos_center_charge2, double time_center_charge2, 
-                        uint16_t clusterSize, uint32_t clusterADC, uint16_t maxDeltaTime, uint16_t maxMissingStrip, uint16_t deltaSpan);
+        void AdditionalAlgorithm(int idx_largest_time, std::vector<double> & vADC,
+                std::vector<double> & vStrips, std::vector<double> & vTimes,
+                double &position_algo, double &time_algo);
 
         void MatchClustersDetector(uint8_t det);
 
-	void PrintStats();
+	void FinishAnalysis();
 
         //bool IsFecChipInDetectorPlane(uint8_t fecId, uint8_t det, uint8_t chip, uint8_t planeId);
 
@@ -86,9 +83,7 @@ private:
 
 	int m_cluster_id = 0;
 	int m_cluster_detector_id = 0;
-        std::map<std::pair<uint8_t,uint8_t>,int> m_clusters_cnt;
-        std::map<uint8_t,int> m_clusters_detector_cnt;
-
+ 
         RootFile* m_rootFile;
 
 	

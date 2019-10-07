@@ -13,7 +13,7 @@ struct Hit {
     uint16_t pos;
     uint16_t bcid;
     uint16_t tdc;
-    uint16_t adc;
+    double adc;
     bool over_threshold;
     float chip_time;
 };
@@ -23,19 +23,22 @@ struct ClusterPlane {
     uint8_t det;
     uint8_t plane;
     uint16_t size;
-    uint32_t adc;
+    double adc;
     double time;
     double time_utpc;
     double time_charge2;
+    double time_algo;
     double pos;
     double pos_utpc;
     double pos_charge2;
+    double pos_algo;
     bool plane_coincidence;
     uint16_t max_delta_time;
     uint16_t max_missing_strip;
     uint16_t span_cluster;
     std::vector<double> strips;
     std::vector<double> times;
+    std::vector<double> adcs;
 
 };
 
@@ -46,8 +49,8 @@ struct ClusterDetector {
     uint8_t det;
     uint16_t size0;
     uint16_t size1;
-    uint32_t adc0;
-    uint32_t adc1;
+    double adc0;
+    double adc1;
     double pos0;
     double pos1;
     double pos2;
@@ -63,6 +66,11 @@ struct ClusterDetector {
     double pos2_charge2;
     double time0_charge2;
     double time1_charge2;
+    double pos0_algo;
+    double pos1_algo;
+    double pos2_algo;
+    double time0_algo;
+    double time1_algo;
     double dt0;
     double dt1;
     double delta_plane;
@@ -76,6 +84,8 @@ struct ClusterDetector {
     std::vector<double> times0;
     std::vector<double> strips1;
     std::vector<double> times1;
+    std::vector<double> adcs0;
+    std::vector<double> adcs1;
 };
 
 

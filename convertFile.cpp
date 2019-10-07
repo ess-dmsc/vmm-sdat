@@ -7,7 +7,8 @@
 
 #include "Configuration.h"
 #include "Clusterer.h"
-#include "Readout.h"
+#include <gdgem/nmx/Readout.h>
+#include <gdgem/srs/CalibrationFile.h>
 
 using namespace hdf5;
 
@@ -37,7 +38,7 @@ int main(int argc, char**argv) {
         auto RootGroup = DataFile.root();
         auto Dataset = RootGroup.get_dataset("srs_hits");
         dataspace::Simple Dataspace(Dataset.dataspace());
-        std::vector<Readout> AllElements(Dataspace.size());
+        std::vector<Gem::Readout> AllElements(Dataspace.size());
 
         Dataset.read(AllElements);
         /*
@@ -45,9 +46,31 @@ int main(int argc, char**argv) {
             return lhs.srs_timestamp < rhs.srs_timestamp;
         });
         */
+        Gem::CalibrationFile calfile(m_configuration.pCalFilename);
         for (auto RowData : AllElements ) {
-
-            bool result = m_Clusterer->AnalyzeHits(static_cast<double>(RowData.srs_timestamp), RowData.fec, RowData.chip_id, RowData.channel, RowData.bcid, RowData.tdc, RowData.adc, RowData.over_threshold, RowData.chiptime);
+            /*
+            if(RowData.chip_id == 4 || RowData.chip_id == 5) {
+                if(RowData.channel%2 == 1) {
+                    RowData.channel = RowData.channel - 1;    
+                }
+                else {
+                    RowData.channel = RowData.channel + 1; 
+                }
+            }
+            */
+            auto calib = calfile.getCalibration(RowData.fec, RowData.chip_id, RowData.channel);
+            double bcTime = m_configuration.pBCTime_ns * RowData.bcid;
+            double tdcTime = RowData.tdc * m_configuration.pTAC / 256;
+            
+            RowData.chiptime = bcTime + (m_configuration.pBCTime_ns - tdcTime - calib.time_offset)*calib.time_slope;
+            double newAdc = (RowData.adc- calib.adc_offset)*calib.adc_slope;
+                       
+            bool result = m_Clusterer->AnalyzeHits(
+                static_cast<double>(RowData.srs_timestamp), 
+                RowData.fec, RowData.chip_id, 
+                RowData.channel, RowData.bcid, 
+                RowData.tdc, RowData.adc, 
+                RowData.over_threshold, RowData.chiptime);
             //std::cout << "hit: " << lines << ": " << (uint32_t) RowData.fec << ", " << (uint32_t) RowData.chip_id << ", " << RowData.srs_timestamp << ", " << RowData.channel << ", " << RowData.bcid << ", " << RowData.tdc << ", " << RowData.adc << ", " << RowData.over_threshold << ", " << RowData.chiptime << std::endl;
             lines++;
             if (result == false || (lines >= m_configuration.nHits && m_configuration.nHits > 0))
@@ -55,7 +78,7 @@ int main(int argc, char**argv) {
         }
 
 
-        m_Clusterer->PrintStats();
+        m_Clusterer->FinishAnalysis();
 
         delete m_Clusterer;
         timeEnd = std::chrono::system_clock::now();

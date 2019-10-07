@@ -1,177 +1,319 @@
 #include <iostream>
-#include <sstream>
-
-#include <cstring>
+//#include <sstream>
+//#include <cstring>
 
 #include "Statistics.h"
 
-void Statistics::CreateStats(Configuration &config)
-{
+void Statistics::CreateStats(Configuration &config) {
+   
+  for (auto const &fec : config.pFecs) {
+    m_deltaTriggerTimestamp.emplace(std::make_pair(fec, 0));
+    m_oldTriggerTimestamp.emplace(std::make_pair(fec, 0));
+    m_error_names.push_back("time_stamp_too_large");
+    m_errors.emplace(
+        std::make_pair(std::make_pair(fec, "time_stamp_too_large"), 0));
+    m_error_names.push_back("time_stamp_order_error");
+    m_errors.emplace(
+        std::make_pair(std::make_pair(fec, "time_stamp_order_error"), 0));
+    m_error_names.push_back("time_stamp_overflow");
+    m_errors.emplace(
+        std::make_pair(std::make_pair(fec, "time_stamp_overflow"), 0));
+    m_error_names.push_back("trigger_period_error");
+    m_errors.emplace(
+        std::make_pair(std::make_pair(fec, "trigger_period_error"), 0));
+  }
 
-    for (auto const &fec : config.pFecs)
-    {
-        m_deltaTriggerTimestamp.emplace(std::make_pair(fec, 0));
-        m_oldTriggerTimestamp.emplace(std::make_pair(fec, 0));
-        m_overflow.emplace(std::make_pair(fec, 0));
-        m_timeError.emplace(std::make_pair(fec, 0));
-        m_timeStampTooLargeError.emplace(std::make_pair(fec, 0));
-    }
+  int size = 0;
+  for (auto const &det : config.pDets) {
+    auto plane0 = std::make_pair(det.first, 0);
+    auto plane1 = std::make_pair(det.first, 1);
 
-    for (auto const &det : config.pDets)
-    {
-        auto plane0 = std::make_pair(det.first, 0);
-        auto plane1 = std::make_pair(det.first, 1);
+    m_lowestCommonTriggerTimestamp_det[det.first] = 0;
+    m_lowestCommonTriggerTimestamp_plane[plane0] = 0;
+    m_lowestCommonTriggerTimestamp_plane[plane1] = 0;
 
-        m_lowestCommonTriggerTimestamp_det[det.first] = 0;
-        m_lowestCommonTriggerTimestamp_plane[plane0] = 0;
-        m_lowestCommonTriggerTimestamp_plane[plane1] = 0;
-        for (unsigned int n = 0; n <= static_cast<unsigned int>(config.pDeltaTimeHits / 50); n++)
-        {
-            m_maxDeltaTime[plane0].push_back(0);
-            m_maxDeltaTime[plane1].push_back(0);
-        }
-        for (unsigned int n = 0; n <= config.pMissingStripsCluster; n++)
-        {
-            m_maxMissingStrip[plane0].push_back(0);
-            m_maxMissingStrip[plane1].push_back(0);
-        }
-        for (unsigned int n = 0; n <= static_cast<unsigned int>(config.pSpanClusterTime / 50); n++)
-        {
-            m_deltaSpan[plane0].push_back(0);
-            m_deltaSpan[plane1].push_back(0);
-        }
-        for (unsigned int n = 0; n <= static_cast<unsigned int>(config.pDeltaTimePlanes / 50); n++)
-        {
-
-            m_deltaPlane[det.first].push_back(0);
-        }
-        for (unsigned int n = 0; n <= 10; n++)
-        {
-            m_chargeRatio_0[det.first].push_back(0);
-            m_chargeRatio_1[det.first].push_back(0);
-        }
-    }
-}
-
-void Statistics::SetClusterStatsPlane(std::pair<uint8_t, uint8_t> dp, uint16_t maxDeltaTime, uint16_t maxMissingStrip, uint16_t deltaSpan)
-{
-    m_maxDeltaTime[dp][(unsigned int)(maxDeltaTime / 50)]++;
-    m_maxMissingStrip[dp][(unsigned int)(maxMissingStrip)]++;
-    m_deltaSpan[dp][(unsigned int)(deltaSpan / 50)]++;
-}
-
-void Statistics::SetStatsDetector(uint8_t det, double deltaPlane, double ratio, int plane)
-{
-    if(plane == 0)
-    {
-        m_chargeRatio_0[det][static_cast<unsigned int>(ratio * 10)]++;
-    }
-    else
-    {
-        m_chargeRatio_1[det][static_cast<unsigned int>(ratio * 10)]++;
-    }
+    m_units.emplace(std::make_pair("delta_time_hits", "ns"));
+    m_factors.emplace(std::make_pair("delta_time_hits", 0.02));
+    m_limits.emplace(std::make_pair("delta_time_hits",
+                                    1 + config.pDeltaTimeHits *
+                                            m_factors["delta_time_hits"]));
+    size = static_cast<int>(m_limits["delta_time_hits"]);
+    std::vector<int> v(size, 0);
+    m_stats_plane_names.push_back("delta_time_hits");
+    m_stats_plane.emplace(
+        std::make_pair(std::make_pair(plane0, "delta_time_hits"), v));
+    m_stats_plane.emplace(
+        std::make_pair(std::make_pair(plane1, "delta_time_hits"), v));
     
-    m_deltaPlane[det][std::abs((int)deltaPlane) / 50]++;
-    
+    m_units.emplace(std::make_pair("missing_strips_cluster", "strips"));
+    m_factors.emplace(std::make_pair("missing_strips_cluster", 1));
+    m_limits.emplace(std::make_pair(
+        "missing_strips_cluster", 1 + config.pMissingStripsCluster *
+                                          m_factors["missing_strips_cluster"]));
+    size = static_cast<int>(m_limits["missing_strips_cluster"]);
+    v.resize(size);
+    std::fill(v.begin(), v.end(), 0);
+    m_stats_plane_names.push_back("missing_strips_cluster");
+    m_stats_plane.emplace(
+        std::make_pair(std::make_pair(plane0, "missing_strips_cluster"), v));
+    m_stats_plane.emplace(
+        std::make_pair(std::make_pair(plane1, "missing_strips_cluster"), v));
+
+    m_units.emplace(std::make_pair("span_cluster_time", "ns"));
+    m_factors.emplace(std::make_pair("span_cluster_time", 0.02));
+    m_limits.emplace(std::make_pair("span_cluster_time",
+                                    1 + config.pSpanClusterTime *
+                                            m_factors["span_cluster_time"]));
+    size = static_cast<int>(m_limits["span_cluster_time"]);
+    v.resize(size);
+    std::fill(v.begin(), v.end(), 0);
+    m_stats_plane_names.push_back("span_cluster_time");
+    m_stats_plane.emplace(
+        std::make_pair(std::make_pair(plane0, "span_cluster_time"), v));
+    m_stats_plane.emplace(
+        std::make_pair(std::make_pair(plane1, "span_cluster_time"), v));
+
+    m_units.emplace(std::make_pair("cluster_size", "strips"));
+    m_factors.emplace(std::make_pair("cluster_size", 1));
+    m_limits.emplace(std::make_pair(
+        "cluster_size", 1 + 64 * m_factors["cluster_size"]));
+    size = static_cast<int>(m_limits["cluster_size"]);
+    v.resize(size);
+    std::fill(v.begin(), v.end(), 0);
+    m_stats_plane_names.push_back("cluster_size");
+    m_stats_plane.emplace(
+        std::make_pair(std::make_pair(plane0, "cluster_size"), v));
+    m_stats_plane.emplace(
+        std::make_pair(std::make_pair(plane1, "cluster_size"), v));
+
+    m_units.emplace(std::make_pair("cluster_cnt_plane", ""));
+    m_factors.emplace(std::make_pair("cluster_cnt_plane", 1));
+    m_limits.emplace(std::make_pair("cluster_cnt_plane",1));
+    size = static_cast<int>(m_limits["cluster_cnt_plane"]);
+    v.resize(size);
+    std::fill(v.begin(), v.end(), 0);
+    m_stats_plane_names.push_back("cluster_cnt_plane");
+    m_stats_plane.emplace(
+        std::make_pair(std::make_pair(plane0, "cluster_cnt_plane"), v));
+    m_stats_plane.emplace(
+        std::make_pair(std::make_pair(plane1, "cluster_cnt_plane"), v));
+
+    m_units.emplace(std::make_pair("delta_time_planes", "ns"));
+    m_factors.emplace(std::make_pair("delta_time_planes", 0.02));
+    m_limits.emplace(std::make_pair("delta_time_planes", 
+    1+config.pDeltaTimePlanes*m_factors["delta_time_planes"]));
+    size = static_cast<int>(m_limits["delta_time_planes"]);
+    v.resize(size);
+    std::fill(v.begin(), v.end(), 0);    
+    m_stats_detector_names.push_back("delta_time_planes");
+    m_stats_detector.emplace(std::make_pair(std::make_pair(det.first, "delta_time_planes"), v));
+   
+    m_units.emplace(std::make_pair("charge_ratio_0_1", "%"));
+    m_factors.emplace(std::make_pair("charge_ratio_0_1", 0.1));
+    m_limits.emplace(std::make_pair("charge_ratio_0_1", 11));
+    size = static_cast<int>(m_limits["charge_ratio_0_1"]);
+    v.resize(size);
+    std::fill(v.begin(), v.end(), 0);
+    m_stats_detector_names.push_back("charge_ratio_0_1");
+    m_stats_detector.emplace(std::make_pair(std::make_pair(det.first, "charge_ratio_0_1"), v));
+ 
+    m_units.emplace(std::make_pair("charge_ratio_1_0", "%"));
+    m_factors.emplace(std::make_pair("charge_ratio_1_0", 0.1));
+    m_limits.emplace(std::make_pair("charge_ratio_1_0", 10));
+    size = static_cast<int>(m_limits["charge_ratio_1_0"]);
+    v.resize(size);
+    std::fill(v.begin(), v.end(), 0);
+    m_stats_detector_names.push_back("charge_ratio_1_0");
+    m_stats_detector.emplace(std::make_pair(std::make_pair(det.first, "charge_ratio_1_0"), v));
+
+    m_units.emplace(std::make_pair("cluster_cnt_detector", ""));
+    m_factors.emplace(std::make_pair("cluster_cnt_detector", 1));
+    m_limits.emplace(std::make_pair("cluster_cnt_detector", 1));
+    size = static_cast<int>(m_limits["cluster_cnt_detector"]);
+    v.resize(size);
+    std::fill(v.begin(), v.end(), 0);
+    m_stats_detector_names.push_back("cluster_cnt_detector");
+    m_stats_detector.emplace(std::make_pair(std::make_pair(det.first, "cluster_cnt_detector"), v));
+  
+  }
+  
 }
 
-int Statistics::maxDeltaTime(std::pair<uint8_t, uint8_t> dp, int n)
-{
-    return m_maxDeltaTime[dp][n];
-}
-
-int Statistics::maxMissingStrip(std::pair<uint8_t, uint8_t> dp, int n)
-{
-    return m_maxMissingStrip[dp][n];
-}
-
-int Statistics::deltaSpan(std::pair<uint8_t, uint8_t> dp, int n)
-{
-    return m_deltaSpan[dp][n];
-}
-
-int Statistics::deltaPlane(uint8_t det, int n)
-{
-    return m_deltaPlane[det][n];
-}
-
-int Statistics::chargeRatio(uint8_t det, int n, int plane)
-{
-    if(plane == 0)
-    {
-        return m_chargeRatio_0[det][n];
+int Statistics::GetStatsDetector(std::string stats, uint8_t det, int n) {
+    if (n < m_limits[stats.c_str()]) {
+        return m_stats_detector[std::make_pair(det, stats.c_str())][n];
     }
-    return m_chargeRatio_1[det][n];
+    return -1;
 }
 
-void Statistics::SetOldTriggerTimestamp(uint8_t fecId, double srsTimestamp)
-{
-    m_oldTriggerTimestamp[fecId] = srsTimestamp;
+void Statistics::SetStatsDetector(std::string stats, uint8_t det,
+                                  double value) {
+  if (value * m_factors[stats] < m_limits[stats]) {
+    m_stats_detector[std::make_pair(det, stats)]
+               [static_cast<unsigned int>(value * m_factors[stats])]++;
+  }
+  else {
+    m_stats_detector[std::make_pair(det, stats)][m_limits[stats]-1]++;
+  }
 }
 
-void Statistics::SetDeltaTriggerTimestamp(uint8_t fecId, double val)
-{
-    m_deltaTriggerTimestamp[fecId] = val;
+int Statistics::GetStatsPlane(std::string stats, std::pair<uint8_t, uint8_t> dp,
+                              int n) {
+  if (n < m_limits[stats]) {
+    return m_stats_plane[std::make_pair(dp, stats)][n];
+  }
+  return -1;
 }
 
-void Statistics::IncrementOverflow(uint8_t fecId)
-{
-    m_overflow[fecId]++;
+void Statistics::SetStatsPlane(std::string stats,
+                               std::pair<uint8_t, uint8_t> dp, double value) {
+  if (value * m_factors[stats] < m_limits[stats]) {
+    m_stats_plane[std::make_pair(dp, stats)]
+                 [static_cast<unsigned int>(value * m_factors[stats])]++;
+  }
+  else {
+    m_stats_plane[std::make_pair(dp, stats)][m_limits[stats]-1]++;
+  }
 }
 
-void Statistics::IncrementTimeError(uint8_t fecId)
-{
-    m_timeError[fecId]++;
+void Statistics::IncrementErrorCount(std::string error, uint8_t fecId) {
+  m_errors[std::make_pair(fecId, error)]++;
 }
 
-void Statistics::IncrementTimestampTooLarge(uint8_t fecId)
-{
-    m_timeStampTooLargeError[fecId]++;
+int Statistics::GetErrorCount(std::string error, uint8_t fecId) {
+  return m_errors[std::make_pair(fecId, error)];
+}
+
+double Statistics::GetDeltaTriggerTimestamp(uint8_t fecId) {
+  return m_deltaTriggerTimestamp[fecId];
+}
+
+void Statistics::SetDeltaTriggerTimestamp(uint8_t fecId, double val) {
+  m_deltaTriggerTimestamp[fecId] = val;
+}
+
+double Statistics::GetOldTriggerTimestamp(uint8_t fecId) {
+  return m_oldTriggerTimestamp[fecId];
+}
+
+void Statistics::SetOldTriggerTimestamp(uint8_t fecId, double srsTimestamp) {
+  m_oldTriggerTimestamp[fecId] = srsTimestamp;
+}
+
+double Statistics::GetLowestCommonTriggerTimestampDet(uint8_t det) {
+  return m_lowestCommonTriggerTimestamp_det[det];
+}
+
+void Statistics::SetLowestCommonTriggerTimestampDet(uint8_t det, double val) {
+  m_lowestCommonTriggerTimestamp_det[det] = val;
+}
+
+double Statistics::GetLowestCommonTriggerTimestampPlane(
+    std::pair<uint8_t, uint8_t> dp) {
+  return m_lowestCommonTriggerTimestamp_plane[dp];
+}
+
+void Statistics::SetLowestCommonTriggerTimestampPlane(
+    std::pair<uint8_t, uint8_t> dp, double val) {
+  m_lowestCommonTriggerTimestamp_plane[dp] = val;
+}
+
+void Statistics::PrintStats(Configuration &config) {
+  int totalPlane0 = 0;
+  int totalPlane1 = 0;
+  int totalDetector = 0;
+  bool bothPlanes = false;
+  for (auto const &det : config.pDets) {
+    auto dp0 = std::make_pair(det.first, 0);
+    auto dp1 = std::make_pair(det.first, 1);
+    auto cnt = m_stats_detector[std::make_pair(det.first, "cluster_cnt_detector")][0];
+    int cnt0 = 1;
+    if(m_stats_plane[std::make_pair(dp0, "cluster_cnt_plane")][0]>0) {
+        cnt0 = m_stats_plane[std::make_pair(dp0, "cluster_cnt_plane")][0];
+    }
+    int cnt1 = 1;
+    if(m_stats_plane[std::make_pair(dp1, "cluster_cnt_plane")][0]>0) {
+        cnt1 = m_stats_plane[std::make_pair(dp1, "cluster_cnt_plane")][0];
+    } 
+    if (config.GetAxes(det.first, 0) && config.GetAxes(det.first, 1)) {
+      bothPlanes = true;      
+    }
+
+    std::cout << "\n\n****************************************" << std::endl;
+    std::cout << "Stats detector " << (int)det.first << std::endl;
+    std::cout << "****************************************" << std::endl;
+
+    for (auto const &stat : m_stats_plane_names) {
+      std::cout << "\n****************************************" << std::endl;
+      std::cout << "Plane 0: " << stat << std::endl;
+      std::cout << "****************************************" << std::endl;
+      std::vector<int> v = m_stats_plane[std::make_pair(dp0, stat)];
+      for (unsigned int n = 0; n < static_cast<unsigned int>(m_limits[stat]);
+           n++) {
+        StatsOutput(n, v[n], stat, cnt0);        
+      }
+      std::cout << "****************************************" << std::endl;
+      if (bothPlanes) {
+        std::cout << "\n****************************************" << std::endl;
+        std::cout << "Plane 1: " << stat << std::endl;
+        std::cout << "****************************************" << std::endl;
+        std::vector<int> v = m_stats_plane[std::make_pair(dp1, stat)];
+        for (unsigned int n = 0; n < static_cast<unsigned int>(m_limits[stat]);
+             n++) {
+            StatsOutput(n, v[n], stat, cnt1);      
+        }
+        std::cout << "****************************************" << std::endl;
+      }
+    }
+    for (auto const &stat : m_stats_detector_names) {
+      std::cout << "\n****************************************" << std::endl;
+      std::cout << stat << std::endl;
+      std::cout << "****************************************" << std::endl;
+      std::vector<int> v = m_stats_detector[std::make_pair(det.first, stat)];
+      for (unsigned int n = 0; n < static_cast<unsigned int>(m_limits[stat]);
+           n++) {
+         StatsOutput(n, v[n], stat, cnt, cnt0, cnt1);      
+      }
+      std::cout << "****************************************" << std::endl;
+    }
+  }
+  for (auto const &fec : config.pFecs) {
+     std::cout << "\n****************************************" << std::endl;
+      std::cout << "FEC " << (int)fec << std::endl;
+      std::cout << "****************************************" << std::endl;
+      for (unsigned int n = 0; n < m_error_names.size();n++) {
+        std::cout << m_error_names[n] << ": " << GetErrorCount(m_error_names[n], fec) << std::endl;
+      }
+      std::cout << "****************************************\n" << std::endl;
+     
+  }
 }
 
 
-
-int Statistics::timeError(uint8_t fecId)
-{
-    return m_timeError[fecId];
-}
-
-int Statistics::overflow(uint8_t fecId)
-{
-    return m_overflow[fecId];
-}
-
-int Statistics::timestampTooLargeError(uint8_t fecId)
-{
-    return m_timeStampTooLargeError[fecId];
-}
-
-double Statistics::oldTriggerTimestamp(uint8_t fecId)
-{
-    return m_oldTriggerTimestamp[fecId];
-}
-
-double Statistics::deltaTriggerTimestamp(uint8_t fecId)
-{
-    return m_deltaTriggerTimestamp[fecId];
-}
-
-double Statistics::lowestCommonTriggerTimestampDet(uint8_t det)
-{
-    return m_lowestCommonTriggerTimestamp_det[det];
-}
-
-void Statistics::SetLowestCommonTriggerTimestampDet(uint8_t det, double val)
-{
-    m_lowestCommonTriggerTimestamp_det[det] = val;
-}
-
-double Statistics::lowestCommonTriggerTimestampPlane(std::pair<uint8_t, uint8_t> dp)
-{
-    return m_lowestCommonTriggerTimestamp_plane[dp];
-}
-
-void Statistics::SetLowestCommonTriggerTimestampPlane(std::pair<uint8_t, uint8_t> dp, double val)
-{
-    m_lowestCommonTriggerTimestamp_plane[dp] = val;
+void Statistics::StatsOutput(int n, int val, std::string stat, int cnt,int cnt0,int cnt1) {
+    if(m_limits[stat] > 1) {
+        if(m_factors[stat] != 1) {
+            std::cout << static_cast<unsigned int>(n / m_factors[stat]) << "-"
+                << static_cast<unsigned int>(n / m_factors[stat] +
+                                            1 / m_factors[stat] - 1)
+                << " " << m_units[stat] << ":  " << val << " ("
+                << (100 * val / cnt) << " %)" << std::endl;
+        }
+        else {
+            std::cout << static_cast<unsigned int>(n / m_factors[stat]) 
+                << " " << m_units[stat] << ":  " << val << " ("
+                << (100 * val / cnt) << " %)" << std::endl;
+        }
+    }
+    else {
+        if(cnt0 > 0 && cnt1 > 0) {
+            std::cout << val << " (common cluster in detector, "
+                  << (100 * val / cnt0) << " % plane 0, " 
+                  << (100 * val / cnt1) << " % plane 1)" 
+                  << std::endl; 
+        }
+        else {
+            std::cout << val << " (" << (100 * val / cnt) << " %)" << std::endl; 
+        }
+    }
 }

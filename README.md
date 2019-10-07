@@ -34,9 +34,93 @@ For help concerning the possible parameters, type:
 
 Complete command line:
 ```
-./convertFile -f data.h5 -vmm "[[1,0,2,2],[1,0,2,3],[1,0,2,0],[1,0,2,1],[1,1,2,8],[1,1,2,9],[1,1,2,6],[1,1,2,7]]" -axis "[[1,0],0],[[1,1],0]" -bc 40 -tac 60 -th 0 -cs 1 -ccs 2 -dt 200 -mst 1 -spc 500 -dp 200 -coin center-of-mass -ratio -hits 1 -json 0 -n 0
+./convertFile -f data.h5 -vmm "[[1,0,2,2],[1,0,2,3],[1,0,2,0],[1,0,2,1],[1,1,2,8],[1,1,2,9],[1,1,2,6],[1,1,2,7]]" -axis "[[1,0],0],[[1,1],0]" -bc 40 -tac 60 -th 0 -cs 1 -ccs 2 -dt 200 -mst 1 -spc 500 -dp 200 -coin center-of-mass -ratio 2 -save 0 -json 0 -n 0 -algo 0
 
 ```
+
+## Description of analysis program
+
+The ESS DAQ https://github.com/ess-dmsc/essdaq provides in various detector pipelines the option to write hits 
+to hdf5 files. The format of this hdf5 file is defined in the ESS DAQ in the Readout.h files. For GEM detectors 
+and the SRS readout, the Readout.h file can be found in 
+https://github.com/ess-dmsc/event-formation-unit/blob/master/src/gdgem/nmx/Readout.h
+
+### Time calculation
+The convertFile utility of the vmm-hdf5-to-root package analyses the hdf5 files of the gdgem/SRS pipeline. There 
+are two time stamps in the hdf5 file, the srs_timestamp coming from the SRS front end card (FEC), and the 
+chiptime coming from the VMM ASIC. The VMM measures time in BCID and TDC, with a 40 MHz BC clock the BCID has 
+a 25 ns resolution. The BCID is a 12 bit number with values going from 0-4095, that means the bc_time is covering 
+a range of 4096 * 25 ns = 102.4 us. The TDC gives information about the time between BCIDs. With a TAC slope of 
+60 ns, the time resolution of the tdc_time is 60ns/256 bits = 0.23 ns. The tdc_time and the bc_time together are 
+called chiptime. 
+
+The formula is chiptime = bc_time - tdc_time = (BCID + 1)*25 ns - TDC*60ns/256. 
+The TDC time is subtracted, because the TDC starts counting when the peakfinder has found the hit, and is then 
+stopped by the falling edge of the next BC clock pulse. A small TDC value means the hit occured shortly before 
+the next BC clock, whereas a large TDC value means it appeared a long time before the next clock. 
+
+Every 4096 * 25 ns the BCID overflows, these overflows are called offset in the FEC firmware. 
+Example:
+    Offset 24, BCID 100, TDC 80: 24 * 102.4 us + (100+1) * 25 ns - 80*60 ns/256 = 2460106.25 ns = 2.46 ms
+But even with the offset the time range covered is only 32 * 102.4 us = 3278.8 us = 3.3 ms. Therefore every 
+3.3 ms 42 bit time markers are send by the FEC card. All the offsets always refer to the previous time marker 
+sent for the particular VMM. The EFU now takes the time markers and the offset and calculates the srs_timestamp 
+from it in unit [ns]. 
+
+### Calibration files
+The ESS DAQ has the option to load JSON calibration files, that contain for each channel of each VMM ASIC 
+an ADC (adc_offset and adc_slope) and a time (adc_offset and adc_slope) correction.
+https://github.com/ess-dmsc/event-formation-unit/blob/master/src/gdgem/srs/CalibrationFile.cpp
+The JSON calibration file can either be produced automatically with the VMM Slow Control program
+https://gitlab.cern.ch/mguth/VMM-software-RD51
+or by other means. If the calibration file is loaded during the data acquisition with the ESS DAQ, then the 
+chip_time has been calculated using the following formula:
+- new_chiptime = BCID * 25 ns + ( 25 ns - tdc_time - time_offset) * time_slope
+For the ADC, the formula is: 
+- new_adc = (adc - adc_offset) * adc_slope;
+If the data has been saved to file without the use of calibration files in the ESS DAQ, then the calibration
+can be loaded during the analysis by convertFile using the parameter -cal.
+
+### Hits
+As first step, the hits are stored in vectors (optionally also in a branch of the root tree), depending on the 
+mapping of the VMM ASICs to the detectors and detector planes. Then, to create clusters for each detector plane, 
+the hits are first sorted in time (which is the sum of srs_time and chiptime). 
+
+#### Time clusters
+A time cluster contains all hits with subsequent timestamps, that have a time difference smaller or equal than 
+the value defined in the -dt (delta t) parameter. Further, the time difference between the first and the last hit 
+has to be smaller than the time span defined in the -spc (span cluster) parameter. 
+
+#### Plane clusters
+The time clusters are then sorted by strip to create the plane clusters. For hits to belong to one cluster, the gap 
+between neighbouring strips cannot be larger than the -mst (missing strips) parameter. For each of the plane clusters,
+a position and a time is calculated using three different algorithms:
+    - center-of-mass (charge as weight) 
+    - center-of-mass2 (charge squared as weight)
+    - utpc (latest time)
+The user can define additional algorithms in the method Clusterer::AdditionalAlgorithm() in
+https://github.com/ess-dmsc/vmm-hdf5-to-root/blob/master/Clusterer.cpp
+
+The additional algorithm is picked depending on the -algo parameter. At the moment, two additional algorithms are 
+defined there 
+    - 0 = utpc center-of-mass2 (center of mass squared of the strip with the latest time and its one or two neighbours)
+    - 1 = utpc center-of-mass (center of mass of the strip with the latest time and its one or two neighbours)
+If the number of strips in a plane cluster is equal or larger than the value specified in the -cs (cluster size) 
+parameter, the cluster is valid. For X-ray data the cluster size parameter is usually 1 or 2, whereas for electron or
+alpha tracks it can be 3 or larger. 
+Valid plane clusters are stored in vectors (optionally also in a branch of the root tree). 
+
+#### Detector clusters
+To determine now the detector clusters, the plane clusters in the two detector planes are matched depending on their
+cluster times. The time difference between the cluster times of two plane clusters has to be smaller or equal than the 
+value specified in the -dp (delta planes) value. The user has to choose in the -coin (coincidence) parameter, which of 
+the four cluster times calculated with the different algorithms has to be used for the matching. The sum of all hists 
+in the two planes of the detector cluster has to be larger or equal to the -ccs (coincident cluster size) parameter.
+In a detector with equal charge sharing between the two planes, the charge of a detector cluster should be almost 
+identical in the two detector planes. The -ratio (charge ratio) parameter defines the allowed charge ratio between
+the two planes (charge plane 0 / charge plane 1) or (charge plane 1 / charge plane 0).
+
+
 ### Explanation of parameters
   
     -f: h5 data file with the extension .h5. The data file was created by ESS DAQ tool
@@ -119,13 +203,27 @@ Complete command line:
         The desired ratio for the matching can be set as optional argument, the default is 2 or 200\%, 
         i.e. the charge in plane 0 has to be between 50\% and 200\% of the charge in plane 1
 
-    -hits: store not only clusters but all hits (a hit is a VMM3 channel over threshold). 
-        Creates large files. Optional argument (default 1)
+    -save: Choose what to store. Only detector clusters = 0, plane and detector clusters = 1, 
+        all clusters and hits = 2 (a hit is a VMM3 channel over threshold). 
+        Option 2 reates large files. Optional argument (default 0)
 
-    -json: create a json file of the detector images. Optional argument (default 1)
+    -json: create a json file of the detector images. Optional argument (default 0)
 
     -n: number of hits to analyze. Optional argument (default 0, i.e. all hits)
 
+    -algo: There are three different algorithms implemented that calulate cluster times: 
+        center-of-mass (charge as weight), 
+        center-of-mass2 (charge squared as weight),
+        utpc (latest time)
+        The user can define additional algorithms in the method Clusterer::AdditionalAlgorithm(),
+        the algorithm is chosen depending on the -algo parameter. At the moment, two additional 
+        algorithms are defined there, 
+            0 = utpc center-of-mass2 (center of mass squared of the strip 
+            with the latest time and its one or two neighbours)
+            1 = utpc center-of-mass (center of mass of the strip 
+            with the latest time and its one or two neighbours)
+
+    -cal: The 
 
   
 

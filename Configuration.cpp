@@ -23,7 +23,7 @@ bool Configuration::PrintUsage(const std::string &errorMessage, char *argv)
     std::cout << "./convertFile -f ../../FAN0_gdgem_readouts_20190528-165706_00000.h5 "
               << "-vmm \"[[1,0,2,0],[1,0,2,1],[1,0,2,2],[1,0,2,3],[1,1,2,6],[1,1,2,7],[1,1,2,8],[1,1,2,9]]\" "
               << "-axis \"[[1,0],0],[[1,1],0]\" -sc \"[[0.4,0.4,1]]\" -tl \"[[-51.2, -51.2, 100]]\" -ro \"[[0,0,45]]\" -tr \"[[S,T,R2]]\" "
-              << "-bc 40 -tac 60 -th 0 -cs 1 -ccs 3 -dt 200 -mst 1 -spc 500 -dp 200 -coin center-of-mass -ratio 2 -hits 1 -json 0 -n 0 " << std::endl;
+              << "-bc 40 -tac 60 -th 0 -cs 1 -ccs 3 -dt 200 -mst 1 -spc 500 -dp 200 -coin center-of-mass -ratio 2 -save 2 -json 0 -n 0 " << std::endl;
 
     std::cout << "\n\nFlags:\n"
               << std::endl;
@@ -93,7 +93,7 @@ bool Configuration::PrintUsage(const std::string &errorMessage, char *argv)
               << std::endl;
     std::cout << "     The desired ratio for the matching can be set as optional argument, the default is 2 or 200\%, i.e. the charge in plane 0 has to be between 50\% and 200\% of the charge in plane 1.\n"
               << std::endl;
-    std::cout << "-hits: store not only clusters but all hits (a hit is a VMM3 channel over threshold). Creates large files. Optional argument (default 1).\n"
+    std::cout << "-save: select what to store. 0 = only common clusters plane0/plan1, 1 = all clusters, 2 = clusters and hits (a hit is a VMM3a channel over threshold). Creates large files. Optional argument (default 1).\n"
               << std::endl;
     std::cout << "-json: create a json file of the detector images. Optional argument (default 1).\n"
               << std::endl;
@@ -409,13 +409,18 @@ bool Configuration::ParseCommandLine(int argc, char **argv)
         {
             pDeltaTimePlanes = atoi(argv[i + 1]);
         }
-        else if (strncmp(argv[i], "-hits", 5) == 0)
+        else if (strncmp(argv[i], "-save", 5) == 0)
         {
-            pCreateHits = atoi(argv[i + 1]);
+            pSaveWhat = atoi(argv[i + 1]);
         }
         else if (strncmp(argv[i], "-n", 2) == 0)
         {
             nHits = atoi(argv[i + 1]);
+        }
+        else if (strncmp(argv[i], "-cal", 4) == 0)
+        {
+            pCalFilename = argv[i + 1];
+            useCalibration = true;
         }
         else if (strncmp(argv[i], "-json", 5) == 0)
         {
@@ -433,6 +438,10 @@ bool Configuration::ParseCommandLine(int argc, char **argv)
                 pConditionCoincidence = argv[i + 1];
             }
         }
+        else if (strncmp(argv[i], "-algo", 5) == 0)
+        {
+            pAlgo = atoi(argv[i + 1]);
+        }
         else
         {
             return PrintUsage("Wrong type of argument!", argv[i]);
@@ -445,21 +454,23 @@ bool Configuration::ParseCommandLine(int argc, char **argv)
 
     if (fFound && pFileName.find(".h5") == std::string::npos)
     {
-        return PrintUsage("Wrong extension: .h5 file required!", nullptr);
+        return PrintUsage("Wrong extension: .h5 file required for data files!", nullptr);
+    }
+    if (useCalibration  && pCalFilename.find(".json") == std::string::npos)
+    {
+        return PrintUsage("Wrong extension: .json file required for calibration!", nullptr);
     }
     if (!vmmsFound)
     {
         return PrintUsage("Detectors, planes, fecs and VMMs have to be defined!", nullptr);
     }
     pRootFilename = pFileName;
-    if (pRootFilename.find(".h5") != std::string::npos)
-    {
+    if (pRootFilename.find(".h5") != std::string::npos) {
         pRootFilename.replace(pRootFilename.size() - 3, pRootFilename.size(), "");
     }
     std::string strParams;
 
-    if (pCreateHits)
-    {
+    if (pSaveWhat > 1) {
         strParams += "_HITS";
     }
     strParams += ".root";

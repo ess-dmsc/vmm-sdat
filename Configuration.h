@@ -76,7 +76,8 @@ public:
     uint16_t pDeltaTimePlanes = 200;
 
     bool createJSON = false;
-    bool pCreateHits = true;
+    bool useCalibration = false;
+    int pSaveWhat = 0;
     std::string pConditionCoincidence = "center-of-mass";
     float pChargeRatio = 2;
     int nHits = 0;
@@ -85,6 +86,7 @@ public:
     //**************************************************************
     
     std::string pRootFilename = "";
+    std::string pCalFilename = "";
 
     uint32_t pBCTime_ns = 1000 / (int)pBC;
     uint32_t pTriggerPeriod = 1000 * 4096 / (int)pBC;
@@ -99,4 +101,5 @@ public:
 
     bool fFound = false;
     bool vmmsFound = false;
+    int pAlgo = 0;
 };

@@ -30,7 +30,7 @@ public:
     void SaveHistograms();
     void AddHits(Hit&& the_hit);
     void SaveHits();
-    void SaveClustersPlane(ClusterVectorPlane&& clusters_plane);
+    void SaveClustersPlane(ClusterVectorPlane&& clusters_plane, int saveWhat);
     void SaveClustersDetector(ClusterVectorDetector&& clusters_detector);
 
 private:

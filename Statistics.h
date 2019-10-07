@@ -9,41 +9,43 @@ public:
     ~Statistics() = default;
 
     void CreateStats(Configuration & config); 
-    void SetClusterStatsPlane(std::pair<uint8_t, uint8_t> dp, uint16_t maxDeltaTime, uint16_t maxMissingStrip, uint16_t deltaSpan);
-    void SetStatsDetector(uint8_t det, double deltaPlane, double ratio, int plane);
-    int maxDeltaTime(std::pair<uint8_t, uint8_t> dp, int n);
-    int maxMissingStrip(std::pair<uint8_t, uint8_t> dp, int n);
-    int deltaSpan(std::pair<uint8_t, uint8_t> dp, int n);
-    int deltaPlane(uint8_t det, int n);
-    int chargeRatio(uint8_t det, int n, int plane);
+    int GetStatsDetector(std::string stats, uint8_t det, int n);
+    void SetStatsDetector(std::string stats, uint8_t det, double value);
+    int GetStatsPlane(std::string stats, std::pair<uint8_t, uint8_t> dp, int n);
+    void SetStatsPlane(std::string stats, std::pair<uint8_t, uint8_t> dp, double value);
 
-    void SetOldTriggerTimestamp(uint8_t fecId, double srsTimestamp);
+    void IncrementErrorCount(std::string error, uint8_t fecId);
+    int GetErrorCount(std::string error, uint8_t fecId);
+   
+    double GetDeltaTriggerTimestamp(uint8_t fecId);
     void SetDeltaTriggerTimestamp(uint8_t fecId, double val);
-    void IncrementOverflow(uint8_t fecId);
-    void IncrementTimeError(uint8_t fecId);
-    void IncrementTimestampTooLarge(uint8_t fecId);
-    double oldTriggerTimestamp(uint8_t fecId);
-    double deltaTriggerTimestamp(uint8_t fecId);
-    double lowestCommonTriggerTimestampDet(uint8_t det);
+    double GetOldTriggerTimestamp(uint8_t fecId);
+    void SetOldTriggerTimestamp(uint8_t fecId, double srsTimestamp);
+    
+    double GetLowestCommonTriggerTimestampDet(uint8_t det);
     void SetLowestCommonTriggerTimestampDet(uint8_t det, double val);
-    double lowestCommonTriggerTimestampPlane(std::pair<uint8_t, uint8_t> dp);
+    double GetLowestCommonTriggerTimestampPlane(std::pair<uint8_t, uint8_t> dp);
     void SetLowestCommonTriggerTimestampPlane(std::pair<uint8_t, uint8_t> dp, double val);
-    int timeError(uint8_t fecId);
-    int overflow(uint8_t fecId);
-    int timestampTooLargeError(uint8_t fecId);
+   
+    void PrintStats(Configuration& config);
+    void StatsOutput(int n, int val, std::string stat, int cnt,int cnt0=0,int cnt1=0);
 private:
-    std::map<std::pair<uint8_t, uint8_t>, std::vector<int>> m_maxDeltaTime;
-    std::map<std::pair<uint8_t, uint8_t>, std::vector<int>> m_maxMissingStrip;
-    std::map<std::pair<uint8_t, uint8_t>, std::vector<int>> m_deltaSpan;
-    std::map<uint8_t, std::vector<int>> m_deltaPlane;
-    std::map<uint8_t, std::vector<int>> m_chargeRatio_0;
-    std::map<uint8_t, std::vector<int>> m_chargeRatio_1;
-    std::map<uint8_t, int> m_overflow;
-    std::map<uint8_t, int> m_timeError;
-    std::map<uint8_t, int> m_timeStampTooLargeError;
+    std::map<std::pair<std::pair<uint8_t, uint8_t>, std::string>, std::vector<int>> m_stats_plane;
+    std::map<std::pair<uint8_t, std::string>, std::vector<int>> m_stats_detector;
+    std::vector<std::string> m_stats_plane_names;
+    std::vector<std::string> m_stats_detector_names;
+    std::map<std::string, double> m_factors;
+    std::map<std::string, double> m_limits;
+    std::map<std::string, std::string> m_units;
+    std::map<std::pair<uint8_t, std::string>, int> m_errors;
+    std::vector<std::string> m_error_names;
 
+
+    // per plane
     std::map<std::pair<uint8_t, uint8_t>, double> m_lowestCommonTriggerTimestamp_plane;
+    // per detector
     std::map<uint8_t, double> m_lowestCommonTriggerTimestamp_det;
+    // per FEC
     std::map<uint8_t, double> m_deltaTriggerTimestamp;
     std::map<uint8_t, double> m_oldTriggerTimestamp;
 };
