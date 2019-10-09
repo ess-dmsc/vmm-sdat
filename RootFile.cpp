@@ -142,6 +142,12 @@ RootFile::RootFile(Configuration &config) : m_config(config)
             m_map_TH2D.emplace(std::make_pair(std::make_pair(det.first, "cluster_charge2"), cnt2D));
             cnt2D++;
 
+            name = std::to_string(det.first) + "_cluster_algo";
+            h2 = new TH2D(name.c_str(), name.c_str(), n0 * 4, r0, n0, n1 * 4, r1, n1);
+            m_TH2D.push_back(h2);
+            m_map_TH2D.emplace(std::make_pair(std::make_pair(det.first, "cluster_algo"), cnt2D));
+            cnt2D++;
+
             name = std::to_string(det.first) + "_size_plane0";
             h2 = new TH2D(name.c_str(), name.c_str(), n0 * 4, r0, n0, n1 * 4, r1, n1);
             m_TH2D.push_back(h2);
@@ -245,6 +251,9 @@ void RootFile::SaveClustersDetector(ClusterVectorDetector &&clusters_detector)
             idx = m_map_TH2D[std::make_pair(it.det, "cluster_charge2")];
             m_TH2D[idx]->Fill(it.pos0_charge2, it.pos1_charge2);
         
+            idx = m_map_TH2D[std::make_pair(it.det, "cluster_algo")];
+            m_TH2D[idx]->Fill(it.pos0_algo, it.pos1_algo);
+
             idx = m_map_TH2D[std::make_pair(it.det, "size_plane0")];
             m_TH2D[idx]->Fill(it.pos0, it.pos1, it.size0);
 
@@ -296,13 +305,28 @@ void RootFile::SaveHistograms()
                 f1.close();
 
                 id = m_map_TH2D[std::make_pair(det.first, "cluster_utpc")];
-
                 json = TBufferJSON::ToJSON(m_TH2D[id], 3);
                 std::ofstream f2;
                 f2.open(jsonFilename + "_detector" + std::to_string(det.first) 
                 + "_cluster_utpc.json", std::ios::out);
                 f2 << json;
                 f2.close();
+
+                id = m_map_TH2D[std::make_pair(det.first, "cluster_charge2")];
+                json = TBufferJSON::ToJSON(m_TH2D[id], 3);
+                std::ofstream f3;
+                f3.open(jsonFilename + "_detector" + std::to_string(det.first) 
+                + "_cluster_charge2.json", std::ios::out);
+                f3 << json;
+                f3.close();
+
+                id = m_map_TH2D[std::make_pair(det.first, "cluster_algo")];
+                json = TBufferJSON::ToJSON(m_TH2D[id], 3);
+                std::ofstream f4;
+                f4.open(jsonFilename + "_detector" + std::to_string(det.first) 
+                + "_cluster_algo.json", std::ios::out);
+                f4 << json;
+                f4.close();
             }
             int n0 = m_config.pChannels[std::make_tuple(det.first, 0)] * 4;
             int n1 = m_config.pChannels[std::make_tuple(det.first, 1)] * 4;

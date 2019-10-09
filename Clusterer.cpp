@@ -65,8 +65,15 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
     return true;
   }
   if (srsTimestamp < m_stats.GetOldTriggerTimestamp(fecId)) {
-    if (m_stats.GetOldTriggerTimestamp(fecId) > 0x1FFFFFFFFFF + srsTimestamp) {
-      m_stats.IncrementErrorCount("overflow", fecId);
+    // 42 bit: 0x1FFFFFFFFFF
+    // 32 bit: 0xFFFFFFFF
+    if (m_stats.GetOldTriggerTimestamp(fecId) > 0x1FFFFFFF + srsTimestamp) {
+      m_stats.IncrementErrorCount("time_stamp_overflow", fecId);
+      std::cout << "time_stamp_overflow " << m_stats.GetErrorCount("time_stamp_overflow", fecId) << std::endl;
+      std::cout << std::setprecision(std::numeric_limits<long double>::digits10 + 1) <<
+      m_stats.GetOldTriggerTimestamp(fecId) << std::endl;
+      std::cout << std::setprecision(std::numeric_limits<long double>::digits10 + 1) <<
+      srsTimestamp << std::endl;
       DTRACE(DEB,
              "\n*********************************** OVERFLOW  fecId %d, "
              "m_lineNr %d, eventNr  %d, "
@@ -74,7 +81,8 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
              fecId, m_lineNr, m_eventNr, static_cast<uint64_t>(srsTimestamp),
              static_cast<uint64_t>(m_stats.GetOldTriggerTimestamp(fecId)));
     } else {
-      m_stats.IncrementErrorCount("time_order_error", fecId);
+      //std::cout << "time_stamp_order_error " << m_stats.GetErrorCount("time_stamp_order_error", fecId) << std::endl;
+      m_stats.IncrementErrorCount("time_stamp_order_error", fecId);
       DTRACE(DEB,
              "\n*********************************** TIME ERROR  fecId %d, "
              "m_lineNr %d, eventNr  %d, "
@@ -928,8 +936,8 @@ void Clusterer::FinishAnalysis() {
         dp0, 100 * m_config.pTriggerPeriod + m_stats.GetLowestCommonTriggerTimestampPlane(dp0));
     m_stats.SetLowestCommonTriggerTimestampPlane(
         dp1, m_stats.GetLowestCommonTriggerTimestampPlane(dp0));
-    std::cout << m_stats.GetLowestCommonTriggerTimestampPlane(dp0) << std::endl;
-     std::cout << m_stats.GetLowestCommonTriggerTimestampPlane(dp1) << std::endl;
+    //std::cout << m_stats.GetLowestCommonTriggerTimestampPlane(dp0) << std::endl;
+    //std::cout << m_stats.GetLowestCommonTriggerTimestampPlane(dp1) << std::endl;
     m_stats.SetLowestCommonTriggerTimestampDet(
         det.first, std::max(m_stats.GetLowestCommonTriggerTimestampPlane(dp0),
                           m_stats.GetLowestCommonTriggerTimestampPlane(dp1)));

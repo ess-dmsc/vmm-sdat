@@ -11,7 +11,7 @@ For more information about ROOT see [here](https://root.cern.ch/)
 - HDF5 1.10 or newer [find_package(HDF5 1.10 REQUIRED)]
 - h5cpp from https://github.com/ess-dmsc/h5cpp [find_package(h5cpp REQUIRED)]
 - root6 from https://root.cern.ch/downloading-root [find_package(ROOT REQUIRED)]
-
+- Installation of ESS DAQ https://github.com/ess-dmsc/essdaq or event formation unit https://github.com/ess-dmsc/event-formation-unit
 
 
 ## Installing
@@ -21,6 +21,8 @@ To build the program, start in the program directory vmm-hdf5-to-root
 mkdir build
 cd build
 cmake .. or (to enable debug info) cmake -DENABLE_DTRACE=ON ..
+
+The program uses conan to install all the ESS dependencies.
 ```
 ## Built With
 * [CMAKE](https://cmake.org/) - Cross platform makefile generation
