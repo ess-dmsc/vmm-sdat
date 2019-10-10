@@ -31,7 +31,7 @@ Clusterer::~Clusterer() { RootFile::Dispose(); }
 //====================================================================================================================
 bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
                             uint16_t chNo, uint16_t bcid, uint16_t tdc,
-                            double adc, bool overThresholdFlag,
+                            uint16_t adc, bool overThresholdFlag,
                             float chipTime) {
   auto searchFecChip =
       m_config.pFecChip_DetectorPlane.find(std::make_pair(fecId, vmmId));
@@ -209,7 +209,7 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
   }
   DTRACE(DEB, "\t\tChannel %d (chNo  %d) - overThresholdFlag %d\n", pos, chNo,
          (int)overThresholdFlag);
-  DTRACE(DEB, "\t\t\tbcid %d, tdc %d, adc %f\n", bcid, tdc, adc);
+  DTRACE(DEB, "\t\t\tbcid %d, tdc %d, adc %d\n", bcid, tdc, adc);
   DTRACE(DEB, "\t\t\ttotal time %f, chip time %f ns\n", totalTime, chipTime);
 
   m_stats.SetOldTriggerTimestamp(fecId, srsTimestamp);
@@ -664,7 +664,7 @@ void Clusterer::MatchClustersDetector(uint8_t det) {
              clusterDetector.pos1);
       DTRACE(DEB, "\ttime x/time y: : %llu/%llu",
              (uint64_t)clusterDetector.time0, (uint64_t)clusterDetector.time1);
-      DTRACE(DEB, "\tadc x/adc y: %f/%f", clusterDetector.adc0,
+      DTRACE(DEB, "\tadc x/adc y: %u/%u", clusterDetector.adc0,
              clusterDetector.adc1);
       DTRACE(DEB, "\tsize x/size y: %u/%u", clusterDetector.size0,
              clusterDetector.size1);

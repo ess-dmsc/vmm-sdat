@@ -59,11 +59,16 @@ int main(int argc, char**argv) {
             }
             */
             auto calib = calfile.getCalibration(RowData.fec, RowData.chip_id, RowData.channel);
-            double bcTime = m_configuration.pBCTime_ns * RowData.bcid;
-            double tdcTime = RowData.tdc * m_configuration.pTAC / 256;
             
-            RowData.chiptime = bcTime + (m_configuration.pBCTime_ns - tdcTime - calib.time_offset)*calib.time_slope;
-            double newAdc = (RowData.adc- calib.adc_offset)*calib.adc_slope;
+            //User calibration added to analysis
+            //The chiptime has to be recalculated in this case from bcid and tdc
+            if(calib.time_offset != 0 || calib.time_slope != 1.0) {
+                double bcTime = m_configuration.pBCTime_ns * RowData.bcid;
+                double tdcTime = RowData.tdc * m_configuration.pTAC / 255;
+                RowData.chiptime = bcTime + (m_configuration.pBCTime_ns - tdcTime - calib.time_offset)*calib.time_slope;
+            }
+            
+            RowData.adc = static_cast<uint16_t>((RowData.adc- calib.adc_offset)*calib.adc_slope);
                        
             bool result = m_Clusterer->AnalyzeHits(
                 static_cast<double>(RowData.srs_timestamp), 

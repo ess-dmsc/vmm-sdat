@@ -22,7 +22,8 @@ public:
 	~Clusterer();
 
 	// Analyzing and storing the hits
-        bool AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId, uint16_t chNo, uint16_t bcid, uint16_t tdc, double adc, bool overThresholdFlag, float chipTime);
+        bool AnalyzeHits(double srsTimestamp, uint8_t fecId, 
+        uint8_t vmmId, uint16_t chNo, uint16_t bcid, uint16_t tdc, uint16_t adc, bool overThresholdFlag, float chipTime);
         void StoreHits(uint8_t det, uint8_t plane, int pos, uint16_t adc, double chipTime, bool overThresholdFlag);
 
         // Analyzing and storing the clusters in plane 0 and 1

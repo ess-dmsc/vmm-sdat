@@ -13,7 +13,7 @@ struct Hit {
     uint16_t pos;
     uint16_t bcid;
     uint16_t tdc;
-    double adc;
+    uint16_t adc;
     bool over_threshold;
     float chip_time;
 };
@@ -23,7 +23,7 @@ struct ClusterPlane {
     uint8_t det;
     uint8_t plane;
     uint16_t size;
-    double adc;
+    uint16_t adc;
     double time;
     double time_utpc;
     double time_charge2;
@@ -49,8 +49,8 @@ struct ClusterDetector {
     uint8_t det;
     uint16_t size0;
     uint16_t size1;
-    double adc0;
-    double adc1;
+    uint16_t adc0;
+    uint16_t adc1;
     double pos0;
     double pos1;
     double pos2;
