@@ -21,6 +21,10 @@ public:
     void SetDeltaTriggerTimestamp(uint8_t fecId, double val);
     double GetOldTriggerTimestamp(uint8_t fecId);
     void SetOldTriggerTimestamp(uint8_t fecId, double srsTimestamp);
+    double GetFirstTriggerTimestamp(uint8_t fecId);
+    void SetFirstTriggerTimestamp(uint8_t fecId, double srsTimestamp);
+    double GetMaxTriggerTimestamp(uint8_t fecId);
+    void SetMaxTriggerTimestamp(uint8_t fecId, double srsTimestamp);
     
     double GetLowestCommonTriggerTimestampDet(uint8_t det);
     void SetLowestCommonTriggerTimestampDet(uint8_t det, double val);
@@ -48,6 +52,9 @@ private:
     // per FEC
     std::map<uint8_t, double> m_deltaTriggerTimestamp;
     std::map<uint8_t, double> m_oldTriggerTimestamp;
+    std::map<uint8_t, double> m_maxTriggerTimestamp;
+    std::map<uint8_t, double> m_firstTriggerTimestamp;
+    std::map<uint8_t, double> m_lastTriggerTimestamp;
 };
 
 

@@ -253,7 +253,7 @@ void RootFile::SaveClustersDetector(ClusterVectorDetector &&clusters_detector)
         
             idx = m_map_TH2D[std::make_pair(it.det, "cluster_algo")];
             m_TH2D[idx]->Fill(it.pos0_algo, it.pos1_algo);
-
+        
             idx = m_map_TH2D[std::make_pair(it.det, "size_plane0")];
             m_TH2D[idx]->Fill(it.pos0, it.pos1, it.size0);
 

@@ -87,6 +87,7 @@ public:
     
     std::string pRootFilename = "";
     std::string pCalFilename = "";
+    std::string pInfo = "";
 
     uint32_t pBCTime_ns = 1000 / (int)pBC;
     uint32_t pTriggerPeriod = 1000 * 4096 / (int)pBC;

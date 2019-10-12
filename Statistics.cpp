@@ -21,6 +21,7 @@ void Statistics::CreateStats(Configuration &config) {
     m_error_names.push_back("trigger_period_error");
     m_errors.emplace(
         std::make_pair(std::make_pair(fec, "trigger_period_error"), 0));
+    
   }
 
   int size = 0;
@@ -200,6 +201,22 @@ void Statistics::SetOldTriggerTimestamp(uint8_t fecId, double srsTimestamp) {
   m_oldTriggerTimestamp[fecId] = srsTimestamp;
 }
 
+double Statistics::GetFirstTriggerTimestamp(uint8_t fecId) {
+  return m_firstTriggerTimestamp[fecId];
+}
+
+void Statistics::SetFirstTriggerTimestamp(uint8_t fecId, double srsTimestamp) {
+  m_firstTriggerTimestamp[fecId] = srsTimestamp;
+}
+
+double Statistics::GetMaxTriggerTimestamp(uint8_t fecId) {
+  return m_maxTriggerTimestamp[fecId];
+}
+
+void Statistics::SetMaxTriggerTimestamp(uint8_t fecId, double srsTimestamp) {
+  m_maxTriggerTimestamp[fecId] = srsTimestamp;  
+}
+
 double Statistics::GetLowestCommonTriggerTimestampDet(uint8_t det) {
   return m_lowestCommonTriggerTimestamp_det[det];
 }
@@ -217,6 +234,7 @@ void Statistics::SetLowestCommonTriggerTimestampPlane(
     std::pair<uint8_t, uint8_t> dp, double val) {
   m_lowestCommonTriggerTimestamp_plane[dp] = val;
 }
+
 
 void Statistics::PrintStats(Configuration &config) {
   int totalPlane0 = 0;
@@ -291,6 +309,7 @@ void Statistics::PrintStats(Configuration &config) {
 
 
 void Statistics::StatsOutput(int n, int val, std::string stat, int cnt,int cnt0,int cnt1) {
+    if(cnt == 0) cnt = 1;
     if(m_limits[stat] > 1) {
         if(m_factors[stat] != 1) {
             std::cout << static_cast<unsigned int>(n / m_factors[stat]) << "-"

@@ -116,7 +116,11 @@ bool Configuration::ParseCommandLine(int argc, char **argv)
         {
             fFound = true;
             pFileName = argv[i + 1];
-            std::cout << pFileName << std::endl;
+        }
+        else if (strncmp(argv[i], "-info", 5) == 0)
+        {
+            pInfo = argv[i + 1];
+            std::cout << pInfo << std::endl;
         }
         else if (strncmp(argv[i], "-bc", 3) == 0)
         {
@@ -464,21 +468,23 @@ bool Configuration::ParseCommandLine(int argc, char **argv)
     {
         return PrintUsage("Detectors, planes, fecs and VMMs have to be defined!", nullptr);
     }
+    std::cout << "Analyzing " << pFileName << " ..." << std::endl;
     pRootFilename = pFileName;
     if (pRootFilename.find(".h5") != std::string::npos) {
         pRootFilename.replace(pRootFilename.size() - 3, pRootFilename.size(), "");
     }
     std::string strParams;
 
-    if (pSaveWhat > 1) {
-        strParams += "_HITS";
+    if (pInfo.length() > 0) {
+        strParams += "_";
+        strParams += pInfo;
     }
     strParams += ".root";
     std::string sChargeRatio = std::to_string(pChargeRatio);
     std::replace(sChargeRatio.begin(), sChargeRatio.end(), '.', 'p');
     sChargeRatio = std::regex_replace(sChargeRatio, std::regex("00000"), "0");
 
-    pRootFilename = pRootFilename + "_bc_" + std::to_string(pBC) + "_tac_" + std::to_string((int)pTAC) + "_cxys_" +
+    pRootFilename = pRootFilename + "_bc_" + std::to_string(pBC) + "_tac_" + std::to_string((int)pTAC) + "_ccs_" +
                     std::to_string((int)pCoincidentClusterSize) + "_cs_" + std::to_string((int)pMinClusterSize) + "_dt_" + std::to_string((int)pDeltaTimeHits) + "_mst_" + std::to_string((int)pMissingStripsCluster) + "_spc_" + std::to_string((int)pSpanClusterTime) + "_dp_" + std::to_string((int)pDeltaTimePlanes) + "_ratio_" + sChargeRatio + "_coin_" + pConditionCoincidence + strParams;
 
     return true;

@@ -69,11 +69,11 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
     // 32 bit: 0xFFFFFFFF
     if (m_stats.GetOldTriggerTimestamp(fecId) > 0x1FFFFFFF + srsTimestamp) {
       m_stats.IncrementErrorCount("time_stamp_overflow", fecId);
-      std::cout << "time_stamp_overflow " << m_stats.GetErrorCount("time_stamp_overflow", fecId) << std::endl;
-      std::cout << std::setprecision(std::numeric_limits<long double>::digits10 + 1) <<
-      m_stats.GetOldTriggerTimestamp(fecId) << std::endl;
-      std::cout << std::setprecision(std::numeric_limits<long double>::digits10 + 1) <<
-      srsTimestamp << std::endl;
+      //std::cout << "time_stamp_overflow " << m_stats.GetErrorCount("time_stamp_overflow", fecId) << std::endl;
+      //std::cout << std::setprecision(std::numeric_limits<long double>::digits10 + 1) <<
+      //m_stats.GetOldTriggerTimestamp(fecId) << std::endl;
+      //std::cout << std::setprecision(std::numeric_limits<long double>::digits10 + 1) <<
+      //srsTimestamp << std::endl;
       DTRACE(DEB,
              "\n*********************************** OVERFLOW  fecId %d, "
              "m_lineNr %d, eventNr  %d, "
@@ -213,6 +213,14 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
   DTRACE(DEB, "\t\t\ttotal time %f, chip time %f ns\n", totalTime, chipTime);
 
   m_stats.SetOldTriggerTimestamp(fecId, srsTimestamp);
+  
+  if(m_lineNr == 1) {
+    m_stats.SetFirstTriggerTimestamp(fecId, srsTimestamp);  
+  }
+  if(m_stats.GetMaxTriggerTimestamp(fecId) < srsTimestamp) {
+    m_stats.SetMaxTriggerTimestamp(fecId, srsTimestamp);  
+  }
+
   m_oldBcId = bcid;
   m_oldVmmId = vmmId;
   m_oldFecId = fecId;
@@ -381,9 +389,9 @@ int Clusterer::ClusterByStrip(uint8_t det, uint8_t plane,
         double time_algo = 0;
         double pos_algo = 0;
         AdditionalAlgorithm(idx, vADC, vStrips, vTimes, pos_algo, time_algo);
+       
         clusterPlane.time_algo = time_algo;
         clusterPlane.pos_algo = pos_algo;
-        
         clusterPlane.plane_coincidence = false;
         clusterPlane.max_delta_time = maxDeltaTime;
         clusterPlane.max_missing_strip = maxMissingStrip;
@@ -590,6 +598,18 @@ void Clusterer::MatchClustersDetector(uint8_t det) {
         clusterDetector.pos2_charge2 =
             c0.pos_charge2 * std::get<0>(tz) +
             (*bestMatchPlane1).pos_charge2 * std::get<1>(tz) + std::get<3>(tz);
+        
+        clusterDetector.pos0_algo =
+            c0.pos_algo * std::get<0>(tx) +
+            (*bestMatchPlane1).pos_algo * std::get<1>(tx) + std::get<3>(tx);
+        clusterDetector.pos1_algo =
+            c0.pos_algo * std::get<0>(ty) +
+            (*bestMatchPlane1).pos_algo * std::get<1>(ty) + std::get<3>(ty);
+        clusterDetector.pos2_algo =
+            c0.pos_algo * std::get<0>(tz) +
+            (*bestMatchPlane1).pos_algo * std::get<1>(tz) + std::get<3>(tz);
+
+
       } else {
         clusterDetector.pos0 = c0.pos;
         clusterDetector.pos1 = (*bestMatchPlane1).pos;
@@ -600,6 +620,9 @@ void Clusterer::MatchClustersDetector(uint8_t det) {
         clusterDetector.pos0_charge2 = c0.pos_charge2;
         clusterDetector.pos1_charge2 = (*bestMatchPlane1).pos_charge2;
         clusterDetector.pos2_charge2 = 0;
+        clusterDetector.pos0_algo = c0.pos_algo;
+        clusterDetector.pos1_algo = (*bestMatchPlane1).pos_algo;
+        clusterDetector.pos2_algo = 0;
       }
 
       clusterDetector.time0 = c0.time;
@@ -608,6 +631,8 @@ void Clusterer::MatchClustersDetector(uint8_t det) {
       clusterDetector.time1_utpc = (*bestMatchPlane1).time_utpc;
       clusterDetector.time0_charge2 = c0.time_charge2;
       clusterDetector.time1_charge2 = (*bestMatchPlane1).time_charge2;
+      clusterDetector.time0_algo = c0.time_algo;
+      clusterDetector.time1_algo = (*bestMatchPlane1).time_algo;
       clusterDetector.dt0 = clusterDetector.time0 - last_time0;
       clusterDetector.dt1 = clusterDetector.time1 - last_time1;
       /*
@@ -946,6 +971,32 @@ void Clusterer::FinishAnalysis() {
     AnalyzeClustersDetector(det.first);
   }
   m_stats.PrintStats(m_config);
+  
+  std::cout << "\n****************************************" << std::endl;
+  std::cout << "Data acquisition times " << std::endl;
+  std::cout << "****************************************" << std::endl;
+  for (int n = 0; n< m_config.pFecs.size();n++) {
+      auto fec = m_config.pFecs[n];
+      double first = m_stats.GetFirstTriggerTimestamp(fec); 
+      double max = m_stats.GetMaxTriggerTimestamp(fec);  
+      double last = m_stats.GetOldTriggerTimestamp(fec);  
+      int overflow = m_stats.GetErrorCount("time_stamp_overflow", fec);
+      double acq_time = 0;
+      if(max <= 4294967295) {
+        max = 4294967295;
+      }
+      if(max > 4294967295 && max <= 109951162777575) {
+        max = 109951162777575;
+      }
+      if(overflow >= 1) {
+        acq_time = ((max - first) + (overflow-1) * max + last)/1000000.0;
+      }
+      else {
+        acq_time = (max - first)/1000000.0;  
+      }
+      std::cout << "FEC " << (int)fec << ": " << acq_time << " ms" << std::endl;
+  }
+  std::cout << "****************************************\n" << std::endl;
 }
 
 //====================================================================================================================

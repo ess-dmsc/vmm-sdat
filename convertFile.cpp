@@ -67,9 +67,12 @@ int main(int argc, char**argv) {
                 double tdcTime = RowData.tdc * m_configuration.pTAC / 255;
                 RowData.chiptime = bcTime + (m_configuration.pBCTime_ns - tdcTime - calib.time_offset)*calib.time_slope;
             }
-            
+            if(calib.adc_slope == 0) {
+                std::cout << "Error in calibration file: adc_slope correction for fec " << RowData.fec << ", chip " 
+                << RowData.chip_id << ", channel " << RowData.channel << " is 0!\nIs that intentional?" << std::endl;
+            }
             RowData.adc = static_cast<uint16_t>((RowData.adc- calib.adc_offset)*calib.adc_slope);
-                       
+                
             bool result = m_Clusterer->AnalyzeHits(
                 static_cast<double>(RowData.srs_timestamp), 
                 RowData.fec, RowData.chip_id, 
