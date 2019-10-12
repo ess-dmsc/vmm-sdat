@@ -120,7 +120,6 @@ bool Configuration::ParseCommandLine(int argc, char **argv)
         else if (strncmp(argv[i], "-info", 5) == 0)
         {
             pInfo = argv[i + 1];
-            std::cout << pInfo << std::endl;
         }
         else if (strncmp(argv[i], "-bc", 3) == 0)
         {
