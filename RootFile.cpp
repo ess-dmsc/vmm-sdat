@@ -345,7 +345,7 @@ void RootFile::SaveHistograms()
                         val = m_TH2D[idx]->GetBinContent(p0, p1) / cnt;
                         m_TH2D[idx]->SetBinContent(p0, p1, val);
 
-                        idx = m_map_TH2D[std::make_pair(det.first, "size_plane0")];
+                        idx = m_map_TH2D[std::make_pair(det.first, "size_plane1")];
                         val = m_TH2D[idx]->GetBinContent(p0, p1) / cnt;
                         m_TH2D[idx]->SetBinContent(p0, p1, val);
 

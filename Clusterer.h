@@ -39,9 +39,10 @@ public:
 
         int ClusterByTime(uint8_t det,uint8_t plane);
         int ClusterByStrip(uint8_t det,uint8_t plane,ClusterContainer &cluster, uint16_t maxDeltaTime);
-        void AdditionalAlgorithm(int idx_largest_time, std::vector<double> & vADC,
-                std::vector<double> & vStrips, std::vector<double> & vTimes,
-                double &position_algo, double &time_algo);
+  
+        void AlgorithmUTPC(int idx_min_largest_time, int idx_max_largest_time, std::vector<double> & vADC,
+                std::vector<double> & vStrips, std::vector<double> & vTimes, double &positionUTPC, double &timeUTPC, 
+                double &positionAlgo, double &timeAlgo);
 
         void MatchClustersDetector(uint8_t det);
 

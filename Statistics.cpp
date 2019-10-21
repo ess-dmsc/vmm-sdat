@@ -39,7 +39,7 @@ void Statistics::CreateStats(Configuration &config) {
                                     1 + config.pDeltaTimeHits *
                                             m_factors["delta_time_hits"]));
     size = static_cast<int>(m_limits["delta_time_hits"]);
-    std::vector<int> v(size, 0);
+    std::vector<long> v(size, 0);
     m_stats_plane_names.push_back("delta_time_hits");
     m_stats_plane.emplace(
         std::make_pair(std::make_pair(plane0, "delta_time_hits"), v));
@@ -134,13 +134,14 @@ void Statistics::CreateStats(Configuration &config) {
     v.resize(size);
     std::fill(v.begin(), v.end(), 0);
     m_stats_detector_names.push_back("cluster_cnt_detector");
-    m_stats_detector.emplace(std::make_pair(std::make_pair(det.first, "cluster_cnt_detector"), v));
+    m_stats_detector.emplace(std::make_pair(std::make_pair(
+      det.first, "cluster_cnt_detector"), v));
   
   }
   
 }
 
-int Statistics::GetStatsDetector(std::string stats, uint8_t det, int n) {
+long Statistics::GetStatsDetector(std::string stats, uint8_t det, int n) {
     if (n < m_limits[stats.c_str()]) {
         return m_stats_detector[std::make_pair(det, stats.c_str())][n];
     }
@@ -158,7 +159,7 @@ void Statistics::SetStatsDetector(std::string stats, uint8_t det,
   }
 }
 
-int Statistics::GetStatsPlane(std::string stats, std::pair<uint8_t, uint8_t> dp,
+long Statistics::GetStatsPlane(std::string stats, std::pair<uint8_t, uint8_t> dp,
                               int n) {
   if (n < m_limits[stats]) {
     return m_stats_plane[std::make_pair(dp, stats)][n];
@@ -181,7 +182,7 @@ void Statistics::IncrementErrorCount(std::string error, uint8_t fecId) {
   m_errors[std::make_pair(fecId, error)]++;
 }
 
-int Statistics::GetErrorCount(std::string error, uint8_t fecId) {
+long Statistics::GetErrorCount(std::string error, uint8_t fecId) {
   return m_errors[std::make_pair(fecId, error)];
 }
 
@@ -237,19 +238,19 @@ void Statistics::SetLowestCommonTriggerTimestampPlane(
 
 
 void Statistics::PrintStats(Configuration &config) {
-  int totalPlane0 = 0;
-  int totalPlane1 = 0;
-  int totalDetector = 0;
+  long totalPlane0 = 0;
+  long totalPlane1 = 0;
+  long totalDetector = 0;
   bool bothPlanes = false;
   for (auto const &det : config.pDets) {
     auto dp0 = std::make_pair(det.first, 0);
     auto dp1 = std::make_pair(det.first, 1);
-    auto cnt = m_stats_detector[std::make_pair(det.first, "cluster_cnt_detector")][0];
-    int cnt0 = 1;
+    long cnt = m_stats_detector[std::make_pair(det.first, "cluster_cnt_detector")][0];
+    long cnt0 = 1;
     if(m_stats_plane[std::make_pair(dp0, "cluster_cnt_plane")][0]>0) {
         cnt0 = m_stats_plane[std::make_pair(dp0, "cluster_cnt_plane")][0];
     }
-    int cnt1 = 1;
+    long cnt1 = 1;
     if(m_stats_plane[std::make_pair(dp1, "cluster_cnt_plane")][0]>0) {
         cnt1 = m_stats_plane[std::make_pair(dp1, "cluster_cnt_plane")][0];
     } 
@@ -265,7 +266,7 @@ void Statistics::PrintStats(Configuration &config) {
       std::cout << "\n****************************************" << std::endl;
       std::cout << "Plane 0: " << stat << std::endl;
       std::cout << "****************************************" << std::endl;
-      std::vector<int> v = m_stats_plane[std::make_pair(dp0, stat)];
+      std::vector<long> v = m_stats_plane[std::make_pair(dp0, stat)];
       for (unsigned int n = 0; n < static_cast<unsigned int>(m_limits[stat]);
            n++) {
         StatsOutput(n, v[n], stat, cnt0);        
@@ -275,7 +276,7 @@ void Statistics::PrintStats(Configuration &config) {
         std::cout << "\n****************************************" << std::endl;
         std::cout << "Plane 1: " << stat << std::endl;
         std::cout << "****************************************" << std::endl;
-        std::vector<int> v = m_stats_plane[std::make_pair(dp1, stat)];
+        std::vector<long> v = m_stats_plane[std::make_pair(dp1, stat)];
         for (unsigned int n = 0; n < static_cast<unsigned int>(m_limits[stat]);
              n++) {
             StatsOutput(n, v[n], stat, cnt1);      
@@ -287,7 +288,7 @@ void Statistics::PrintStats(Configuration &config) {
       std::cout << "\n****************************************" << std::endl;
       std::cout << stat << std::endl;
       std::cout << "****************************************" << std::endl;
-      std::vector<int> v = m_stats_detector[std::make_pair(det.first, stat)];
+      std::vector<long> v = m_stats_detector[std::make_pair(det.first, stat)];
       for (unsigned int n = 0; n < static_cast<unsigned int>(m_limits[stat]);
            n++) {
          StatsOutput(n, v[n], stat, cnt, cnt0, cnt1);      
@@ -308,7 +309,7 @@ void Statistics::PrintStats(Configuration &config) {
 }
 
 
-void Statistics::StatsOutput(int n, int val, std::string stat, int cnt,int cnt0,int cnt1) {
+void Statistics::StatsOutput(int n, long val, std::string stat, long cnt,long cnt0,long cnt1) {
     if(cnt == 0) cnt = 1;
     if(m_limits[stat] > 1) {
         if(m_factors[stat] != 1) {
@@ -325,7 +326,7 @@ void Statistics::StatsOutput(int n, int val, std::string stat, int cnt,int cnt0,
         }
     }
     else {
-        if(cnt0 > 0 && cnt1 > 0) {
+         if(cnt0 > 0 && cnt1 > 0) {
             std::cout << val << " (common cluster in detector, "
                   << (100 * val / cnt0) << " % plane 0, " 
                   << (100 * val / cnt1) << " % plane 1)" 

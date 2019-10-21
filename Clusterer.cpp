@@ -248,7 +248,7 @@ int Clusterer::ClusterByTime(uint8_t det, uint8_t plane) {
   double time1 = 0, time2 = 0;
   uint32_t adc1 = 0;
   uint16_t strip1 = 0;
-
+  
   for (auto &itHits : m_hits[dp]) {
     time2 = time1;
 
@@ -283,8 +283,7 @@ int Clusterer::ClusterByStrip(uint8_t det, uint8_t plane,
   uint16_t spanCluster = 0;
 
   double startTime = 0;
-  double largestTime = 0;
-  double position_utpc = -1;
+  double largestTime = -9999;
   double centerOfGravity = 0;
   double centerOfTime = 0;
   double centerOfGravity2 = 0;
@@ -293,7 +292,8 @@ int Clusterer::ClusterByStrip(uint8_t det, uint8_t plane,
   long int totalADC2 = 0;
 
   double time1 = 0;
-  int idx = 0;
+  int idx_left = 0;
+  int idx_right = 0;
   int adc1 = 0;
   int strip1 = 0;
   int strip2 = 0;
@@ -318,9 +318,11 @@ int Clusterer::ClusterByStrip(uint8_t det, uint8_t plane,
     // At beginning of cluster, set start time of cluster
     if (stripCount == 0) {
       maxMissingStrip = 0;
-      idx = 0;
+      idx_left = 0;
+      idx_right = 0;
       startTime = time1;
       largestTime = time1;
+      //position_utpc = (double)strip1;
       DTRACE(DEB, "\nDetector %d, plane %d cluster:\n", (int)det, (int)plane);
     }
 
@@ -333,11 +335,14 @@ int Clusterer::ClusterByStrip(uint8_t det, uint8_t plane,
          largestTime - time1 <= m_config.pSpanClusterTime)) {
       DTRACE(DEB, "\tstrip %d, time %llu, adc %d:\n", strip1, (uint64_t)time1,
              adc1);
-
-      if (time1 >= largestTime) {
+      if(time1 == largestTime) {
+        idx_right = stripCount;
+      }
+      if (time1 > largestTime) {
+        idx_left = stripCount;
+        idx_right = stripCount; 
         largestTime = time1;
-        position_utpc = (double)strip1;
-        idx = stripCount;
+        //position_utpc = (double)strip1;
       }
       if (time1 < startTime) {
         startTime = time1;
@@ -360,7 +365,7 @@ int Clusterer::ClusterByStrip(uint8_t det, uint8_t plane,
     // Stop clustering if gap between strips is too large or time span too long
     else if (std::abs(strip1 - strip2) - 1 > m_config.pMissingStripsCluster ||
              time1 - startTime > m_config.pSpanClusterTime ||
-             largestTime - time1 > m_config.pSpanClusterTime) {
+             largestTime - time1 > m_config.pSpanClusterTime) { 
       // Valid cluster
       if (stripCount < m_config.pMinClusterSize || totalADC == 0) {
         DTRACE(DEB, "******** INVALID ********\n\n");
@@ -379,17 +384,23 @@ int Clusterer::ClusterByStrip(uint8_t det, uint8_t plane,
         ClusterPlane clusterPlane;
         clusterPlane.size = stripCount;
         clusterPlane.adc = totalADC;
-        clusterPlane.time_utpc = largestTime;
-        clusterPlane.pos_utpc = position_utpc;
         clusterPlane.time = centerOfTime;
         clusterPlane.pos = centerOfGravity;
         clusterPlane.time_charge2 = centerOfTime2;
         clusterPlane.pos_charge2 = centerOfGravity2;
-
+        
+        double time_utpc = 0;
+        double pos_utpc = 0;
         double time_algo = 0;
         double pos_algo = 0;
-        AdditionalAlgorithm(idx, vADC, vStrips, vTimes, pos_algo, time_algo);
-       
+        AlgorithmUTPC(idx_left, idx_right, vADC, vStrips, vTimes, pos_utpc, time_utpc, pos_algo, time_algo);
+        if(pos_algo == -1 && time_algo == -1) {
+          time_utpc = centerOfTime2;
+          pos_utpc = centerOfGravity2;
+          time_algo = centerOfTime2;
+          pos_algo = centerOfGravity2;  
+        }
+
         clusterPlane.time_algo = time_algo;
         clusterPlane.pos_algo = pos_algo;
         clusterPlane.plane_coincidence = false;
@@ -426,7 +437,8 @@ int Clusterer::ClusterByStrip(uint8_t det, uint8_t plane,
       vTimes.clear();
     }
   }
-
+  
+  
   // At the end of the clustering, check again if there is a last valid cluster
   if (stripCount < m_config.pMinClusterSize || totalADC == 0) {
     DTRACE(DEB, "******** INVALID ********\n\n");
@@ -445,16 +457,24 @@ int Clusterer::ClusterByStrip(uint8_t det, uint8_t plane,
     ClusterPlane clusterPlane;
     clusterPlane.size = stripCount;
     clusterPlane.adc = totalADC;
-    clusterPlane.time_utpc = largestTime;
-    clusterPlane.pos_utpc = position_utpc;
     clusterPlane.time = centerOfTime;
     clusterPlane.pos = centerOfGravity;
     clusterPlane.time_charge2 = centerOfTime2;
     clusterPlane.pos_charge2 = centerOfGravity2;
 
+    double time_utpc = 0;
+    double pos_utpc = 0;
     double time_algo = 0;
     double pos_algo = 0;
-    AdditionalAlgorithm(idx, vADC, vStrips, vTimes, pos_algo, time_algo);
+    AlgorithmUTPC(idx_left, idx_right, vADC, vStrips, vTimes, pos_utpc, time_utpc, pos_algo, time_algo);
+    if(pos_algo == -1 && time_algo == -1) {
+      time_utpc = centerOfTime2;
+      pos_utpc = centerOfGravity2;
+      time_algo = centerOfTime2;
+      pos_algo = centerOfGravity2;  
+    }
+    clusterPlane.time_utpc = time_utpc;
+    clusterPlane.pos_utpc = pos_utpc;
     clusterPlane.time_algo = time_algo;
     clusterPlane.pos_algo = pos_algo;
     
@@ -478,11 +498,45 @@ int Clusterer::ClusterByStrip(uint8_t det, uint8_t plane,
   return clusterCount;
 }
 
-void Clusterer::AdditionalAlgorithm(int idx_largest_time, std::vector<double> & vADC,
+void Clusterer::AlgorithmUTPC(int idx_min_largest_time, int idx_max_largest_time, std::vector<double> & vADC,
   std::vector<double> & vStrips, std::vector<double> & vTimes,
- double &positionAlgo, double &timeAlgo) {
+  double &positionUTPC, double &timeUTPC,
+  double &positionAlgo, double &timeAlgo) {
   double a1 = 0, a2 = 0, a3 = 0, p1 = 0, p2 = 0, p3 = 0, t1 = 0, t2 = 0, t3 = 0;
+  int idx_largest_time = 0;
+  //One largest time exists
+  if(idx_max_largest_time == idx_min_largest_time) {
+    idx_largest_time = idx_max_largest_time;  
+    positionUTPC = vStrips[idx_largest_time];
+    timeUTPC = vTimes[idx_largest_time]; 
+  }
+  else { 
+    //More than one largest time, the right most largest time strip
+    //is closer to the end of the track than the lest most
+    if(vStrips.size()-1-idx_max_largest_time < idx_min_largest_time) {
+      idx_largest_time = idx_max_largest_time;  
+    }
+    //More than one largest time, the left most largest time strip
+    //is closer to the end of the track than the right most
+    else if(vStrips.size()-1-idx_max_largest_time > idx_min_largest_time) {
+      idx_largest_time = idx_min_largest_time;   
+    }
+     //More than one largest time, the left and right most largest time strips
+    //have an identical distance to the start/end of the track
+    //Take the strip with the larges ADC
+    else {
+      if(vADC[idx_min_largest_time] > vADC[idx_max_largest_time]) {
+        idx_largest_time = idx_min_largest_time;     
+      }
+      else {
+        idx_largest_time = idx_max_largest_time;   
+      }
+    }
+  }
   
+  positionUTPC = vStrips[idx_largest_time];
+  timeUTPC = vTimes[idx_largest_time]; 
+
   p2 = vStrips[idx_largest_time];
   a2 = vADC[idx_largest_time];
   t2 = vTimes[idx_largest_time]; 

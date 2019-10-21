@@ -104,7 +104,7 @@ a position and a time is calculated using three different algorithms:
     - center-of-mass (charge as weight) 
     - center-of-mass2 (charge squared as weight)
     - utpc (latest time)
-The user can define additional algorithms in the method Clusterer::AdditionalAlgorithm() in
+The user can define additional algorithms in the method Clusterer::AlgorithmUTPC() in
 https://github.com/ess-dmsc/vmm-hdf5-to-root/blob/master/Clusterer.cpp
 
 The additional algorithm is picked depending on the -algo parameter. At the moment, two additional algorithms are 
@@ -221,7 +221,21 @@ the two planes (charge plane 0 / charge plane 1) or (charge plane 1 / charge pla
         center-of-mass (charge as weight), 
         center-of-mass2 (charge squared as weight),
         utpc (latest time)
-        The user can define additional algorithms in the method Clusterer::AdditionalAlgorithm(),
+        The utpc algorithm works as follows:
+            1. The strip with the largest time is chosen as position
+            2. If there are several strips with identical largest times, the indices of the 
+            outermost strips are retained
+                Example: The cluster has 8 strips (strip 10-17, index 0-7), strips 12, 13 and 16
+                have the same largest time, so strip 12 and 15 are retained. The indices of 
+                strips 12 and 16 are 2 and 6 respectively
+            3. The strip with the index that is the closest to the start or end of the track
+            is retained. In the example, index 6 is one index away from the end of the track,
+            and index 2 two indices, thus index 6 is retained.
+            4. If the outermost indices have the same distance from the start/end of the track,
+            the strip with the largest ADC value is retained.
+            5. If the ADC values are the same, the center-of-mass2 is taken.
+
+        The user can define an additional utpc algorithm in the method Clusterer::AlgorithmUTPC(),
         the algorithm is chosen depending on the -algo parameter. At the moment, two additional 
         algorithms are defined there, 
             0 = utpc center-of-mass2 (center of mass squared of the strip 
