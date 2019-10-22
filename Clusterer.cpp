@@ -394,15 +394,12 @@ int Clusterer::ClusterByStrip(uint8_t det, uint8_t plane,
         double time_algo = 0;
         double pos_algo = 0;
         AlgorithmUTPC(idx_left, idx_right, vADC, vStrips, vTimes, pos_utpc, time_utpc, pos_algo, time_algo);
-        if(pos_algo == -1 && time_algo == -1) {
-          time_utpc = centerOfTime2;
-          pos_utpc = centerOfGravity2;
-          time_algo = centerOfTime2;
-          pos_algo = centerOfGravity2;  
-        }
-
+        
+        clusterPlane.time_utpc = time_utpc;
+    	clusterPlane.pos_utpc = pos_utpc;
         clusterPlane.time_algo = time_algo;
         clusterPlane.pos_algo = pos_algo;
+        
         clusterPlane.plane_coincidence = false;
         clusterPlane.max_delta_time = maxDeltaTime;
         clusterPlane.max_missing_strip = maxMissingStrip;
@@ -467,12 +464,7 @@ int Clusterer::ClusterByStrip(uint8_t det, uint8_t plane,
     double time_algo = 0;
     double pos_algo = 0;
     AlgorithmUTPC(idx_left, idx_right, vADC, vStrips, vTimes, pos_utpc, time_utpc, pos_algo, time_algo);
-    if(pos_algo == -1 && time_algo == -1) {
-      time_utpc = centerOfTime2;
-      pos_utpc = centerOfGravity2;
-      time_algo = centerOfTime2;
-      pos_algo = centerOfGravity2;  
-    }
+    
     clusterPlane.time_utpc = time_utpc;
     clusterPlane.pos_utpc = pos_utpc;
     clusterPlane.time_algo = time_algo;
@@ -528,8 +520,8 @@ void Clusterer::AlgorithmUTPC(int idx_min_largest_time, int idx_max_largest_time
       if(vADC[idx_min_largest_time] > vADC[idx_max_largest_time]) {
         idx_largest_time = idx_min_largest_time;     
       }
-      else {
-        idx_largest_time = idx_max_largest_time;   
+      else if(vADC[idx_min_largest_time] <= vADC[idx_max_largest_time]) {
+      	idx_largest_time = idx_max_largest_time;   
       }
     }
   }
@@ -1036,13 +1028,14 @@ void Clusterer::FinishAnalysis() {
       double last = m_stats.GetOldTriggerTimestamp(fec);  
       int overflow = m_stats.GetErrorCount("time_stamp_overflow", fec);
       double acq_time = 0;
-      if(max <= 4294967295) {
-        max = 4294967295;
-      }
-      if(max > 4294967295 && max <= 109951162777575) {
-        max = 109951162777575;
-      }
+ 
       if(overflow >= 1) {
+        if(max <= 4294967295) {
+          max = 4294967295;
+        }
+        if(max > 4294967295 && max <= 109951162777575) {
+          max = 109951162777575;
+        }
         acq_time = ((max - first) + (overflow-1) * max + last)/1000000.0;
       }
       else {
