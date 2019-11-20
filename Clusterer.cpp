@@ -56,13 +56,18 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
     return true;
   }
   m_stats.SetDeltaTriggerTimestamp(fecId, 0);
-  if (srsTimestamp > 0x3FFFFFFFFFF) {
+  //Biggest possible time should be:
+  //from FEC: 2^42-1 = 0x3FFFFFFFFFF clock cycles
+  //converted to ns: 0x3FFFFFFFFFF*25 = 109951162777575 ns
+  //added 31 offsets of 4096*25 ns: 3174400
+  //total: 109951165951975 ns
+  if (srsTimestamp > 109951165951975) {
     m_stats.IncrementErrorCount("time_stamp_too_large", fecId);
     DTRACE(DEB,
            "\t\tTimestamp %llu larger than 42 bit and 31 times trigger periodd "
            "for FEC %d and vmmId %d!\n",
            static_cast<uint64_t>(srsTimestamp), (int)fecId, (int)vmmId);
-    return true;
+    //return true;
   }
   if (srsTimestamp < m_stats.GetOldTriggerTimestamp(fecId)) {
     // 42 bit: 0x1FFFFFFFFFF
