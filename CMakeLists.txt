@@ -8,8 +8,7 @@ set(CMAKE_CXX_STANDARD 11)
 
 
 # Directory with EFU installation
-set(EFU_DIR "$ENV{HOME}/programming/essdaq/efu/event-formation-unit"
-  CACHE STRING "EFU directory")
+set(EFU_DIR "$ENV{HOME}/essdaq/efu/event-formation-unit"  CACHE STRING "EFU directory")
 message(STATUS "EFU directory: ${EFU_DIR}")
 
 #=============================================================================
