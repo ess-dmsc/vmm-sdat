@@ -67,7 +67,6 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
            "\t\tTimestamp %llu larger than 42 bit and 31 times trigger periodd "
            "for FEC %d and vmmId %d!\n",
            static_cast<uint64_t>(srsTimestamp), (int)fecId, (int)vmmId);
-    //return true;
   }
   if (srsTimestamp < m_stats.GetOldTriggerTimestamp(fecId)) {
     // 42 bit: 0x1FFFFFFFFFF
@@ -103,7 +102,8 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
     m_stats.IncrementErrorCount("trigger_period_error", fecId);
     uint64_t offset =
         m_stats.GetDeltaTriggerTimestamp(fecId) / m_config.pTriggerPeriod;
-    printf("\n******* ABORT ANALYSIS: SRS timestamp wrong increment: fec "
+        DTRACE(DEB,
+        	"\n******* ERROR: SRS timestamp wrong increment: fec "
            "%d,vmmId %d, chNo %d, line %d, "
            "trigger period %d, offset %llu, remainder %llu, new time %llu, old "
            "time %llu\n",
@@ -111,7 +111,6 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
            static_cast<uint64_t>(remainder),
            static_cast<uint64_t>(srsTimestamp),
            static_cast<uint64_t>(m_stats.GetOldTriggerTimestamp(fecId)));
-    // return false;
   }
 
   bool newEvent = false;
