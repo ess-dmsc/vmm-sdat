@@ -36,10 +36,10 @@ For help concerning the possible parameters, type:
 
 Complete command line:
 ```
-./convertFile -f data.h5 
+./convertFile -f data.pcapng 
 -vmm "[[1,0,2,2],[1,0,2,3],[1,0,2,0],[1,0,2,1],[1,1,2,8],[1,1,2,9],[1,1,2,6],[1,1,2,7]]" 
 -axis "[[1,0],0],[[1,1],0]" -bc 40 -tac 60 -th 0 -cs 1 -ccs 2 -dt 200 -mst 1 -spc 500 
--dp 200 -coin center-of-mass -ratio 2 -save 0 -json 0 -n 0 -algo 0
+-dp 200 -coin center-of-mass -ratio 2 -save 2 -json 0 -n 0 -algo 0
 -cal CalibrationFile.json
 
 ```
@@ -129,7 +129,7 @@ the two planes (charge plane 0 / charge plane 1) or (charge plane 1 / charge pla
 
 ## Explanation of parameters
   
-    -f: h5 data file with the extension .h5. The data file was created by ESS DAQ tool
+    -f: h5 data file with the extension .h5 or .pcapng. The data file was created by ESS DAQ tool
     
     -vmm: mapping of detectors, plane, fecs and chips starting and ending with " and separated by brackets
         and comma [[det, plane, fec,chip], [det, plane, fec, chip], etc.]
