@@ -62,7 +62,7 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
   //added 31 offsets of 4096*25 ns: 3174400
   //total: 109951165951975 ns
   if (srsTimestamp > 109951165951975) {
-    m_stats.IncrementErrorCount("time_stamp_too_large", fecId);
+    m_stats.IncrementCounter("time_stamp_too_large", fecId);
     DTRACE(DEB,
            "\t\tTimestamp %llu larger than 42 bit and 31 times trigger periodd "
            "for FEC %d and vmmId %d!\n",
@@ -71,8 +71,8 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
   if (srsTimestamp < m_stats.GetOldTriggerTimestamp(fecId)) {
     // 42 bit: 0x1FFFFFFFFFF
     // 32 bit: 0xFFFFFFFF
-    if (m_stats.GetOldTriggerTimestamp(fecId) > 0x1FFFFFFF + srsTimestamp) {
-      m_stats.IncrementErrorCount("time_stamp_overflow", fecId);
+    if (m_stats.GetOldTriggerTimestamp(fecId) > 0x1FFFFFFFFFF + srsTimestamp) {
+      m_stats.IncrementCounter("time_stamp_overflow", fecId);
       //std::cout << "time_stamp_overflow " << m_stats.GetErrorCount("time_stamp_overflow", fecId) << std::endl;
       //std::cout << std::setprecision(std::numeric_limits<long double>::digits10 + 1) <<
       //m_stats.GetOldTriggerTimestamp(fecId) << std::endl;
@@ -84,9 +84,10 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
              "srsTimestamp %llu, old srsTimestamp %llu\n",
              fecId, m_lineNr, m_eventNr, static_cast<uint64_t>(srsTimestamp),
              static_cast<uint64_t>(m_stats.GetOldTriggerTimestamp(fecId)));
+             
     } else {
-      //std::cout << "time_stamp_order_error " << m_stats.GetErrorCount("time_stamp_order_error", fecId) << std::endl;
-      m_stats.IncrementErrorCount("time_stamp_order_error", fecId);
+      m_stats.IncrementCounter("time_stamp_order_error", fecId);
+      //std::cout << "********************** " << static_cast<uint64_t>(srsTimestamp)/25 << " " << static_cast<uint64_t>(m_stats.GetOldTriggerTimestamp(fecId))/25 << std::endl;
       DTRACE(DEB,
              "\n*********************************** TIME ERROR  fecId %d, "
              "m_lineNr %d, eventNr  %d, "
@@ -99,7 +100,7 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
   double remainder = std::fmod(m_stats.GetDeltaTriggerTimestamp(fecId),
                                m_config.pTriggerPeriod);
   if (remainder > 0) {
-    m_stats.IncrementErrorCount("trigger_period_error", fecId);
+    m_stats.IncrementCounter("trigger_period_error", fecId);
     uint64_t offset =
         m_stats.GetDeltaTriggerTimestamp(fecId) / m_config.pTriggerPeriod;
         DTRACE(DEB,
@@ -216,8 +217,9 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
   DTRACE(DEB, "\t\t\tbcid %d, tdc %d, adc %d\n", bcid, tdc, adc);
   DTRACE(DEB, "\t\t\ttotal time %f, chip time %f ns\n", totalTime, chipTime);
 
+  int delta = (srsTimestamp - static_cast<uint64_t>(m_stats.GetOldTriggerTimestamp(fecId)))/25;
+
   m_stats.SetOldTriggerTimestamp(fecId, srsTimestamp);
-  
   if(m_lineNr == 1) {
     m_stats.SetFirstTriggerTimestamp(fecId, srsTimestamp);  
   }
@@ -235,6 +237,7 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
 //====================================================================================================================
 void Clusterer::StoreHits(uint8_t det, uint8_t plane, int pos, uint16_t adc,
                           double totalTime, bool overThresholdFlag) {
+                            
   if ((adc >= m_config.pADCThreshold || overThresholdFlag)) {
     m_hits_new[std::make_pair(det, plane)].emplace_back(totalTime,
                                                         (uint16_t)pos, adc);
@@ -785,6 +788,7 @@ void Clusterer::AnalyzeClustersDetector(uint8_t det) {
 
  
   m_rootFile->SaveHits();
+  
   m_rootFile->SaveClustersPlane(std::move(m_clusters[std::make_pair(det, 0)]),m_config.pSaveWhat);
   m_rootFile->SaveClustersPlane(std::move(m_clusters[std::make_pair(det, 1)]),m_config.pSaveWhat);
   m_rootFile->SaveClustersDetector(std::move(m_clusters_detector[det]));
@@ -1020,34 +1024,10 @@ void Clusterer::FinishAnalysis() {
     AnalyzeClustersPlane(det.first, 1);
     AnalyzeClustersDetector(det.first);
   }
-  m_stats.PrintStats(m_config);
-  
-  std::cout << "\n****************************************" << std::endl;
-  std::cout << "Data acquisition times " << std::endl;
-  std::cout << "****************************************" << std::endl;
-  for (int n = 0; n< m_config.pFecs.size();n++) {
-      auto fec = m_config.pFecs[n];
-      double first = m_stats.GetFirstTriggerTimestamp(fec); 
-      double max = m_stats.GetMaxTriggerTimestamp(fec);  
-      double last = m_stats.GetOldTriggerTimestamp(fec);  
-      int overflow = m_stats.GetErrorCount("time_stamp_overflow", fec);
-      double acq_time = 0;
- 
-      if(overflow >= 1) {
-        if(max <= 4294967295) {
-          max = 4294967295;
-        }
-        if(max > 4294967295 && max <= 109951162777575) {
-          max = 109951162777575;
-        }
-        acq_time = ((max - first) + (overflow-1) * max + last)/1000000.0;
-      }
-      else {
-        acq_time = (max - first)/1000000.0;  
-      }
-      std::cout << "FEC " << (int)fec << ": " << acq_time << " ms" << std::endl;
+  if(!m_config.isPcap) {
+    m_stats.PrintClusterStats(m_config);
   }
-  std::cout << "****************************************\n" << std::endl;
+  m_stats.PrintFECStats(m_config);  
 }
 
 //====================================================================================================================

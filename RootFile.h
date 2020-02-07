@@ -48,7 +48,7 @@ private:
     ClusterVectorDetector m_clusters_detector;
     ClusterVectorPlane m_clusters_plane;
     TrackVector m_tracks;
-
+	
     std::map<std::pair<uint8_t, std::string>, int> m_map_TH2D;
     std::map<std::pair<uint8_t, std::string>, int> m_map_TH1D;
 

@@ -103,4 +103,5 @@ public:
     bool fFound = false;
     bool vmmsFound = false;
     int pAlgo = 0;
+    bool isPcap = false;
 };

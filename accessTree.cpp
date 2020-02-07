@@ -37,11 +37,8 @@ int main(int argc, char**argv)
 	TTree * t = (TTree*)f->Get("events");
 	 
 	std::vector<ClusterDetector> *  m_clusters_detector = nullptr;
-	std::vector<ClusterPlane> *  m_clusters_plane = nullptr;
 		
 	ClusterDetector theClusterDetector;
-	ClusterPlane theClusterPlane;
-	t->SetBranchAddress("clusters_plane", &m_clusters_plane);
 	t->SetBranchAddress("clusters_detector", &m_clusters_detector);
 	
 	int numEvents = t->GetEntries();   
@@ -55,6 +52,7 @@ int main(int argc, char**argv)
 		for( int s = 0; s < m_clusters_detector->size(); s++)
 		{   
 			theClusterDetector = m_clusters_detector->at(s);
+			
 			oldTime0 = time0;
 			time0 = (double)m_clusters_detector->at(s).time0;
 			if(time0 < oldTime0)

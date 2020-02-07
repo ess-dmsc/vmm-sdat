@@ -1,8 +1,10 @@
 [requires]
 google-benchmark/1.4.1-dm2@ess-dmsc/testing
+CLI11/1.8.0@cliutils/stable
 graylog-logger/1.1.8-dm1@ess-dmsc/stable
 gtest/3121b20-dm3@ess-dmsc/stable
 fmt/5.2.0@bincrafters/stable
+libpcap/1.8.1@bincrafters/stable
 h5cpp/0.1.2@ess-dmsc/testing
 jsonformoderncpp/3.6.1@vthiery/stable
 

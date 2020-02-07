@@ -27,7 +27,7 @@ bool Configuration::PrintUsage(const std::string &errorMessage, char *argv)
 
     std::cout << "\n\nFlags:\n"
               << std::endl;
-    std::cout << "-f: h5 data file with the extension .h5. The data file was created by ESS DAQ tool.\n"
+    std::cout << "-f: Either h5 data file with the extension .h5 (data file created by ESS DAQ tool), or .pcapng PCAP file saved in Wireshark.\n"
               << std::endl;
 
     std::cout << "-vmm: mapping of detectors, plane, fecs and chips starting and ending with \" and separated by brackets and comma [[det, plane, fec,chip], [det, plane, fec, chip], etc.].\n"
@@ -457,7 +457,10 @@ bool Configuration::ParseCommandLine(int argc, char **argv)
 
     if (fFound && pFileName.find(".h5") == std::string::npos)
     {
-        return PrintUsage("Wrong extension: .h5 file required for data files!", nullptr);
+    	if(pFileName.find(".pcapng") != std::string::npos) {
+    		isPcap = true;
+    	}
+        else return PrintUsage("Wrong extension: .h5 or .pcap file required for data files!", nullptr);
     }
     if (useCalibration  && pCalFilename.find(".json") == std::string::npos)
     {
@@ -471,6 +474,9 @@ bool Configuration::ParseCommandLine(int argc, char **argv)
     pRootFilename = pFileName;
     if (pRootFilename.find(".h5") != std::string::npos) {
         pRootFilename.replace(pRootFilename.size() - 3, pRootFilename.size(), "");
+    }
+    else if (pRootFilename.find(".pcapng") != std::string::npos) {
+        pRootFilename.replace(pRootFilename.size() - 7, pRootFilename.size(), "");
     }
     std::string strParams;
 

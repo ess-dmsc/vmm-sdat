@@ -3,12 +3,15 @@ cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 project(vmm-hdf5-to-root)
 
 set(CMAKE_BUILD_TYPE RelWithDebInfo)
-set(CMAKE_CXX_STANDARD 11)
+#set(CMAKE_CXX_STANDARD 11)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -fsanitize=address -O0 -ggdb")
 
 
 # Directory with EFU installation
-set(EFU_DIR "$ENV{HOME}/essdaq/efu/event-formation-unit"  CACHE STRING "EFU directory")
+#Standard path
+#set(EFU_DIR "$ENV{HOME}/essdaq/efu/event-formation-unit"  CACHE STRING "EFU directory")
+#Individual path
+set(EFU_DIR "$ENV{HOME}/programming/essdaq/efu/event-formation-unit"  CACHE STRING "EFU directory")
 message(STATUS "EFU directory: ${EFU_DIR}")
 
 #=============================================================================
@@ -88,16 +91,19 @@ include_directories(${EFU_DIR}/src)
 include_directories(${VERSION_INCLUDE_DIR})
 
 
-ROOT_GENERATE_DICTIONARY(vmm-hdf5-to-rootDict ${EFU_DIR}/src/gdgem/srs/CalibrationFile.h Clusterer.h RootFile.h DataStructures.h Configuration.h Statistics.h LINKDEF convertLinkDef.h MODULE vmm-hdf5-to-root)
+ROOT_GENERATE_DICTIONARY(vmm-hdf5-to-rootDict ${EFU_DIR}/src/gdgem/nmx/Readout.h ${EFU_DIR}/src/gdgem/srs/ParserVMM3.h ${EFU_DIR}/src/gdgem/srs/SRSTime.h ${EFU_DIR}/src/gdgem/srs/CalibrationFile.h ${EFU_DIR}/src/tools/ReaderPcap.h  Clusterer.h RootFile.h DataStructures.h Configuration.h Statistics.h LINKDEF convertLinkDef.h MODULE vmm-hdf5-to-root)
+
 
 #---Create a shared library with generated dictionary
-add_library(vmm-hdf5-to-root SHARED  ${EFU_DIR}/src/gdgem/srs/CalibrationFile.cpp Clusterer.cpp RootFile.cpp Configuration.cpp Statistics.cpp vmm-hdf5-to-rootDict.cxx)
-target_link_libraries(vmm-hdf5-to-root ${ROOT_LIBRARIES} ${Boost_SYSTEM_LIBRARY} ${HDF5_LIBRARIES} h5cpp fmt graylog_logger_static)
+add_library(vmm-hdf5-to-root SHARED ${EFU_DIR}/src/gdgem/srs/ParserVMM3.cpp ${EFU_DIR}/src/gdgem/srs/SRSTime.cpp ${EFU_DIR}/src/gdgem/srs/CalibrationFile.cpp ${EFU_DIR}/src/tools/ReaderPcap.cpp Clusterer.cpp RootFile.cpp Configuration.cpp Statistics.cpp vmm-hdf5-to-rootDict.cxx)
+target_link_libraries(vmm-hdf5-to-root ${ROOT_LIBRARIES} ${Boost_SYSTEM_LIBRARY} ${HDF5_LIBRARIES} h5cpp fmt graylog_logger_static pcap)
 
 #---Create  a main program using the library
 add_executable(convertFile convertFile.cpp)
 add_executable(accessTree accessTree.cpp)
 
+
 target_link_libraries(convertFile vmm-hdf5-to-root)
 target_link_libraries(accessTree vmm-hdf5-to-root)
 
+target_compile_definitions(vmm-hdf5-to-root PUBLIC __FAVOR_BSD)

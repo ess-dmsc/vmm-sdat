@@ -8,14 +8,17 @@ public:
     Statistics() = default;
     ~Statistics() = default;
 
-    void CreateStats(Configuration & config); 
+    void CreateClusterStats(Configuration & config); 
+    void CreateFECStats(Configuration & config); 
+    void CreatePCAPStats(Configuration & config); 
+    
     long GetStatsDetector(std::string stats, uint8_t det, int n);
     void SetStatsDetector(std::string stats, uint8_t det, double value);
     long GetStatsPlane(std::string stats, std::pair<uint8_t, uint8_t> dp, int n);
     void SetStatsPlane(std::string stats, std::pair<uint8_t, uint8_t> dp, double value);
 
-    void IncrementErrorCount(std::string error, uint8_t fecId);
-    long GetErrorCount(std::string error, uint8_t fecId);
+    void IncrementCounter(std::string error, uint8_t fecId, uint64_t increment=1);
+    long GetCounter(std::string error, uint8_t fecId);
    
     double GetDeltaTriggerTimestamp(uint8_t fecId);
     void SetDeltaTriggerTimestamp(uint8_t fecId, double val);
@@ -31,7 +34,9 @@ public:
     double GetLowestCommonTriggerTimestampPlane(std::pair<uint8_t, uint8_t> dp);
     void SetLowestCommonTriggerTimestampPlane(std::pair<uint8_t, uint8_t> dp, double val);
    
-    void PrintStats(Configuration& config);
+    void PrintClusterStats(Configuration& config);
+    void PrintFECStats(Configuration& config);
+    
     void StatsOutput(int n, long val, std::string stat, long cnt,long cnt0=0,long cnt1=0);
 private:
     std::map<std::pair<std::pair<uint8_t, uint8_t>, std::string>, std::vector<long>> m_stats_plane;
@@ -41,9 +46,9 @@ private:
     std::map<std::string, double> m_factors;
     std::map<std::string, double> m_limits;
     std::map<std::string, std::string> m_units;
-    std::map<std::pair<uint8_t, std::string>, long> m_errors;
-    std::vector<std::string> m_error_names;
-
+    std::map<std::pair<uint8_t, std::string>, long> m_counters;
+    std::vector<std::string> m_counter_names;
+   
 
     // per plane
     std::map<std::pair<uint8_t, uint8_t>, double> m_lowestCommonTriggerTimestamp_plane;
