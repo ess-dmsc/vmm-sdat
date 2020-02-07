@@ -108,6 +108,7 @@ struct Track {
     std::vector<double> z_charge2;
     std::vector<double> t_charge2;
 };
+
 using std::string;
 
 
