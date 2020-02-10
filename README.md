@@ -250,7 +250,7 @@ the two planes (charge plane 0 / charge plane 1) or (charge plane 1 / charge pla
             1 = utpc center-of-mass (center of mass of the strip 
             with the latest time and its one or two neighbours)
 
-    -cal: The 
+    -cal: Name of the calibration file. A calibration file is a JSON file               containing an ADC and/or time correction in the form of a slope and an          offset correction. The calibration file can be produced with the VMM slow       control tool. Optional parameter. 
 
   
 

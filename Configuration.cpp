@@ -97,8 +97,9 @@ bool Configuration::PrintUsage(const std::string &errorMessage, char *argv)
               << std::endl;
     std::cout << "-n: number of hits to analyze. Optional argument (default 0, i.e. all hits).\n"
               << std::endl;
-     std::cout << "-stats: Show statistics of the run (default 0, do not show any stats).\n"
+    std::cout << "-stats: Show statistics of the run (default 0, do not show any stats).\n"
               << std::endl;
+    std::cout << "-cal: Name of the calibration file. A calibration file is a JSON file containing an ADC and/or time correction in the form of a slope and an offset value. Optional parameter.s\n"<< std::endl;
 
     std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;
     if (argv != nullptr)
