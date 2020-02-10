@@ -209,9 +209,16 @@ the two planes (charge plane 0 / charge plane 1) or (charge plane 1 / charge pla
         The desired ratio for the matching can be set as optional argument, the default is 2 or 200\%, 
         i.e. the charge in plane 0 has to be between 50\% and 200\% of the charge in plane 1
 
-    -save: Choose what to store. Only detector clusters = 0, plane and detector clusters = 1, 
-        all clusters and hits = 2 (a hit is a VMM3 channel over threshold). 
-        Option 2 reates large files. Optional argument (default 0)
+    -save: Select which data to store in root file. Input is a 3 bit binary number.
+        bit 0 (LSB): hits (a hit is a VMM3a channel over threshold)
+        bit 1      : clusters plane" << std::endl;
+        bit 2 (MSB): clusters detector" << std::endl;
+        Examples:
+            0001: hits only 
+            0100: clusters detector only 
+            0111: everything, hits, clusters plane, clusters detector
+   
+    -stats: Show statistics of the run (default 1, show all stats)
 
     -json: create a json file of the detector images. Optional argument (default 0)
 

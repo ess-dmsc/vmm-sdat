@@ -55,122 +55,112 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
            (int)fecId, (int)vmmId);
     return true;
   }
-  m_stats.SetDeltaTriggerTimestamp(fecId, 0);
-  //Biggest possible time should be:
-  //from FEC: 2^42-1 = 0x3FFFFFFFFFF clock cycles
-  //converted to ns: 0x3FFFFFFFFFF*25 = 109951162777575 ns
-  //added 31 offsets of 4096*25 ns: 3174400
-  //total: 109951165951975 ns
-  if (srsTimestamp > 109951165951975) {
-    m_stats.IncrementCounter("time_stamp_too_large", fecId);
-    DTRACE(DEB,
-           "\t\tTimestamp %llu larger than 42 bit and 31 times trigger periodd "
-           "for FEC %d and vmmId %d!\n",
-           static_cast<uint64_t>(srsTimestamp), (int)fecId, (int)vmmId);
-  }
-  if (srsTimestamp < m_stats.GetOldTriggerTimestamp(fecId)) {
-    // 42 bit: 0x1FFFFFFFFFF
-    // 32 bit: 0xFFFFFFFF
-    if (m_stats.GetOldTriggerTimestamp(fecId) > 0x1FFFFFFFFFF + srsTimestamp) {
-      m_stats.IncrementCounter("time_stamp_overflow", fecId);
-      //std::cout << "time_stamp_overflow " << m_stats.GetErrorCount("time_stamp_overflow", fecId) << std::endl;
-      //std::cout << std::setprecision(std::numeric_limits<long double>::digits10 + 1) <<
-      //m_stats.GetOldTriggerTimestamp(fecId) << std::endl;
-      //std::cout << std::setprecision(std::numeric_limits<long double>::digits10 + 1) <<
-      //srsTimestamp << std::endl;
+
+  if(m_config.pShowStats) {
+    m_stats.SetDeltaTriggerTimestamp(fecId, 0);
+    //Biggest possible time should be:
+    //from FEC: 2^42-1 = 0x3FFFFFFFFFF clock cycles
+    //converted to ns: 0x3FFFFFFFFFF*25 = 109951162777575 ns
+    //added 31 offsets of 4096*25 ns: 3174400
+    //total: 109951165951975 ns
+    if (srsTimestamp > 109951165951975) {
+      m_stats.IncrementCounter("time_stamp_too_large", fecId);
       DTRACE(DEB,
-             "\n*********************************** OVERFLOW  fecId %d, "
-             "m_lineNr %d, eventNr  %d, "
-             "srsTimestamp %llu, old srsTimestamp %llu\n",
-             fecId, m_lineNr, m_eventNr, static_cast<uint64_t>(srsTimestamp),
-             static_cast<uint64_t>(m_stats.GetOldTriggerTimestamp(fecId)));
-             
-    } else {
-      m_stats.IncrementCounter("time_stamp_order_error", fecId);
-      //std::cout << "********************** " << static_cast<uint64_t>(srsTimestamp)/25 << " " << static_cast<uint64_t>(m_stats.GetOldTriggerTimestamp(fecId))/25 << std::endl;
-      DTRACE(DEB,
-             "\n*********************************** TIME ERROR  fecId %d, "
-             "m_lineNr %d, eventNr  %d, "
-             "srsTimestamp %llu, old srsTimestamp %llu\n",
-             fecId, m_lineNr, m_eventNr, static_cast<uint64_t>(srsTimestamp),
-             static_cast<uint64_t>(m_stats.GetOldTriggerTimestamp(fecId)));
+            "\t\tTimestamp %llu larger than 42 bit and 31 times trigger periodd "
+            "for FEC %d and vmmId %d!\n",
+            static_cast<uint64_t>(srsTimestamp), (int)fecId, (int)vmmId);
+    }
+    if (srsTimestamp < m_stats.GetOldTriggerTimestamp(fecId)) {
+      // 42 bit: 0x1FFFFFFFFFF
+      // 32 bit: 0xFFFFFFFF
+      if (m_stats.GetOldTriggerTimestamp(fecId) > 0x1FFFFFFFFFF + srsTimestamp) {
+        m_stats.IncrementCounter("time_stamp_overflow", fecId);
+        DTRACE(DEB,
+              "\n*********************************** OVERFLOW  fecId %d, "
+              "m_lineNr %d, eventNr  %d, "
+              "srsTimestamp %llu, old srsTimestamp %llu\n",
+              fecId, m_lineNr, m_eventNr, static_cast<uint64_t>(srsTimestamp),
+              static_cast<uint64_t>(m_stats.GetOldTriggerTimestamp(fecId)));
+              
+      } else {
+        m_stats.IncrementCounter("time_stamp_order_error", fecId);
+        //std::cout << "********************** " << static_cast<uint64_t>(srsTimestamp)/25 << " " << static_cast<uint64_t>(m_stats.GetOldTriggerTimestamp(fecId))/25 << std::endl;
+        DTRACE(DEB,
+              "\n*********************************** TIME ERROR  fecId %d, "
+              "m_lineNr %d, eventNr  %d, "
+              "srsTimestamp %llu, old srsTimestamp %llu\n",
+              fecId, m_lineNr, m_eventNr, static_cast<uint64_t>(srsTimestamp),
+              static_cast<uint64_t>(m_stats.GetOldTriggerTimestamp(fecId)));
+      }
+    }
+
+    double remainder = std::fmod(m_stats.GetDeltaTriggerTimestamp(fecId),
+                                m_config.pTriggerPeriod);
+    if (remainder > 0) {
+      m_stats.IncrementCounter("trigger_period_error", fecId);
+      uint64_t offset =
+          m_stats.GetDeltaTriggerTimestamp(fecId) / m_config.pTriggerPeriod;
+          DTRACE(DEB,
+            "\n******* ERROR: SRS timestamp wrong increment: fec "
+            "%d,vmmId %d, chNo %d, line %d, "
+            "trigger period %d, offset %llu, remainder %llu, new time %llu, old "
+            "time %llu\n",
+            fecId, vmmId, chNo, m_lineNr, m_config.pTriggerPeriod, offset,
+            static_cast<uint64_t>(remainder),
+            static_cast<uint64_t>(srsTimestamp),
+            static_cast<uint64_t>(m_stats.GetOldTriggerTimestamp(fecId)));
     }
   }
-
-  double remainder = std::fmod(m_stats.GetDeltaTriggerTimestamp(fecId),
-                               m_config.pTriggerPeriod);
-  if (remainder > 0) {
-    m_stats.IncrementCounter("trigger_period_error", fecId);
-    uint64_t offset =
-        m_stats.GetDeltaTriggerTimestamp(fecId) / m_config.pTriggerPeriod;
-        DTRACE(DEB,
-        	"\n******* ERROR: SRS timestamp wrong increment: fec "
-           "%d,vmmId %d, chNo %d, line %d, "
-           "trigger period %d, offset %llu, remainder %llu, new time %llu, old "
-           "time %llu\n",
-           fecId, vmmId, chNo, m_lineNr, m_config.pTriggerPeriod, offset,
-           static_cast<uint64_t>(remainder),
-           static_cast<uint64_t>(srsTimestamp),
-           static_cast<uint64_t>(m_stats.GetOldTriggerTimestamp(fecId)));
-  }
-
   bool newEvent = false;
   if (srsTimestamp > m_stats.GetOldTriggerTimestamp(fecId)) {
-    m_stats.SetDeltaTriggerTimestamp(
-        fecId, srsTimestamp - m_stats.GetOldTriggerTimestamp(fecId));
+    if(m_config.pShowStats) {
+      m_stats.SetDeltaTriggerTimestamp(
+          fecId, srsTimestamp - m_stats.GetOldTriggerTimestamp(fecId));
+    }
     newEvent = true;
   }
 
   if (newEvent) {
     m_eventNr++;
-    //std::cout << "vmmiD " << (int)vmmId << " " << std::setprecision(std::numeric_limits<long double>::digits10 + 1) <<
-    //srsTimestamp << std::endl;
-    int factor = 0;
-    for (auto const &searchDetPlaneFec : m_config.pDetectorPlane_Fec) {
-      auto fec = searchDetPlaneFec.second;
-      auto det_plane = searchDetPlaneFec.first;
-      auto det = std::get<0>(det_plane);
-      auto plane = std::get<1>(det_plane);
-      auto dp0 = std::make_pair(det, 0);
-      auto dp1 = std::make_pair(det, 1);
-      //std::cout << "before x " << std::setprecision(std::numeric_limits<long double>::digits10 + 1) << m_stats.GetLowestCommonTriggerTimestampPlane(dp0) << std::endl;
-      //std::cout << "before y " << std::setprecision(std::numeric_limits<long double>::digits10 + 1) << m_stats.GetLowestCommonTriggerTimestampPlane(dp1) << std::endl;
-      //std::cout << "fec " << std::setprecision(std::numeric_limits<long double>::digits10 + 1) << 
-     // m_stats.GetOldTriggerTimestamp(fecId) << std::endl;
-    
-      
-      if (m_stats.GetOldTriggerTimestamp(fecId) >
-              factor * m_config.pTriggerPeriod &&
-          m_stats.GetLowestCommonTriggerTimestampPlane(det_plane) <
-              m_stats.GetOldTriggerTimestamp(fecId) -
-                          factor * m_config.pTriggerPeriod) {
-          m_stats.SetLowestCommonTriggerTimestampPlane(
-            det_plane, m_stats.GetOldTriggerTimestamp(fecId) -
-                          factor * m_config.pTriggerPeriod);
-      }
-      // std::cout << "x " << std::setprecision(std::numeric_limits<long double>::digits10 + 1) << m_stats.GetLowestCommonTriggerTimestampPlane(dp0) << std::endl;
-      //std::cout << "y " << std::setprecision(std::numeric_limits<long double>::digits10 + 1) << m_stats.GetLowestCommonTriggerTimestampPlane(dp1) << std::endl;
-    
-      m_stats.SetLowestCommonTriggerTimestampDet(
-          det, std::min(m_stats.GetLowestCommonTriggerTimestampPlane(dp0),
-                        m_stats.GetLowestCommonTriggerTimestampPlane(dp1)));
-      //std::cout << "common " << std::setprecision(std::numeric_limits<long double>::digits10 + 1) 
-      //<< m_stats.GetLowestCommonTriggerTimestampDet(det) << "\n" << std::endl;
-     
+    if(m_config.pSaveWhat % 2 == 1) {
+      m_rootFile->SaveHits();
     }
-    //std::cout << m_stats.GetLowestCommonTriggerTimestampPlane(dp0) << std::endl;
-    // std::cout << m_stats.GetLowestCommonTriggerTimestampPlane(dp1) << std::endl;
-
-    for (auto const &searchDet : m_config.pDets) {
-      AnalyzeClustersPlane(searchDet.first, 0);
-      AnalyzeClustersPlane(searchDet.first, 1);
-      AnalyzeClustersDetector(searchDet.first);
+    if (m_config.pSaveWhat >= 10) {
+      int factor = 0;
+      for (auto const &searchDetPlaneFec : m_config.pDetectorPlane_Fec) {
+        auto fec = searchDetPlaneFec.second;
+        auto det_plane = searchDetPlaneFec.first;
+        auto det = std::get<0>(det_plane);
+        auto plane = std::get<1>(det_plane);
+        auto dp0 = std::make_pair(det, 0);
+        auto dp1 = std::make_pair(det, 1);
+  
+        if (m_stats.GetOldTriggerTimestamp(fecId) >
+                factor * m_config.pTriggerPeriod &&
+            m_stats.GetLowestCommonTriggerTimestampPlane(det_plane) <
+                m_stats.GetOldTriggerTimestamp(fecId) -
+                            factor * m_config.pTriggerPeriod) {
+            m_stats.SetLowestCommonTriggerTimestampPlane(
+              det_plane, m_stats.GetOldTriggerTimestamp(fecId) -
+                            factor * m_config.pTriggerPeriod);
+        }
+      
+        m_stats.SetLowestCommonTriggerTimestampDet(
+            det, std::min(m_stats.GetLowestCommonTriggerTimestampPlane(dp0),
+                          m_stats.GetLowestCommonTriggerTimestampPlane(dp1)));
+     
+      }
+      for (auto const &searchDet : m_config.pDets) {
+        AnalyzeClustersPlane(searchDet.first, 0);
+        AnalyzeClustersPlane(searchDet.first, 1);
+        AnalyzeClustersDetector(searchDet.first);
+      }
     }
   }
 
   m_lineNr++;
   double totalTime = srsTimestamp + chipTime;
-  if (m_config.pSaveWhat > 1) {
+  if (m_config.pSaveWhat % 2  == 1) {
     Hit theHit;
     theHit.id = m_lineNr;
     theHit.event = m_eventNr;
@@ -383,11 +373,13 @@ int Clusterer::ClusterByStrip(uint8_t det, uint8_t plane,
         centerOfGravity2 = (centerOfGravity2 / totalADC2);
         centerOfTime2 = (centerOfTime2 / totalADC2);
 
-        m_stats.SetStatsPlane("delta_time_hits", dp, maxDeltaTime);
-        m_stats.SetStatsPlane("missing_strips_cluster", dp, maxMissingStrip);
-        m_stats.SetStatsPlane("span_cluster_time", dp, spanCluster);
-        m_stats.SetStatsPlane("cluster_size", dp, stripCount);
-      
+        if(m_config.pShowStats) {
+          m_stats.SetStatsPlane("delta_time_hits", dp, maxDeltaTime);
+          m_stats.SetStatsPlane("missing_strips_cluster", dp, maxMissingStrip);
+          m_stats.SetStatsPlane("span_cluster_time", dp, spanCluster);
+          m_stats.SetStatsPlane("cluster_size", dp, stripCount);
+        }
+
         ClusterPlane clusterPlane;
         clusterPlane.size = stripCount;
         clusterPlane.adc = totalADC;
@@ -403,7 +395,7 @@ int Clusterer::ClusterByStrip(uint8_t det, uint8_t plane,
         AlgorithmUTPC(idx_left, idx_right, vADC, vStrips, vTimes, pos_utpc, time_utpc, pos_algo, time_algo);
         
         clusterPlane.time_utpc = time_utpc;
-    	clusterPlane.pos_utpc = pos_utpc;
+    	  clusterPlane.pos_utpc = pos_utpc;
         clusterPlane.time_algo = time_algo;
         clusterPlane.pos_algo = pos_algo;
         
@@ -421,7 +413,9 @@ int Clusterer::ClusterByStrip(uint8_t det, uint8_t plane,
         clusterPlane.det = det;
         clusterPlane.plane = plane;
         m_clusters_new[dp].emplace_back(std::move(clusterPlane));
-        m_stats.SetStatsPlane("cluster_cnt_plane", dp, 0);
+        if(m_config.pShowStats) {
+          m_stats.SetStatsPlane("cluster_cnt_plane", dp, 0);
+        }
         clusterCount++;
       }
       // Reset all parameters
@@ -452,12 +446,12 @@ int Clusterer::ClusterByStrip(uint8_t det, uint8_t plane,
     centerOfTime = (centerOfTime / totalADC);
     centerOfGravity2 = (centerOfGravity2 / totalADC2);
     centerOfTime2 = (centerOfTime2 / totalADC2);
-
-    m_stats.SetStatsPlane("delta_time_hits", dp, maxDeltaTime);
-    m_stats.SetStatsPlane("missing_strips_cluster", dp, maxMissingStrip);
-    m_stats.SetStatsPlane("span_cluster_time", dp, spanCluster);
-    m_stats.SetStatsPlane("cluster_size", dp, stripCount);
-   
+    if(m_config.pShowStats) {
+      m_stats.SetStatsPlane("delta_time_hits", dp, maxDeltaTime);
+      m_stats.SetStatsPlane("missing_strips_cluster", dp, maxMissingStrip);
+      m_stats.SetStatsPlane("span_cluster_time", dp, spanCluster);
+      m_stats.SetStatsPlane("cluster_size", dp, stripCount);
+    }
     ClusterPlane clusterPlane;
     clusterPlane.size = stripCount;
     clusterPlane.adc = totalADC;
@@ -491,7 +485,9 @@ int Clusterer::ClusterByStrip(uint8_t det, uint8_t plane,
     clusterPlane.det = det;
     clusterPlane.plane = plane;
     m_clusters_new[dp].emplace_back(std::move(clusterPlane));
-    m_stats.SetStatsPlane("cluster_cnt_plane", dp, 0);
+    if(m_config.pShowStats) {
+      m_stats.SetStatsPlane("cluster_cnt_plane", dp, 0);
+    }
     clusterCount++;
   }
   return clusterCount;
@@ -713,16 +709,20 @@ void Clusterer::MatchClustersDetector(uint8_t det) {
         clusterDetector.delta_plane =
             clusterDetector.time1_charge2 - clusterDetector.time0_charge2;
       }
-      m_stats.SetStatsDetector("delta_time_planes", det, std::abs(clusterDetector.delta_plane));
-      
-      double ratio =
-          100*(double)clusterDetector.adc0 / (double)clusterDetector.adc1;
-      if (ratio > 100.0) {
-        ratio = 100*(double)clusterDetector.adc1 / (double)clusterDetector.adc0;
-        m_stats.SetStatsDetector("charge_ratio_1_0", det, ratio);
-      } else {
-        m_stats.SetStatsDetector("charge_ratio_0_1", det, ratio);
+
+      if(m_config.pShowStats) {
+        m_stats.SetStatsDetector("delta_time_planes", det, std::abs(clusterDetector.delta_plane));        
+        double ratio =
+            100*(double)clusterDetector.adc0 / (double)clusterDetector.adc1;
+        if (ratio > 100.0) {
+          ratio = 100*(double)clusterDetector.adc1 / (double)clusterDetector.adc0;
+          m_stats.SetStatsDetector("charge_ratio_1_0", det, ratio);
+        } else {
+          m_stats.SetStatsDetector("charge_ratio_0_1", det, ratio);
+        }
+        m_stats.SetStatsDetector("cluster_cnt_detector", det, 0);
       }
+
       clusterDetector.max_delta_time0 = c0.max_delta_time;
       clusterDetector.max_delta_time1 = (*bestMatchPlane1).max_delta_time;
       clusterDetector.max_missing_strip0 = c0.max_missing_strip;
@@ -748,7 +748,7 @@ void Clusterer::MatchClustersDetector(uint8_t det) {
              clusterDetector.size1);
       DTRACE(DEB, "\tdelta time planes: %d", (int)clusterDetector.delta_plane);
       m_clusters_detector[det].emplace_back(std::move(clusterDetector));
-      m_stats.SetStatsDetector("cluster_cnt_detector", det, 0);
+      
     }
   }
 }
@@ -787,7 +787,7 @@ void Clusterer::AnalyzeClustersDetector(uint8_t det) {
   }
 
  
-  m_rootFile->SaveHits();
+  //m_rootFile->SaveHits();
   
   m_rootFile->SaveClustersPlane(std::move(m_clusters[std::make_pair(det, 0)]),m_config.pSaveWhat);
   m_rootFile->SaveClustersPlane(std::move(m_clusters[std::make_pair(det, 1)]),m_config.pSaveWhat);
@@ -1023,11 +1023,14 @@ void Clusterer::FinishAnalysis() {
     AnalyzeClustersPlane(det.first, 0);
     AnalyzeClustersPlane(det.first, 1);
     AnalyzeClustersDetector(det.first);
+    m_rootFile->SaveHits();
   }
-  if(!m_config.isPcap) {
-    m_stats.PrintClusterStats(m_config);
+  if(m_config.pShowStats) {
+    if(m_config.pSaveWhat >= 10) {
+      m_stats.PrintClusterStats(m_config);
+    }
+    m_stats.PrintFECStats(m_config);  
   }
-  m_stats.PrintFECStats(m_config);  
 }
 
 //====================================================================================================================

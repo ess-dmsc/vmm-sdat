@@ -18,37 +18,41 @@ int main(int argc, char **argv) {
   uint64_t total_hits = 0;
   std::chrono::time_point<std::chrono::system_clock> timeEnd, timeStart;
 
-  Configuration m_configuration;
+  Configuration m_config;
   Statistics m_stats;
 
-  if (m_configuration.ParseCommandLine(argc, argv)) {
-    if (!m_configuration.CreateMapping()) {
+  if (m_config.ParseCommandLine(argc, argv)) {
+    if (!m_config.CreateMapping()) {
       return -1;
     }
-    if (!m_configuration.CalculateTransform()) {
+    if (!m_config.CalculateTransform()) {
       return -1;
     }
 
     timeStart = std::chrono::system_clock::now();
-	uint64_t last_time = 0;
+	  uint64_t last_time = 0;
 
-    Clusterer *m_Clusterer = new Clusterer(m_configuration, m_stats);
-    m_stats.CreateFECStats(m_configuration);
-    m_stats.CreateClusterStats(m_configuration);
-    if (m_configuration.isPcap) {
-      m_stats.CreatePCAPStats(m_configuration);
+    Clusterer *m_Clusterer = new Clusterer(m_config, m_stats);
+    m_stats.CreateFECStats(m_config);
+    if(m_config.pShowStats) {
+      m_stats.CreateClusterStats(m_config);
+      if (m_config.pIsPcap) {
+        m_stats.CreatePCAPStats(m_config);
+      }
+    }
+    if (m_config.pIsPcap) {
       char buffer[10000];
       Gem::SRSTime srs_time;
-	  srs_time.bc_clock_MHz(m_configuration.pBC);
-  	  srs_time.tac_slope_ns(m_configuration.pTAC);
+	    srs_time.bc_clock_MHz(m_config.pBC);
+  	  srs_time.tac_slope_ns(m_config.pTAC);
  
       Gem::NMXStats nmxstats;
       Gem::ParserVMM3 *parser = new Gem::ParserVMM3(2000, nmxstats, srs_time);
       Gem::Readout readout;
-      Gem::CalibrationFile calfile(m_configuration.pCalFilename);
-      ReaderPcap pcap(m_configuration.pFileName);
+      Gem::CalibrationFile calfile(m_config.pCalFilename);
+      ReaderPcap pcap(m_config.pFileName);
       if (pcap.open() < 0) {
-        std::cout << "Error opening file: " << m_configuration.pFileName
+        std::cout << "Error opening file: " << m_config.pFileName
                   << std::endl;
         return -1;
       }
@@ -88,8 +92,6 @@ int main(int argc, char **argv) {
 
             readout.chip_id = d.vmmid;
             readout.channel = d.chno;
-            // std::cout << (int)readout.channel  << " " << (int) readout.adc <<
-            // std::endl;
             readout.bcid = d.bcid;
             readout.tdc = d.tdc;
             readout.over_threshold = (d.overThreshold != 0);
@@ -100,56 +102,50 @@ int main(int argc, char **argv) {
                 d.bcid, d.tdc, calib.time_offset, calib.time_slope));
             readout.adc = (d.adc - calib.adc_offset) * calib.adc_slope;
 
-            // std::cout << "pcappackets: " << pcappackets << ": " << (uint32_t)
-            // readout.fec << ", " << (uint32_t) readout.chip_id << ", " <<
-            // readout.srs_timestamp << ", "
-            //<< (uint32_t)readout.channel << ", " << (uint32_t)readout.bcid <<
-            //", " << (uint32_t)readout.tdc << ", " << (uint32_t)readout.adc <<
-            //", "
-            //<< (uint32_t)readout.over_threshold << ", " << readout.chiptime <<
-            // std::endl;
-
             bool result = m_Clusterer->AnalyzeHits(
                 static_cast<double>(readout.srs_timestamp), readout.fec,
                 readout.chip_id, readout.channel, readout.bcid, readout.tdc,
                 readout.adc, readout.over_threshold, readout.chiptime);
-            if (result == false || (total_hits >= m_configuration.nHits &&
-                                    m_configuration.nHits > 0))
+            if (result == false || (total_hits >= m_config.nHits &&
+                                    m_config.nHits > 0))
               break;
           }
         }
-        pcappackets++;
-        m_stats.IncrementCounter("parser_frame_seq_errors", readout.fec,
-                                 nmxstats.parser_frame_seq_errors);
-        m_stats.IncrementCounter("parser_frame_missing_errors", readout.fec,
-                                 nmxstats.parser_frame_missing_errors);
-        m_stats.IncrementCounter("parser_framecounter_overflows", readout.fec,
-                                 nmxstats.parser_framecounter_overflows);
-        nmxstats.parser_frame_seq_errors = 0;
-        nmxstats.parser_frame_missing_errors = 0;
-        nmxstats.parser_framecounter_overflows = 0;
+        if(m_config.pShowStats) {
+          pcappackets++;
+          m_stats.IncrementCounter("parser_frame_seq_errors", readout.fec,
+                                  nmxstats.parser_frame_seq_errors);
+          m_stats.IncrementCounter("parser_frame_missing_errors", readout.fec,
+                                  nmxstats.parser_frame_missing_errors);
+          m_stats.IncrementCounter("parser_framecounter_overflows", readout.fec,
+                                  nmxstats.parser_framecounter_overflows);
+          nmxstats.parser_frame_seq_errors = 0;
+          nmxstats.parser_frame_missing_errors = 0;
+          nmxstats.parser_framecounter_overflows = 0;
 
-        m_stats.IncrementCounter("parser_readouts",readout.fec,nmxstats.parser_readouts);
-        m_stats.IncrementCounter("parser_markers",readout.fec,nmxstats.parser_markers);
-        m_stats.IncrementCounter("parser_data",readout.fec,nmxstats.parser_data);
-        nmxstats.parser_readouts=0;
-        nmxstats.parser_markers=0;
-        nmxstats.parser_data=0;
+          m_stats.IncrementCounter("parser_readouts",readout.fec,nmxstats.parser_readouts);
+          m_stats.IncrementCounter("parser_markers",readout.fec,nmxstats.parser_markers);
+          m_stats.IncrementCounter("parser_data",readout.fec,nmxstats.parser_data);
+          nmxstats.parser_readouts=0;
+          nmxstats.parser_markers=0;
+          nmxstats.parser_data=0;
 
-		m_stats.IncrementCounter("parser_timestamp_seq_errors",readout.fec,nmxstats.parser_timestamp_seq_errors);
-        m_stats.IncrementCounter("parser_timestamp_overflows",readout.fec,nmxstats.parser_timestamp_overflows);
-        nmxstats.parser_timestamp_seq_errors=0;
-        nmxstats.parser_timestamp_overflows=0;
+          m_stats.IncrementCounter("parser_timestamp_seq_errors",readout.fec,nmxstats.parser_timestamp_seq_errors);
+          m_stats.IncrementCounter("parser_timestamp_overflows",readout.fec,nmxstats.parser_timestamp_overflows);
+          nmxstats.parser_timestamp_seq_errors=0;
+          nmxstats.parser_timestamp_overflows=0;
+        }
       
       }
-      m_stats.IncrementCounter("parser_bad_frames", readout.fec,
+      if(m_config.pShowStats) {
+        m_stats.IncrementCounter("parser_bad_frames", readout.fec,
                                nmxstats.parser_bad_frames);
-      m_stats.IncrementCounter("parser_good_frames", readout.fec,
+        m_stats.IncrementCounter("parser_good_frames", readout.fec,
                                nmxstats.parser_good_frames);
-
+      }
       delete parser;
     } else {
-      auto DataFile = file::open(m_configuration.pFileName);
+      auto DataFile = file::open(m_config.pFileName);
       auto RootGroup = DataFile.root();
       auto Dataset = RootGroup.get_dataset("srs_hits");
       dataspace::Simple Dataspace(Dataset.dataspace());
@@ -161,7 +157,7 @@ int main(int argc, char **argv) {
       const Readout& rhs) { return lhs.srs_timestamp < rhs.srs_timestamp;
       });
       */
-      Gem::CalibrationFile calfile(m_configuration.pCalFilename);
+      Gem::CalibrationFile calfile(m_config.pCalFilename);
       for (auto RowData : AllElements) {
         /*
         if(RowData.chip_id == 4 || RowData.chip_id == 5) {
@@ -179,9 +175,9 @@ int main(int argc, char **argv) {
         // User calibration added to analysis
         // The chiptime has to be recalculated in this case from bcid and tdc
         if (calib.time_offset != 0 || calib.time_slope != 1.0) {
-          double bcTime = m_configuration.pBCTime_ns * RowData.bcid;
-          double tdcTime = RowData.tdc * m_configuration.pTAC / 255;
-          RowData.chiptime = bcTime + (m_configuration.pBCTime_ns - tdcTime -
+          double bcTime = m_config.pBCTime_ns * RowData.bcid;
+          double tdcTime = RowData.tdc * m_config.pTAC / 255;
+          RowData.chiptime = bcTime + (m_config.pBCTime_ns - tdcTime -
                                        calib.time_offset) *
                                           calib.time_slope;
         }
@@ -198,16 +194,10 @@ int main(int argc, char **argv) {
             static_cast<double>(RowData.srs_timestamp), RowData.fec,
             RowData.chip_id, RowData.channel, RowData.bcid, RowData.tdc,
             RowData.adc, RowData.over_threshold, RowData.chiptime);
-        // std::cout << "hit: " << lines << ": " << (uint32_t) RowData.fec << ",
-        // " << (uint32_t) RowData.chip_id << ", " << RowData.srs_timestamp <<
-        // ", " << RowData.channel << ", " << RowData.bcid << ", " <<
-        // RowData.tdc <<
-        // ", " << RowData.adc << ", " << RowData.over_threshold << ", " <<
-        // RowData.chiptime << std::endl;
         total_hits++;
-		m_stats.IncrementCounter("parser_data",RowData.fec);
+		    m_stats.IncrementCounter("parser_data",RowData.fec);
         if (result == false ||
-            (total_hits >= m_configuration.nHits && m_configuration.nHits > 0))
+            (total_hits >= m_config.nHits && m_config.nHits > 0))
           break;
       }
     }

@@ -10,27 +10,18 @@
 
 bool Configuration::PrintUsage(const std::string &errorMessage, char *argv)
 {
-    if (argv != nullptr)
-    {
-        std::cout << "\nERROR: " << errorMessage << ": " << argv << std::endl;
-    }
-    else
-    {
-        std::cout << "\nERROR: " << errorMessage << std::endl;
-    }
-
     std::cout << "\nUsage:" << std::endl;
     std::cout << "./convertFile -f ../../FAN0_gdgem_readouts_20190528-165706_00000.h5 "
               << "-vmm \"[[1,0,2,0],[1,0,2,1],[1,0,2,2],[1,0,2,3],[1,1,2,6],[1,1,2,7],[1,1,2,8],[1,1,2,9]]\" "
               << "-axis \"[[1,0],0],[[1,1],0]\" -sc \"[[0.4,0.4,1]]\" -tl \"[[-51.2, -51.2, 100]]\" -ro \"[[0,0,45]]\" -tr \"[[S,T,R2]]\" "
-              << "-bc 40 -tac 60 -th 0 -cs 1 -ccs 3 -dt 200 -mst 1 -spc 500 -dp 200 -coin center-of-mass -ratio 2 -save 2 -json 0 -n 0 " << std::endl;
+              << "-bc 40 -tac 60 -th 0 -cs 1 -ccs 3 -dt 200 -mst 1 -spc 500 -dp 200 -coin center-of-mass -ratio 2 -save 111 -json 0 -n 0 " << std::endl;
 
     std::cout << "\n\nFlags:\n"
               << std::endl;
     std::cout << "-f: Either h5 data file with the extension .h5 (data file created by ESS DAQ tool), or .pcapng PCAP file saved in Wireshark.\n"
               << std::endl;
 
-    std::cout << "-vmm: mapping of detectors, plane, fecs and chips starting and ending with \" and separated by brackets and comma [[det, plane, fec,chip], [det, plane, fec, chip], etc.].\n"
+    std::cout << "-vmm: mapping of detectors, plane, fecs and chips starting and ending with \" and separated by brackets and comma [[det, plane, fec,chip], [det, plane, fec, chip], etc.]."
               << std::endl;
     std::cout << "    The tuples for the VMMs are defined as follows:" << std::endl;
     std::cout << "        detector (choose a number between 0 and 255)" << std::endl;
@@ -43,10 +34,10 @@ bool Configuration::PrintUsage(const std::string &errorMessage, char *argv)
     std::cout << "        - plane 0 is at the bottom (HDMI cables go downwards)" << std::endl;
     std::cout << "        - plane 1 is at the right side (HDMI cables go to the right)" << std::endl;
     std::cout << "    If one looks at a VMM3a hybrid (connector to detector readout is on the bottom side), the channel 0 of the VMM 0 is always where the HDMI cable is connected" << std::endl;
-    std::cout << "    If the planes are correctly used as described above, the VMM IDs are always in icreasing order PER HYBRID (e.g. 14, 15 or e.g. 0, 1)" << std::endl;
+    std::cout << "    If the planes are correctly used as described above, the VMM IDs are always in icreasing order PER HYBRID (e.g. 14, 15 or e.g. 0, 1)\n" << std::endl;
 
     std::cout << "-axis: direction of axis. Detector, plane and direction flag (if direction flag = 1, axis direction is flipped)." << std::endl;
-    std::cout << "    Detector, plane and direction flag starting and ending with \" and separated by bracket and comma [[[det,plane],flag], [[det, plane],flag]].\n"
+    std::cout << "    Detector, plane and direction flag starting and ending with \" and separated by bracket and comma [[[det,plane],flag], [[det, plane],flag]]."
               << std::endl;
     std::cout << "    The tuples for the axes are defined as follows:" << std::endl;
     std::cout << "        - detector (choose a number between 0 and 255)" << std::endl;
@@ -57,16 +48,16 @@ bool Configuration::PrintUsage(const std::string &errorMessage, char *argv)
     std::cout << "        - plane 1 is at the right and goes from bottom (0) to top (255)" << std::endl;
     std::cout << "    If the plane axis is FLIPPED:" << std::endl;
     std::cout << "        - plane 0 is at the bottom and goes from right (255) to left (0)" << std::endl;
-    std::cout << "        - plane 1 is at the right and goes from top (0) to bottom (255)" << std::endl;
+    std::cout << "        - plane 1 is at the right and goes from top (0) to bottom (255)\n" << std::endl;
     std::cout << "-sc: Scale coordinates. Per detector a tuple with three values in mm, e.g for two detectors [[s0,s1,s2], [s0,s1,s2]].\n"
               << std::endl;
     std::cout << "-tl: Translate coordinates. Per detector a tuple with three values in mm, e.g for two detectors [[t0,t1,t2], [t0,t1,t2]].\n"
               << std::endl;
     std::cout << "-ro: Rotate around plane 0, plane 1, plane 2. Per detector a tuple with three angles in degrees, e.g for two detectors [[r0,r1,r2], [r0,r1,r2]].\n"
               << std::endl;
-    std::cout << "-tr: Transform detector coordinates. S=scale, T=translate, R0=rotation plane 0, R1=rotation plane1, R2=rotation plane2..\n"
+    std::cout << "-tr: Transform detector coordinates. S=scale, T=translate, R0=rotation plane 0, R1=rotation plane1, R2=rotation plane2."
               << std::endl;
-    std::cout << "    example (two detectors): -tr [[S,T,R2], [S,T, R2]]. First scaling, then translation, then rotation around normal axis to plane0 and plane 1." << std::endl;
+    std::cout << "    example (two detectors): -tr [[S,T,R2], [S,T, R2]]. First scaling, then translation, then rotation around normal axis to plane0 and plane 1.\n" << std::endl;
     std::cout << "-bc: bunch crossing clock. Optional argument (default 40 MHz).\n"
               << std::endl;
     std::cout << "-tac: tac slope. Optional argument (default 60 ns).\n"
@@ -85,21 +76,42 @@ bool Configuration::PrintUsage(const std::string &errorMessage, char *argv)
               << std::endl;
     std::cout << "-dp: maximum time between matched clusters in x and y. Optional argument (default 200).\n"
               << std::endl;
-    std::cout << "-coin: Valid clusters normally occur at the same time in plane 0 and plane 1 of a detctor. The parameter -dp determines the permitted time difference between the planes.\n"
+    std::cout << "-coin: Valid clusters normally occur at the same time in plane 0 and plane 1 of a detctor. The parameter -dp determines the permitted time difference between the planes."
               << std::endl;
     std::cout << "     The time can be calculated with the center-of-mass algorithm (center-of-mass), the uTPC method (utpc) or the center-of-mass squared method (charge2). Optional argument (default center-of-mass).\n"
               << std::endl;
-    std::cout << "-ratio: Valid clusters normally have the same amount of charge in both detector planes (ratio of (charge plane 0 / charge plane 1) is 100\% or 1.\n"
+    std::cout << "-ratio: Valid clusters normally have the same amount of charge in both detector planes (ratio of (charge plane 0 / charge plane 1) is 100\% or 1."
               << std::endl;
     std::cout << "     The desired ratio for the matching can be set as optional argument, the default is 2 or 200\%, i.e. the charge in plane 0 has to be between 50\% and 200\% of the charge in plane 1.\n"
               << std::endl;
-    std::cout << "-save: select what to store. 0 = only common clusters plane0/plan1, 1 = all clusters, 2 = clusters and hits (a hit is a VMM3a channel over threshold). Creates large files. Optional argument (default 1).\n"
-              << std::endl;
+    std::cout << "-save: select which data to store in root file. Input is a 3 bit binary number." << std::endl;
+    std::cout << "       bit 0 (LSB): hits (a hit is a VMM3a channel over threshold)" << std::endl;
+    std::cout << "       bit 1      : clusters plane" << std::endl;
+    std::cout << "       bit 2 (MSB): clusters detector" << std::endl;
+    std::cout << "       Examples:" << std::endl; 
+    std::cout << "           001: hits only" << std::endl; 
+    std::cout << "           100: clusters detector only" << std::endl; 
+    std::cout << "           111: everything, hits, clusters plane, clusters detector\n" << std::endl; 
+   
     std::cout << "-json: create a json file of the detector images. Optional argument (default 1).\n"
               << std::endl;
     std::cout << "-n: number of hits to analyze. Optional argument (default 0, i.e. all hits).\n"
               << std::endl;
+     std::cout << "-stats: Show statistics of the run (default 0, do not show any stats).\n"
+              << std::endl;
 
+    std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;
+    if (argv != nullptr)
+    {
+        std::cout << "ERROR: " << errorMessage << ": " << argv << std::endl;
+    }
+    else
+    {
+        std::cout << "ERROR: " << errorMessage << std::endl;
+    }
+    std::cout << "\nFor meaning of the flags and the correct usage of convertFile, please see above!" << std::endl;
+    std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;
+  
     return false;
 }
 
@@ -415,10 +427,19 @@ bool Configuration::ParseCommandLine(int argc, char **argv)
         else if (strncmp(argv[i], "-save", 5) == 0)
         {
             pSaveWhat = atoi(argv[i + 1]);
+            std::vector<int> v_valid_values = {1,10,11,100,101,110,111};
+            auto searchValid = std::find(v_valid_values.begin(), v_valid_values.end(), pSaveWhat);
+            if (searchValid == v_valid_values.end()) {
+                return PrintUsage("The -save parameter accepts only the values 1,10,11,101,110,111!", nullptr);
+            } 
         }
         else if (strncmp(argv[i], "-n", 2) == 0)
         {
             nHits = atoi(argv[i + 1]);
+        }
+        else if (strncmp(argv[i], "-stats", 6) == 0)
+        {
+            pShowStats = atoi(argv[i + 1]);
         }
         else if (strncmp(argv[i], "-cal", 4) == 0)
         {
@@ -458,7 +479,7 @@ bool Configuration::ParseCommandLine(int argc, char **argv)
     if (fFound && pFileName.find(".h5") == std::string::npos)
     {
     	if(pFileName.find(".pcapng") != std::string::npos) {
-    		isPcap = true;
+    		pIsPcap = true;
     	}
         else return PrintUsage("Wrong extension: .h5 or .pcap file required for data files!", nullptr);
     }

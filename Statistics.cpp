@@ -62,7 +62,7 @@ void Statistics::CreateFECStats(Configuration &config) {
     m_counters.emplace(
         std::make_pair(std::make_pair(fec, "trigger_period_error"), 0));
 
-    if(!config.isPcap) {
+    if(!config.pIsPcap) {
       m_counter_names.push_back("parser_data");
       m_counters.emplace(std::make_pair(std::make_pair(fec, "parser_data"), 0));
     }  
