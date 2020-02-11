@@ -6,6 +6,8 @@
 #include <map>
 #include <sstream>
 
+#define NUMFECS 10
+
 class Configuration
 {
 public:
@@ -16,7 +18,7 @@ public:
     bool PrintUsage(const std::string &errorMessage, char *argv);
     bool CreateMapping();
     bool CalculateTransform();
-    bool GetAxes(uint8_t det, uint8_t plane);
+    bool GetAxes(std::pair<uint8_t, uint8_t> dp);
     //**************************************************************
     // BEGIN INPUT PARAMETERS
     //**************************************************************
@@ -105,4 +107,8 @@ public:
     int pAlgo = 0;
     bool pIsPcap = false;
     bool pShowStats = true;
+
+    int pPositions[NUMFECS][16][64];
+    int pDetectors[NUMFECS][16];
+    int pPlanes[NUMFECS][16];
 };

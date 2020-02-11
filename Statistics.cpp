@@ -303,7 +303,7 @@ void Statistics::PrintClusterStats(Configuration &config) {
     if (m_stats_plane[std::make_pair(dp1, "cluster_cnt_plane")][0] > 0) {
       cnt1 = m_stats_plane[std::make_pair(dp1, "cluster_cnt_plane")][0];
     }
-    if (config.GetAxes(det.first, 0) && config.GetAxes(det.first, 1)) {
+    if (config.GetAxes(dp0) && config.GetAxes(dp1)) {
       bothPlanes = true;
     }
 

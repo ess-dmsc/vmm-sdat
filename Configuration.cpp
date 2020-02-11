@@ -670,8 +670,8 @@ bool Configuration::CalculateTransform()
     return true;
 }
 
-bool Configuration::GetAxes(uint8_t det, uint8_t plane) {
-    auto searchMap = pAxes.find(std::make_pair(det, plane));
+bool Configuration::GetAxes(std::pair<uint8_t, uint8_t> dp) {
+    auto searchMap = pAxes.find(dp);
     if (searchMap == pAxes.end()) {
         return false;
     }
@@ -766,5 +766,44 @@ bool Configuration::CreateMapping()
             }
         }
     }
+    
+    for(int f=0; f < NUMFECS; f++) {
+        for(int v=0; v<16; v++) {
+            auto searchFecChip = pFecChip_DetectorPlane.find(std::make_pair(f, v));
+            if (searchFecChip != pFecChip_DetectorPlane.end()) {
+                auto fecChip = std::make_pair(f,v);
+                auto det_plane = pFecChip_DetectorPlane[fecChip];
+                auto det = std::get<0>(det_plane);
+                auto plane = std::get<1>(det_plane);
+                pDetectors[f][v] = det;
+                pPlanes[f][v] = plane;
+                auto flag = pAxes[det_plane];
+                auto search = pOffsets.find(fecChip);
+                int offset = 0;
+                if (search != end(pOffsets)) {
+                    offset = search->second;
+                }
+                if (flag == 1) {
+                    for(int ch=0; ch<64; ch++) { 
+                        pPositions[f][v][ch] = offset -ch;
+                    } 
+                }
+                else {
+                    for(int ch=0; ch<64; ch++) { 
+                        pPositions[f][v][ch] = offset + ch;
+                    }
+
+                } 
+            } else {
+                pDetectors[f][v] = -1;
+                pPlanes[f][v] = -1;
+                for(int ch=0; ch<64; ch++) { 
+                    pPositions[f][v][ch] = -1;
+                }   
+            }
+
+        }
+    }
+ 
     return true;
 }

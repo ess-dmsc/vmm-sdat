@@ -24,21 +24,20 @@ public:
 	// Analyzing and storing the hits
         bool AnalyzeHits(double srsTimestamp, uint8_t fecId, 
         uint8_t vmmId, uint16_t chNo, uint16_t bcid, uint16_t tdc, uint16_t adc, bool overThresholdFlag, float chipTime);
-        void StoreHits(uint8_t det, uint8_t plane, int pos, uint16_t adc, double chipTime, bool overThresholdFlag);
-
+       
         // Analyzing and storing the clusters in plane 0 and 1
-        void AnalyzeClustersPlane(uint8_t det, uint8_t plane);
+        void AnalyzeClustersPlane(std::pair<uint8_t, uint8_t> dp);
 
 	//Select hits that are ready to be clustered in time
-        bool ChooseHitsToBeClustered(uint8_t det, uint8_t plane);
+        bool ChooseHitsToBeClustered(std::pair<uint8_t, uint8_t> dp);
 
-        bool ChooseClustersToBeMatched(uint8_t det, uint8_t plane);
+        bool ChooseClustersToBeMatched(std::pair<uint8_t, uint8_t> dp);
 
         // Matching the clusters that are common between detector planes
         void AnalyzeClustersDetector(uint8_t det);
 
-        int ClusterByTime(uint8_t det,uint8_t plane);
-        int ClusterByStrip(uint8_t det,uint8_t plane,ClusterContainer &cluster, uint16_t maxDeltaTime);
+        int ClusterByTime(std::pair<uint8_t, uint8_t> dp);
+        int ClusterByStrip(std::pair<uint8_t, uint8_t> dp,ClusterContainer &cluster, uint16_t maxDeltaTime);
   
         void AlgorithmUTPC(int idx_min_largest_time, int idx_max_largest_time, std::vector<double> & vADC,
                 std::vector<double> & vStrips, std::vector<double> & vTimes, double &positionUTPC, double &timeUTPC, 
@@ -47,14 +46,6 @@ public:
         void MatchClustersDetector(uint8_t det);
 
 	void FinishAnalysis();
-
-        //bool IsFecChipInDetectorPlane(uint8_t fecId, uint8_t det, uint8_t chip, uint8_t planeId);
-
-        std::pair<int, int> GetDetectorPlane(std::pair<uint8_t, uint8_t> fecChip);
-        // Helper methods that map channels to strips
-        int GetChannel(std::pair<uint8_t, uint8_t> fecChip, int chNo);
-
-
 
 #ifdef USE_ROOT
 	void createRootFile(string fileName);
@@ -73,7 +64,6 @@ private:
         double last_time0_charge2 = 0;
         double last_time1_charge2 = 0;
 
-        uint16_t m_oldBcId = 0;
         uint8_t m_oldVmmId = 0;
         uint8_t m_oldFecId = 0;
 
@@ -85,7 +75,7 @@ private:
 
 	int m_cluster_id = 0;
 	int m_cluster_detector_id = 0;
- 
+       
         RootFile* m_rootFile;
 
 	

@@ -71,7 +71,9 @@ RootFile::RootFile(Configuration &config) : m_config(config) {
     int cnt1D = 0;
     int cnt2D = 0;
     for (auto const &det : m_config.pDets) {
-      if (m_config.GetAxes(det.first, 0) && m_config.GetAxes(det.first, 1)) {
+      auto dp0 = std::make_pair(det.first, 0);
+      auto dp1 = std::make_pair(det.first, 1);
+      if (m_config.GetAxes(dp0) && m_config.GetAxes(dp1)) {
         name = std::to_string(det.first) + "_delta_time_planes";
         h1 = new TH1D(name.c_str(), name.c_str(), 1000, -500, 500);
         m_TH1D.push_back(h1);
@@ -298,7 +300,9 @@ void RootFile::SaveHistograms() {
     h1->Write("", TObject::kOverwrite);
   }
   for (auto const &det : m_config.pDets) {
-    if (m_config.GetAxes(det.first, 0) && m_config.GetAxes(det.first, 1)) {
+    auto dp0 = std::make_pair(det.first, 0);
+    auto dp1 = std::make_pair(det.first, 1);
+    if (m_config.GetAxes(dp0) && m_config.GetAxes(dp1)) {
       if (m_config.createJSON) {
         int id = m_map_TH2D[std::make_pair(det.first, "cluster")];
 
