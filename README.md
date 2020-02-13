@@ -1,7 +1,7 @@
 
 # vmm-sdat
 
-Analysis software for VMM3a HDF5 files written by the EFU. From the HDF5 file, a root tree with the hits and clusters is created.
+VMM3a/SRS Data Analysis Tool: Analysis software for VMM3a data, recorded with the SRS as PCAP or HDF5 files (GdGEM pipeline of the EFU). From the PCAP or HDF5 file, a root tree with the hits and clusters is created.
 For more information about ROOT see [here](https://root.cern.ch/)
 
 ## Getting Started
@@ -261,6 +261,7 @@ The script accessTree in the build directory shows how to access the produced tr
 ## Authors
 
 * **Dorothea Pfeiffer** - *Initial work* - [dorotheapfeiffer](https://github.com/dorotheapfeiffer)
+* **Lucian Scharenberg**
 
 See also the list of [contributors](https://github.com/ess-dmsc/vmm-hdf5-to-root/contributors) who participated in this project.
 
