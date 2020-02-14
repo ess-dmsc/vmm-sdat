@@ -57,7 +57,8 @@ int main(int argc, char **argv) {
       uint64_t pcappackets = 0;
 
       int rdsize;
-      while ((rdsize = pcap.read((char *)&buffer, sizeof(buffer))) != -1) {
+      bool doContinue = true;
+      while (doContinue && (rdsize = pcap.read((char *)&buffer, sizeof(buffer))) != -1) {
         if (rdsize == 0) {
           continue; // non udp data
         }
@@ -84,8 +85,10 @@ int main(int argc, char **argv) {
                 srs_timestamp, parser->pd.fecId, d.vmmid, d.chno, d.bcid, d.tdc,
                 adc, d.overThreshold != 0, chiptime);
             if (result == false ||
-                (total_hits >= m_config.nHits && m_config.nHits > 0))
+                (total_hits >= m_config.nHits && m_config.nHits > 0)) {
+                doContinue = false;
               break;
+            }
           }
         }
         if (m_config.pShowStats) {

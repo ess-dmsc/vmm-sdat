@@ -286,7 +286,7 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
   std::vector<double> vTimes;
   auto det = std::get<0>(dp);
   auto plane = std::get<1>(dp);
-  //auto dp = std::make_pair(det, plane);
+
   std::sort(begin(cluster), end(cluster),
             [](const ClusterTuple &t1, const ClusterTuple &t2) {
               return std::get<0>(t1) < std::get<0>(t2) ||
@@ -754,10 +754,7 @@ void Clusterer::AnalyzeClustersPlane(std::pair<uint8_t, uint8_t> dp) {
   DTRACE(DEB, "%d cluster in detector %d plane %d\n", cnt, (int)std::get<0>(dp),
          (int)std::get<1>(dp));
 
-  //std::pair<uint8_t, uint8_t> dp = std::make_pair(det, plane);
-  if (!m_hits[dp].empty()) {
-    m_hits[dp].clear();
-  }
+  m_hits[dp].clear();
 }
 
 void Clusterer::AnalyzeClustersDetector(uint8_t det) {
@@ -773,13 +770,14 @@ void Clusterer::AnalyzeClustersDetector(uint8_t det) {
 
     MatchClustersDetector(det);
   }
-
- 
-  //m_rootFile->SaveHits();
   
-  m_rootFile->SaveClustersPlane(std::move(m_clusters[std::make_pair(det, 0)]),m_config.pSaveWhat);
-  m_rootFile->SaveClustersPlane(std::move(m_clusters[std::make_pair(det, 1)]),m_config.pSaveWhat);
-  m_rootFile->SaveClustersDetector(std::move(m_clusters_detector[det]));
+  if(static_cast<int>(m_config.pSaveWhat/10) >= 1) {
+    m_rootFile->SaveClustersPlane(std::move(m_clusters[std::make_pair(det, 0)]));
+    m_rootFile->SaveClustersPlane(std::move(m_clusters[std::make_pair(det, 1)]));
+  }
+  if(m_config.pSaveWhat >= 100) {
+    m_rootFile->SaveClustersDetector(std::move(m_clusters_detector[det]));
+  }
 
   m_clusters[std::make_pair(det, 0)].clear();
   m_clusters[std::make_pair(det, 1)].clear();
@@ -1011,7 +1009,9 @@ void Clusterer::FinishAnalysis() {
     AnalyzeClustersPlane(dp0);
     AnalyzeClustersPlane(dp1);
     AnalyzeClustersDetector(det.first);
-    m_rootFile->SaveHits();
+    if(m_config.pSaveWhat % 2 == 1) {
+      m_rootFile->SaveHits();
+    }
   }
   if(m_config.pShowStats) {
     if(m_config.pSaveWhat >= 10) {
@@ -1021,31 +1021,3 @@ void Clusterer::FinishAnalysis() {
   }
 }
 
-/*
-std::pair<int, int>
-Clusterer::GetDetectorPlane(std::pair<uint8_t, uint8_t> fecChip) {
-  auto pair = m_config.pFecChip_DetectorPlane.find(fecChip);
-  if (pair != end(m_config.pFecChip_DetectorPlane)) {
-    return pair->second;
-  }
-  return std::make_pair(-1, -1);
-  ;
-}
-*/
-
-/*
-int Clusterer::GetChannel(std::pair<uint8_t, uint8_t> fecChip, int chNo) {
-  auto search = m_config.pOffsets.find(fecChip);
-  auto det_plane = m_config.pFecChip_DetectorPlane[fecChip];
-  auto flag = m_config.pAxes[det_plane];
-  if (search != end(m_config.pOffsets)) {
-    uint32_t ch = chNo + search->second;
-    if (flag == 1) {
-      ch = search->second - chNo;
-    }
-    return ch;
-  } else {
-    return -1;
-  }
-}
-*/

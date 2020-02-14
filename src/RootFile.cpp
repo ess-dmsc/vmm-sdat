@@ -227,14 +227,11 @@ void RootFile::SaveHits() {
   }
 }
 
-void RootFile::SaveClustersPlane(ClusterVectorPlane &&clusters_plane,
-                                 int saveWhat) {
+void RootFile::SaveClustersPlane(ClusterVectorPlane &&clusters_plane) {
   m_clusters_plane = clusters_plane;
   if (m_clusters_plane.size() > 0) {
-    if (saveWhat > 0) {
       m_tree->Fill();
-    }
-    m_clusters_plane.clear();
+      m_clusters_plane.clear();
   }
 }
 

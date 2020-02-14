@@ -1,8 +1,5 @@
 #pragma once
 
-#define NUMDET 10
-#define NUMPLANE 4
-
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -30,7 +27,7 @@ public:
     void SaveHistograms();
     void AddHits(Hit&& the_hit);
     void SaveHits();
-    void SaveClustersPlane(ClusterVectorPlane&& clusters_plane, int saveWhat);
+    void SaveClustersPlane(ClusterVectorPlane&& clusters_plane);
     void SaveClustersDetector(ClusterVectorDetector&& clusters_detector);
 
 private:
