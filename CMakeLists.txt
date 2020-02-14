@@ -5,7 +5,7 @@ project(vmm-sdat)
 set(CMAKE_BUILD_TYPE RelWithDebInfo)
 #set(CMAKE_CXX_STANDARD 11)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -fsanitize=address -O0 -ggdb")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb")
 
 
 # Directory with EFU installation
@@ -87,21 +87,22 @@ find_package(ROOT REQUIRED)
 #---Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
 include(${ROOT_USE_FILE})
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
 include_directories(${EFU_DIR}/src)
 include_directories(${VERSION_INCLUDE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/analysis)
 
 
-ROOT_GENERATE_DICTIONARY(vmm-sdatDict ${EFU_DIR}/src/gdgem/nmx/Readout.h ${EFU_DIR}/src/gdgem/srs/ParserVMM3.h ${EFU_DIR}/src/gdgem/srs/SRSTime.h ${EFU_DIR}/src/gdgem/srs/CalibrationFile.h ${EFU_DIR}/src/tools/ReaderPcap.h  Clusterer.h RootFile.h DataStructures.h Configuration.h Statistics.h LINKDEF convertLinkDef.h MODULE vmm-sdat)
+ROOT_GENERATE_DICTIONARY(vmm-sdatDict ${EFU_DIR}/src/gdgem/nmx/Readout.h ${EFU_DIR}/src/gdgem/srs/ParserVMM3.h ${EFU_DIR}/src/gdgem/srs/SRSTime.h ${EFU_DIR}/src/gdgem/srs/CalibrationFile.h ${EFU_DIR}/src/tools/ReaderPcap.h  ${CMAKE_CURRENT_SOURCE_DIR}/src/Clusterer.h ${CMAKE_CURRENT_SOURCE_DIR}/src/RootFile.h ${CMAKE_CURRENT_SOURCE_DIR}/src/DataStructures.h ${CMAKE_CURRENT_SOURCE_DIR}/src/Configuration.h ${CMAKE_CURRENT_SOURCE_DIR}/src/Statistics.h LINKDEF ${CMAKE_CURRENT_SOURCE_DIR}/src/convertLinkDef.h MODULE vmm-sdat)
 
 
 #---Create a shared library with generated dictionary
-add_library(vmm-sdat SHARED ${EFU_DIR}/src/gdgem/srs/ParserVMM3.cpp ${EFU_DIR}/src/gdgem/srs/SRSTime.cpp ${EFU_DIR}/src/gdgem/srs/CalibrationFile.cpp ${EFU_DIR}/src/tools/ReaderPcap.cpp Clusterer.cpp RootFile.cpp Configuration.cpp Statistics.cpp vmm-sdatDict.cxx)
+add_library(vmm-sdat SHARED ${EFU_DIR}/src/gdgem/srs/ParserVMM3.cpp ${EFU_DIR}/src/gdgem/srs/SRSTime.cpp ${EFU_DIR}/src/gdgem/srs/CalibrationFile.cpp ${EFU_DIR}/src/tools/ReaderPcap.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Clusterer.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/RootFile.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Configuration.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Statistics.cpp vmm-sdatDict.cxx)
 target_link_libraries(vmm-sdat ${ROOT_LIBRARIES} ${Boost_SYSTEM_LIBRARY} ${HDF5_LIBRARIES} h5cpp fmt graylog_logger_static pcap)
 
 #---Create  a main program using the library
-add_executable(convertFile convertFile.cpp)
-add_executable(accessTree accessTree.cpp)
+add_executable(convertFile ${CMAKE_CURRENT_SOURCE_DIR}/src/convertFile.cpp)
+add_executable(accessTree ${CMAKE_CURRENT_SOURCE_DIR}/analysis/accessTree.cpp)
 
 
 target_link_libraries(convertFile vmm-sdat)
