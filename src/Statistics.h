@@ -39,6 +39,7 @@ public:
     
     void StatsOutput(int n, long val, std::string stat, long cnt,long cnt0=0,long cnt1=0);
 private:
+    double m_acq_time;
     std::map<std::pair<std::pair<uint8_t, uint8_t>, std::string>, std::vector<long>> m_stats_plane;
     std::map<std::pair<uint8_t, std::string>, std::vector<long>> m_stats_detector;
     std::vector<std::string> m_stats_plane_names;

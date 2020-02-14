@@ -345,16 +345,6 @@ void Statistics::PrintClusterStats(Configuration &config) {
       std::cout << "****************************************" << std::endl;
     }
   }
-  for (auto const &fec : config.pFecs) {
-    std::cout << "\n****************************************" << std::endl;
-    std::cout << "FEC " << (int)fec << std::endl;
-    std::cout << "****************************************" << std::endl;
-    for (unsigned int n = 0; n < m_counter_names.size(); n++) {
-      std::cout << m_counter_names[n] << ": "
-                << GetCounter(m_counter_names[n], fec) << std::endl;
-    }
-    std::cout << "****************************************\n" << std::endl;
-  }
 }
 
 void Statistics::PrintFECStats(Configuration &config) {
@@ -370,7 +360,7 @@ void Statistics::PrintFECStats(Configuration &config) {
     double max = GetMaxTriggerTimestamp(fec);
     double last = GetOldTriggerTimestamp(fec);
     int overflow = GetCounter("time_stamp_overflow", fec);
-    double acq_time = 0;
+    m_acq_time = 0;
 
     if (overflow >= 1) {
       if (max <= 4294967295) {
@@ -379,21 +369,27 @@ void Statistics::PrintFECStats(Configuration &config) {
       if (max > 4294967295 && max <= 109951162777575) {
         max = 109951162777575;
       }
-      acq_time = ((max - first) + (overflow - 1) * max + last) / 1000000.0;
+      m_acq_time = ((max - first) + (overflow - 1) * max + last) / 1000000.0;
     } else {
-      acq_time = (max - first) / 1000000.0;
+      m_acq_time = (max - first) / 1000000.0;
     }
     std::cout << "\n****************************************" << std::endl;
-    std::cout << "ACQ time " << acq_time << " ms" << std::endl;
-    std::cout << "****************************************\n" << std::endl;
-    std::cout << "\n****************************************" << std::endl;
-    std::cout << "Hit rate " << 1000*GetCounter("parser_data", fec)/acq_time << " Hz" << std::endl;
-    std::cout << "****************************************\n" << std::endl;
+    std::cout << "Stats (acquisition):" << std::endl;
+    std::cout << "****************************************" << std::endl;
+    std::cout << "Acq time: " << m_acq_time << " ms" << std::endl;
+    std::cout << "Hit rate FEC: " << std::scientific << 1000*GetCounter("parser_data", fec)/m_acq_time << " hit/s" << std::endl;
+    std::cout << "Data rate FEC: " << std::scientific << 1000*GetCounter("parser_data", fec)*48/m_acq_time << " bit/s" << std::endl;
+    std::cout << "****************************************" << std::endl;
+
   }
-  std::cout << "****************************************\n" << std::endl;
+  std::cout << "\n****************************************" << std::endl;
+  long cnt = 0;
+    for (auto const &det : config.pDets) {
+      cnt += GetStatsDetector("cluster_cnt_detector", det.first, 0); 
+    }
+    std::cout << "Total Cluster rate: " << std::scientific << 1000*cnt/m_acq_time << " particles/s" << std::endl;
+  std::cout << "****************************************" << std::endl;
 }
-
-
 
 void Statistics::StatsOutput(int n, long val, std::string stat, long cnt,
                              long cnt0, long cnt1) {
