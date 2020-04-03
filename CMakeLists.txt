@@ -12,6 +12,7 @@ set(CMAKE_BUILD_TYPE RelWithDebInfo)
 #Standard path
 #set(EFU_DIR "$ENV{HOME}/essdaq/efu/event-formation-unit"  CACHE STRING "EFU directory")
 #Individual path
+# Could also use commandline: cmake -DEFU_DIR=~/dev/event-formation-unit/ ..
 set(EFU_DIR "$ENV{HOME}/programming/essdaq/efu/event-formation-unit"  CACHE STRING "EFU directory")
 message(STATUS "EFU directory: ${EFU_DIR}")
 
