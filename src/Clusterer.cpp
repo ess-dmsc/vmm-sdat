@@ -172,11 +172,19 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
   }
 
   //StoreHits(det, plane, pos, adc, totalTime, overThresholdFlag);
-  if ((adc >= m_config.pADCThreshold || overThresholdFlag)) {
-    if(plane == 1 || ((int)pos >= 35 && plane == 0))
-    m_hits_new[std::make_pair(det, plane)].emplace_back(totalTime,
+  if (m_config.pADCThreshold < 0) {
+  	if(overThresholdFlag) {
+  		m_hits_new[std::make_pair(det, plane)].emplace_back(totalTime,
                                                     (uint16_t)pos, adc);
+  	}
   }
+  else {
+  	if ((adc >= m_config.pADCThreshold || overThresholdFlag)) {
+    	m_hits_new[std::make_pair(det, plane)].emplace_back(totalTime,  (uint16_t)pos, adc);
+  	}
+  
+  }
+  
 
   if (newEvent) {
     DTRACE(DEB, "\neventNr  %d\n", m_eventNr);

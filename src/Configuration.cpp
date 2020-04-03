@@ -62,7 +62,7 @@ bool Configuration::PrintUsage(const std::string &errorMessage, char *argv)
               << std::endl;
     std::cout << "-tac: tac slope. Optional argument (default 60 ns).\n"
               << std::endl;
-    std::cout << "-th: threshold value in ADC counts. Optional argument (default 0).\n"
+    std::cout << "-th: threshold value in ADC counts. Optional argument (default 0, if -1, only hits with over threshold flag 1 are expected).\n"
               << std::endl;
     std::cout << "-cs: minimum cluster size per plane. Optional argument (default 1).\n"
               << std::endl;
@@ -399,7 +399,7 @@ bool Configuration::ParseCommandLine(int argc, char **argv)
         }
         else if (strncmp(argv[i], "-th", 3) == 0)
         {
-            pADCThreshold = atoi(argv[i + 1]);
+            pADCThreshold = atof(argv[i + 1]);
         }
         else if (strncmp(argv[i], "-cs", 3) == 0)
         {
