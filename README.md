@@ -60,14 +60,14 @@ a range of 4096 * 25 ns = 102.4 us. The TDC gives information about the time bet
 60 ns, the time resolution of the tdc_time is 60ns/256 bits = 0.23 ns. The tdc_time and the bc_time together are 
 called chiptime. 
 
-The formula is chiptime = bc_time - tdc_time = (BCID + 1)*25 ns - TDC*60ns/256. 
+The formula is chiptime = bc_time - tdc_time = (BCID + 1) * 25 ns - TDC * 60ns / 256. 
 The TDC time is subtracted, because the TDC starts counting when the peakfinder has found the hit, and is then 
 stopped by the falling edge of the next BC clock pulse. A small TDC value means the hit occured shortly before 
 the next BC clock, whereas a large TDC value means it appeared a long time before the next clock. 
 
 Every 4096 * 25 ns the BCID overflows, these overflows are called offset in the FEC firmware. 
 Example:
-    Offset 24, BCID 100, TDC 80: 24 * 102.4 us + (100+1) * 25 ns - 80*60 ns/256 = 2460106.25 ns = 2.46 ms
+    Offset 24, BCID 100, TDC 80: 24 * 102.4 us + (100+1) * 25 ns - 80 * 60 ns/256 = 2460106.25 ns = 2.46 ms
 But even with the offset the time range covered is only 32 * 102.4 us = 3278.8 us = 3.3 ms. Therefore every 
 3.3 ms 42 bit time markers are send by the FEC card. All the offsets always refer to the previous time marker 
 sent for the particular VMM. The EFU now takes the time markers and the offset and calculates the srs_timestamp 
