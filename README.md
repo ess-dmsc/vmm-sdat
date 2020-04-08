@@ -271,7 +271,7 @@ The script accessTree in the build directory shows how to access the produced tr
 ## Authors
 
 * **Dorothea Pfeiffer** - *Initial work* - [dorotheapfeiffer](https://github.com/dorotheapfeiffer)
-* **Lucian Scharenberg**
+* **Lucian Scharenberg** - *Debugging, Testing, Inspiration for new features, Python analysis*  - [lscharenberg](https://github.com/lscharenberg)
 
 See also the list of [contributors](https://github.com/ess-dmsc/vmm-hdf5-to-root/contributors) who participated in this project.
 
