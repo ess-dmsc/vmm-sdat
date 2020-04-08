@@ -39,7 +39,7 @@ Complete command line:
 ./convertFile -f data.pcapng 
 -vmm "[[1,0,2,2],[1,0,2,3],[1,0,2,0],[1,0,2,1],[1,1,2,8],[1,1,2,9],[1,1,2,6],[1,1,2,7]]" 
 -axis "[[1,0],0],[[1,1],0]" -bc 40 -tac 60 -th 0 -cs 1 -ccs 2 -dt 200 -mst 1 -spc 500 
--dp 200 -coin center-of-mass -ratio 2 -save 2 -json 0 -n 0 -algo 0
+-dp 200 -coin center-of-mass -crl 0.5 -cru 2 -save 111 -json 0 -n 0 -algo 0 -swap 0 
 -cal CalibrationFile.json
 
 ```
@@ -184,7 +184,7 @@ the two planes (charge plane 0 / charge plane 1) or (charge plane 1 / charge pla
 
     -tac: tac slope. Optional argument (default 60 ns)
 
-    -th: threshold value in ADC counts. Optional argument (default 0)
+    -th: threshold value in ADC counts. Optional argument (default 0, if -1, only hits with over threshold flag 1 are accepted)
 
     -cs: minimum cluster size per plane. Optional argument (default 1)
 
@@ -204,10 +204,18 @@ the two planes (charge plane 0 / charge plane 1) or (charge plane 1 / charge pla
         The time can be calculated with the center-of-mass algorithm (center-of-mass), the uTPC method (utpc) 
         or the center-of-mass squared method (charge2). Optional argument (default center-of-mass)
 
-    -ratio: Valid clusters normally have the same amount of charge in both detector planes 
-        (ratio of (charge plane 0 / charge plane 1) is 100\% or 1
-        The desired ratio for the matching can be set as optional argument, the default is 2 or 200\%, 
-        i.e. the charge in plane 0 has to be between 50\% and 200\% of the charge in plane 1
+    -crl: Valid clusters normally have the same amount of charge in both detector planes 
+    	(ratio of charge plane 0 / charge plane 1 is 100% or 1). Depending on the readout, 
+    	the charge sharing can be different, e.g. in a standard GEM strip readout the total 
+    	charge is divided 60/40 between plane 0/plane 1.
+		With -crl one sets the lower threshold for the plane0/plane1 charge ratio. 
+		Optional argument (default 0.5).
+
+	-cru: With -cru one sets the upper threshold for the plane0/plane1 charge ratio. 
+		Optional argument (default 2).
+
+	-swap: Same connectors on readout boards unintentionally swap odd and even channels. 
+		With -swap 1 one can correct this. Optional parameter (default 0).
 
     -save: Select which data to store in root file. Input is a 3 bit binary number.
         bit 0 (LSB): hits (a hit is a VMM3a channel over threshold)
@@ -250,7 +258,9 @@ the two planes (charge plane 0 / charge plane 1) or (charge plane 1 / charge pla
             1 = utpc center-of-mass (center of mass of the strip 
             with the latest time and its one or two neighbours)
 
-    -cal: Name of the calibration file. A calibration file is a JSON file               containing an ADC and/or time correction in the form of a slope and an          offset correction. The calibration file can be produced with the VMM slow       control tool. Optional parameter. 
+    -cal: Name of the calibration file. A calibration file is a JSON file containing an 
+    	ADC and/or time correction in the form of a slope and an offset correction. 
+    	The calibration file can be produced with the VMM slow control tool. Optional parameter. 
 
   
 

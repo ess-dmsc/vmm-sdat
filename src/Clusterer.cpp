@@ -568,7 +568,7 @@ void Clusterer::MatchClustersDetector(uint8_t det) {
          c1 != end(m_clusters[std::make_pair(det, 1)]); ++c1) {
       if ((*c1).plane_coincidence == false) {
 
-        double chargeRatio = (double)(*c1).adc / (double)c0.adc;
+        double chargeRatio = (double)(c0).adc / (double)(*c1).adc;
         lastDelta_t = delta_t;
         delta_t = (*c1).time - c0.time;
         if (m_config.pConditionCoincidence == "utpc") {
@@ -576,8 +576,8 @@ void Clusterer::MatchClustersDetector(uint8_t det) {
         } else if (m_config.pConditionCoincidence == "charge2") {
           delta_t = (*c1).time_charge2 - c0.time_charge2;
         }
-        if (chargeRatio >= 1 / m_config.pChargeRatio &&
-            chargeRatio <= m_config.pChargeRatio &&
+        if (chargeRatio >= m_config.pChargeRatioLower &&
+            chargeRatio <= m_config.pChargeRatioUpper &&
             std::abs(delta_t) < minDelta &&
             std::abs(delta_t) <= m_config.pDeltaTimePlanes &&
             (c0.size + (*c1).size >= m_config.pCoincidentClusterSize)) {

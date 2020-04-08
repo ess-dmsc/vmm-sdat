@@ -14,93 +14,95 @@ bool Configuration::PrintUsage(const std::string &errorMessage, char *argv)
     std::cout << "./convertFile -f ../../FAN0_gdgem_readouts_20190528-165706_00000.h5 "
               << "-vmm \"[[1,0,2,0],[1,0,2,1],[1,0,2,2],[1,0,2,3],[1,1,2,6],[1,1,2,7],[1,1,2,8],[1,1,2,9]]\" "
               << "-axis \"[[1,0],0],[[1,1],0]\" -sc \"[[0.4,0.4,1]]\" -tl \"[[-51.2, -51.2, 100]]\" -ro \"[[0,0,45]]\" -tr \"[[S,T,R2]]\" "
-              << "-bc 40 -tac 60 -th 0 -cs 1 -ccs 3 -dt 200 -mst 1 -spc 500 -dp 200 -coin center-of-mass -ratio 2 -save 111 -json 0 -n 0 " << std::endl;
+              << "-bc 40 -tac 60 -th 0 -cs 1 -ccs 3 -dt 200 -mst 1 -spc 500 -dp 200 -coin center-of-mass -crl 0.75 -cru 3.0 -save 111 -swap 0 -json 0 -n 0 " << std::endl;
 
     std::cout << "\n\nFlags:\n"
               << std::endl;
-    std::cout << "-f: Either h5 data file with the extension .h5 (data file created by ESS DAQ tool), or .pcapng PCAP file saved in Wireshark.\n"
+    std::cout << "-f:     Either h5 data file with the extension .h5 (data file created by ESS DAQ tool), or .pcapng PCAP file saved in Wireshark.\n"
               << std::endl;
 
-    std::cout << "-vmm: mapping of detectors, plane, fecs and chips starting and ending with \" and separated by brackets and comma [[det, plane, fec,chip], [det, plane, fec, chip], etc.]."
+    std::cout << "-vmm:   mapping of detectors, plane, fecs and chips starting and ending with \" and separated by brackets and comma [[det, plane, fec,chip], [det, plane, fec, chip], etc.]."
               << std::endl;
-    std::cout << "    The tuples for the VMMs are defined as follows:" << std::endl;
-    std::cout << "        detector (choose a number between 0 and 255)" << std::endl;
-    std::cout << "        plane (0 or 1)" << std::endl;
-    std::cout << "        fec (fecID set in firmware based on IP address, 10.0.0.1 is fecID 1, 10.0.0.2 is fecID 2 and so on)" << std::endl;
-    std::cout << "        vmm (depends on connection of hybrid to FEC, FEC channel 1 equals VMMs 0 and 1, FEC channel 2 VMMs 2 and 3, FEC channel 8 VMMs 14 and 15)" << std::endl;
-    std::cout << "    When looking at the detector, the following conventions are used:" << std::endl;
-    std::cout << "        - top side of the hybrids is visible (if the hybrids are mounted in the readout plane)" << std::endl;
-    std::cout << "        - side of the Hirose connector (bottom of the hybird) is visible (if hybrids are mounted on the side of the detector)" << std::endl;
-    std::cout << "        - plane 0 is at the bottom (HDMI cables go downwards)" << std::endl;
-    std::cout << "        - plane 1 is at the right side (HDMI cables go to the right)" << std::endl;
-    std::cout << "    If one looks at a VMM3a hybrid (connector to detector readout is on the bottom side), the channel 0 of the VMM 0 is always where the HDMI cable is connected" << std::endl;
-    std::cout << "    If the planes are correctly used as described above, the VMM IDs are always in icreasing order PER HYBRID (e.g. 14, 15 or e.g. 0, 1)\n" << std::endl;
+    std::cout << "        The tuples for the VMMs are defined as follows:" << std::endl;
+    std::cout << "            detector (choose a number between 0 and 255)" << std::endl;
+    std::cout << "            plane (0 or 1)" << std::endl;
+    std::cout << "            fec (fecID set in firmware based on IP address, 10.0.0.1 is fecID 1, 10.0.0.2 is fecID 2 and so on)" << std::endl;
+    std::cout << "            vmm (depends on connection of hybrid to FEC, FEC channel 1 equals VMMs 0 and 1, FEC channel 2 VMMs 2 and 3, FEC channel 8 VMMs 14 and 15)" << std::endl;
+    std::cout << "        When looking at the detector, the following conventions are used:" << std::endl;
+    std::cout << "            - top side of the hybrids is visible (if the hybrids are mounted in the readout plane)" << std::endl;
+    std::cout << "            - side of the Hirose connector (bottom of the hybird) is visible (if hybrids are mounted on the side of the detector)" << std::endl;
+    std::cout << "            - plane 0 is at the bottom (HDMI cables go downwards)" << std::endl;
+    std::cout << "            - plane 1 is at the right side (HDMI cables go to the right)" << std::endl;
+    std::cout << "        If one looks at a VMM3a hybrid (connector to detector readout is on the bottom side), the channel 0 of the VMM 0 is always where the HDMI cable is connected" << std::endl;
+    std::cout << "        If the planes are correctly used as described above, the VMM IDs are always in icreasing order PER HYBRID (e.g. 14, 15 or e.g. 0, 1)\n" << std::endl;
 
-    std::cout << "-axis: direction of axis. Detector, plane and direction flag (if direction flag = 1, axis direction is flipped)." << std::endl;
-    std::cout << "    Detector, plane and direction flag starting and ending with \" and separated by bracket and comma [[[det,plane],flag], [[det, plane],flag]]."
+    std::cout << "-axis:  direction of axis. Detector, plane and direction flag (if direction flag = 1, axis direction is flipped)." << std::endl;
+    std::cout << "        Detector, plane and direction flag starting and ending with \" and separated by bracket and comma [[[det,plane],flag], [[det, plane],flag]]."
               << std::endl;
-    std::cout << "    The tuples for the axes are defined as follows:" << std::endl;
-    std::cout << "        - detector (choose a number between 0 and 255)" << std::endl;
-    std::cout << "        - plane (0 or 1)" << std::endl;
-    std::cout << "        - flip axis flag (0 or 1)" << std::endl;
-    std::cout << "    Using the convention described above, if the plane axis is NOT FLIPPED:" << std::endl;
-    std::cout << "        - plane 0 is at the bottom and goes from left (0) to right (255)" << std::endl;
-    std::cout << "        - plane 1 is at the right and goes from bottom (0) to top (255)" << std::endl;
-    std::cout << "    If the plane axis is FLIPPED:" << std::endl;
-    std::cout << "        - plane 0 is at the bottom and goes from right (255) to left (0)" << std::endl;
-    std::cout << "        - plane 1 is at the right and goes from top (0) to bottom (255)\n" << std::endl;
-    std::cout << "-sc: Scale coordinates. Per detector a tuple with three values in mm, e.g for two detectors [[s0,s1,s2], [s0,s1,s2]].\n"
+    std::cout << "        The tuples for the axes are defined as follows:" << std::endl;
+    std::cout << "            - detector (choose a number between 0 and 255)" << std::endl;
+    std::cout << "            - plane (0 or 1)" << std::endl;
+    std::cout << "            - flip axis flag (0 or 1)" << std::endl;
+    std::cout << "        Using the convention described above, if the plane axis is NOT FLIPPED:" << std::endl;
+    std::cout << "            - plane 0 is at the bottom and goes from left (0) to right (255)" << std::endl;
+    std::cout << "            - plane 1 is at the right and goes from bottom (0) to top (255)" << std::endl;
+    std::cout << "        If the plane axis is FLIPPED:" << std::endl;
+    std::cout << "            - plane 0 is at the bottom and goes from right (255) to left (0)" << std::endl;
+    std::cout << "            - plane 1 is at the right and goes from top (0) to bottom (255)\n" << std::endl;
+    std::cout << "-sc:    Scale coordinates. Per detector a tuple with three values in mm, e.g for two detectors [[s0,s1,s2], [s0,s1,s2]].\n"
               << std::endl;
-    std::cout << "-tl: Translate coordinates. Per detector a tuple with three values in mm, e.g for two detectors [[t0,t1,t2], [t0,t1,t2]].\n"
+    std::cout << "-tl:    Translate coordinates. Per detector a tuple with three values in mm, e.g for two detectors [[t0,t1,t2], [t0,t1,t2]].\n"
               << std::endl;
-    std::cout << "-ro: Rotate around plane 0, plane 1, plane 2. Per detector a tuple with three angles in degrees, e.g for two detectors [[r0,r1,r2], [r0,r1,r2]].\n"
+    std::cout << "-ro:    Rotate around plane 0, plane 1, plane 2. Per detector a tuple with three angles in degrees, e.g for two detectors [[r0,r1,r2], [r0,r1,r2]].\n"
               << std::endl;
-    std::cout << "-tr: Transform detector coordinates. S=scale, T=translate, R0=rotation plane 0, R1=rotation plane1, R2=rotation plane2."
+    std::cout << "-tr:    Transform detector coordinates. S=scale, T=translate, R0=rotation plane 0, R1=rotation plane1, R2=rotation plane2.\n"
+              << "        example (two detectors): -tr [[S,T,R2], [S,T, R2]]. First scaling, then translation, then rotation around normal axis to plane0 and plane 1.\n" << std::endl;
+    std::cout << "-bc:    bunch crossing clock. Optional argument (default 40 MHz).\n"
               << std::endl;
-    std::cout << "    example (two detectors): -tr [[S,T,R2], [S,T, R2]]. First scaling, then translation, then rotation around normal axis to plane0 and plane 1.\n" << std::endl;
-    std::cout << "-bc: bunch crossing clock. Optional argument (default 40 MHz).\n"
+    std::cout << "-tac:   tac slope. Optional argument (default 60 ns).\n"
               << std::endl;
-    std::cout << "-tac: tac slope. Optional argument (default 60 ns).\n"
+    std::cout << "-th:    threshold value in ADC counts. Optional argument (default 0, if -1, only hits with over threshold flag 1 are expected).\n"
               << std::endl;
-    std::cout << "-th: threshold value in ADC counts. Optional argument (default 0, if -1, only hits with over threshold flag 1 are expected).\n"
+    std::cout << "-cs:    minimum cluster size per plane. Optional argument (default 1).\n"
               << std::endl;
-    std::cout << "-cs: minimum cluster size per plane. Optional argument (default 1).\n"
+    std::cout << "-ccs:   minimum cluster size in plane 0 and plane 1 together. Optional argument (default 2).\n"
               << std::endl;
-    std::cout << "-ccs: minimum cluster size in plane 0 and plane 1 together. Optional argument (default 2).\n"
+    std::cout << "-dt:    maximum time difference between strips in time sorted vector. Optional argument (default 200).\n"
               << std::endl;
-    std::cout << "-dt: maximum time difference between strips in time sorted vector. Optional argument (default 200).\n"
+    std::cout << "-mst:   maximum missing strips in strip sorted vector. Optional argument (default 2).\n"
               << std::endl;
-    std::cout << "-mst: maximum missing strips in strip sorted vector. Optional argument (default 2).\n"
+    std::cout << "-spc:   maximum time span of cluster in one dimension (determined by drift size and speed). Optional argument (default 500).\n"
               << std::endl;
-    std::cout << "-spc: maximum time span of cluster in one dimension (determined by drift size and speed). Optional argument (default 500).\n"
+    std::cout << "-dp:    maximum time between matched clusters in x and y. Optional argument (default 200).\n"
               << std::endl;
-    std::cout << "-dp: maximum time between matched clusters in x and y. Optional argument (default 200).\n"
+    std::cout << "-coin:  Valid clusters normally occur at the same time in plane 0 and plane 1 of a detctor. The parameter -dp determines the permitted time difference between the planes.\n"
+              << "        The time can be calculated with the center-of-mass algorithm (center-of-mass), the uTPC method (utpc) or the center-of-mass squared method (charge2).\n"
+              << "        Optional argument (default center-of-mass).\n"
               << std::endl;
-    std::cout << "-coin: Valid clusters normally occur at the same time in plane 0 and plane 1 of a detctor. The parameter -dp determines the permitted time difference between the planes."
-              << std::endl;
-    std::cout << "     The time can be calculated with the center-of-mass algorithm (center-of-mass), the uTPC method (utpc) or the center-of-mass squared method (charge2). Optional argument (default center-of-mass).\n"
-              << std::endl;
-    std::cout << "-ratio: Valid clusters normally have the same amount of charge in both detector planes (ratio of (charge plane 0 / charge plane 1) is 100\% or 1."
-              << std::endl;
-    std::cout << "     The desired ratio for the matching can be set as optional argument, the default is 2 or 200\%, i.e. the charge in plane 0 has to be between 50\% and 200\% of the charge in plane 1.\n"
-              << std::endl;
-    std::cout << "-save: select which data to store in root file. Input is a 3 bit binary number." << std::endl;
-    std::cout << "       bit 0 (LSB): hits (a hit is a VMM3a channel over threshold)" << std::endl;
-    std::cout << "       bit 1      : clusters plane" << std::endl;
-    std::cout << "       bit 2 (MSB): clusters detector" << std::endl;
-    std::cout << "       Examples:" << std::endl; 
-    std::cout << "           001: hits only" << std::endl; 
-    std::cout << "           100: clusters detector only" << std::endl; 
-    std::cout << "           111: everything, hits, clusters plane, clusters detector\n" << std::endl; 
+    std::cout << "-crl:   Valid clusters normally have the same amount of charge in both detector planes (ratio of charge plane 0/charge plane 1 is 100\% or 1.\n"
+              << "        Depending on the readout, the charge sharing can be different, e.g. in a standard GEM strip readout the total charge is divided 60/40 between plane 0/ plane 1\n"
+              << "        With -crl one sets the lower threshold for the plane0/plane1 charge ratio. Optional argument (default 0.5).\n" <<  std::endl;
+    std::cout << "-cru:   With -cru one sets the upper threshold for the plane0/plane1 charge ratio. Optional argument (default 2).\n" <<  std::endl;
+    
+    std::cout << "-swap:  Same connectors on readout boards unintentionally swap odd and even channels. With -swap 1 one can correct this.\n" 
+              << "        Optional parameter (default 0).\n" << std::endl;
+    std::cout << "-save:  select which data to store in root file. Input is a 3 bit binary number." << std::endl;
+    std::cout << "        bit 0 (LSB): hits (a hit is a VMM3a channel over threshold)" << std::endl;
+    std::cout << "        bit 1      : clusters plane" << std::endl;
+    std::cout << "        bit 2 (MSB): clusters detector" << std::endl;
+    std::cout << "        Examples:" << std::endl; 
+    std::cout << "            001: hits only" << std::endl; 
+    std::cout << "            100: clusters detector only" << std::endl; 
+    std::cout << "            111: everything, hits, clusters plane, clusters detector\n" << std::endl; 
    
-    std::cout << "-json: create a json file of the detector images. Optional argument (default 1).\n"
+    std::cout << "-json:  create a json file of the detector images. Optional argument (default 1).\n"
               << std::endl;
-    std::cout << "-n: number of hits to analyze. Optional argument (default 0, i.e. all hits).\n"
+    std::cout << "-n:     number of hits to analyze. Optional argument (default 0, i.e. all hits).\n"
               << std::endl;
     std::cout << "-stats: Show statistics of the run (default 0, do not show any stats).\n"
               << std::endl;
-    std::cout << "-cal: Name of the calibration file. A calibration file is a JSON file containing an ADC and/or time correction in the form of a slope and an offset value. Optional parameter.s\n"<< std::endl;
-
+    std::cout << "-cal:   Name of the calibration file. A calibration file is a JSON file containing an ADC and/or time correction in the form of a slope and an offset value. Optional parameter.\n"<< std::endl;
+    std::cout << "-info:  Additional info the user wants to be added to the end of the newly created file name.\n"<<  	std::endl;
     std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;
     if (argv != nullptr)
     {
@@ -451,9 +453,13 @@ bool Configuration::ParseCommandLine(int argc, char **argv)
         {
             createJSON = atoi(argv[i + 1]);
         }
-        else if (strncmp(argv[i], "-ratio", 6) == 0)
+        else if (strncmp(argv[i], "-crl", 4) == 0)
         {
-            pChargeRatio = atof(argv[i + 1]);
+            pChargeRatioLower = atof(argv[i + 1]);
+        }
+        else if (strncmp(argv[i], "-cru", 4) == 0)
+        {
+            pChargeRatioUpper = atof(argv[i + 1]);
         }
         else if (strncmp(argv[i], "-coin", 5) == 0)
         {
@@ -466,6 +472,9 @@ bool Configuration::ParseCommandLine(int argc, char **argv)
         else if (strncmp(argv[i], "-algo", 5) == 0)
         {
             pAlgo = atoi(argv[i + 1]);
+        }
+        else if (strncmp(argv[i], "-swap", 5) == 0) {
+        	swapOddEven = atoi(argv[i + 1]);
         }
         else
         {
@@ -501,18 +510,27 @@ bool Configuration::ParseCommandLine(int argc, char **argv)
         pRootFilename.replace(pRootFilename.size() - 7, pRootFilename.size(), "");
     }
     std::string strParams;
-
+	
+	if(swapOddEven) {
+	  pInfo = pInfo + "_sw";
+	}
     if (pInfo.length() > 0) {
         strParams += "_";
         strParams += pInfo;
     }
     strParams += ".root";
-    std::string sChargeRatio = std::to_string(pChargeRatio);
-    std::replace(sChargeRatio.begin(), sChargeRatio.end(), '.', 'p');
-    sChargeRatio = std::regex_replace(sChargeRatio, std::regex("00000"), "0");
+    std::string sChargeRatioLower = std::to_string(pChargeRatioLower);
+    std::replace(sChargeRatioLower.begin(), sChargeRatioLower.end(), '.', 'p');
+    sChargeRatioLower = std::regex_replace(sChargeRatioLower, std::regex("00000"), "0");
+    
+    std::string sChargeRatioUpper = std::to_string(pChargeRatioUpper);
+    std::replace(sChargeRatioUpper.begin(), sChargeRatioUpper.end(), '.', 'p');
+    sChargeRatioUpper = std::regex_replace(sChargeRatioUpper, std::regex("00000"), "0");
+
 
     pRootFilename = pRootFilename + "_bc_" + std::to_string(pBC) + "_tac_" + std::to_string((int)pTAC) + "_ccs_" +
-                    std::to_string((int)pCoincidentClusterSize) + "_cs_" + std::to_string((int)pMinClusterSize) + "_dt_" + std::to_string((int)pDeltaTimeHits) + "_mst_" + std::to_string((int)pMissingStripsCluster) + "_spc_" + std::to_string((int)pSpanClusterTime) + "_dp_" + std::to_string((int)pDeltaTimePlanes) + "_ratio_" + sChargeRatio + "_coin_" + pConditionCoincidence + strParams;
+                    std::to_string((int)pCoincidentClusterSize) + "_cs_" + std::to_string((int)pMinClusterSize) + "_dt_" + std::to_string((int)pDeltaTimeHits) + "_mst_" +    std::to_string((int)pMissingStripsCluster) + "_spc_" + std::to_string((int)pSpanClusterTime) + "_dp_" + std::to_string((int)pDeltaTimePlanes) 
+                    + "_cr_" + sChargeRatioLower + "-"  + sChargeRatioUpper  + "_coin_" + pConditionCoincidence + strParams;
 
     return true;
 }
@@ -783,17 +801,33 @@ bool Configuration::CreateMapping()
                 if (search != end(pOffsets)) {
                     offset = search->second;
                 }
-                if (flag == 1) {
-                    for(int ch=0; ch<64; ch++) { 
-                        pPositions[f][v][ch] = offset -ch;
-                    } 
-                }
-                else {
-                    for(int ch=0; ch<64; ch++) { 
-                        pPositions[f][v][ch] = offset + ch;
-                    }
-
-                } 
+                if(swapOddEven == false) {					
+					for(int ch=0; ch<64; ch++) { 
+						if (flag == 1) {
+							pPositions[f][v][ch] = offset -ch;
+						} 
+						else {
+							pPositions[f][v][ch] = offset + ch;
+						}
+					}
+				}
+				else {
+					int channel = 0;
+					for(int ch=0; ch<64; ch++) { 
+						if(ch%2 == 0) {
+							channel = ch + 1;
+						}
+						else {
+							channel = ch - 1;
+						}
+						if (flag == 1) {
+							pPositions[f][v][ch] = offset -channel;
+						} 
+						else {
+							pPositions[f][v][ch] = offset + channel;
+						}
+					}
+				}
             } else {
                 pDetectors[f][v] = -1;
                 pPlanes[f][v] = -1;

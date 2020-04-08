@@ -79,9 +79,11 @@ public:
 
     bool createJSON = false;
     bool useCalibration = false;
+    bool swapOddEven = false;
     int pSaveWhat = 0;
     std::string pConditionCoincidence = "center-of-mass";
-    float pChargeRatio = 2;
+    float pChargeRatioLower = 0.5;
+    float pChargeRatioUpper = 2;
     int nHits = 0;
     //**************************************************************
     // END PARAMETERS
