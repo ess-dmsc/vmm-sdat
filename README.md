@@ -52,11 +52,14 @@ and the SRS readout, the Readout.h file can be found in
 https://github.com/ess-dmsc/event-formation-unit/blob/master/src/gdgem/nmx/Readout.h
 
 ### Time calculation
-The convertFile utility of the vmm-hdf5-to-root package analyses the hdf5 files of the gdgem/SRS pipeline. There 
+The convertFile utility of the vmm-sdat package analyses pcapng or the hdf5 files of the gdgem/SRS pipeline. There 
 are two time stamps in the hdf5 file, the srs_timestamp coming from the SRS front end card (FEC), and the 
-chiptime coming from the VMM ASIC. The VMM measures time in BCID and TDC, with a 40 MHz BC clock the BCID has 
-a 25 ns resolution. The BCID is a 12 bit number with values going from 0-4095, that means the bc_time is covering 
-a range of 4096 * 25 ns = 102.4 us. The TDC gives information about the time between BCIDs. With a TAC slope of 
+chiptime coming from the VMM ASIC. To obtain the total time, these two timestamps are added, and the new field in the 
+root file is just called time.
+
+The VMM measures time in BCID and TDC, with a 40 MHz BC clock the BCID has a 25 ns resolution. The BCID is a 12 bit 
+number with values going from 0-4095, that means the bc_time is covering a range of 4096 * 25 ns = 102.4 us. 
+The TDC gives information about the time between BCIDs. With a TAC slope of 
 60 ns, the time resolution of the tdc_time is 60ns/256 bits = 0.23 ns. The tdc_time and the bc_time together are 
 called chiptime. 
 
@@ -71,7 +74,9 @@ Example:
 But even with the offset the time range covered is only 32 * 102.4 us = 3278.8 us = 3.3 ms. Therefore every 
 3.3 ms 42 bit time markers are send by the FEC card. All the offsets always refer to the previous time marker 
 sent for the particular VMM. The EFU now takes the time markers and the offset and calculates the srs_timestamp 
-from it in unit [ns]. 
+from it in unit [ns]. If one analyses a pcapng file, the vmm-sdat analysis code carries out the same steps that are 
+done in the EFU. The chiptime is calculated from BCID and TDC, the srs_timestamp is calculated from the last time marker
+and the offsets.
 
 ### Calibration files
 The ESS DAQ has the option to load JSON calibration files, that contain for each channel of each VMM ASIC 
