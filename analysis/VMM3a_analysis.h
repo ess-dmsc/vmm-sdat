@@ -1,13 +1,15 @@
 //////////////////////////////////////////////////////////
 // This class has been automatically generated on
-// Wed Jun 10 15:09:15 2020 by ROOT version 6.18/04
+// Tue Jun 16 15:35:00 2020 by ROOT version 6.18/04
 // from TTree events/vmm3 events
-// found on file: example.root
+// found on file: Xray_4975V_DAQ_225_VMM_Mixed_Gain_4_5mV_fC_X_6mv_fC_Y_Gas_Flow_2_5_L_h_Neighbouring_Logic_OFF_Long_Run_20200611-153731_bc_40_tac_60_ccs_3_cs_1_dt_200_mst_1_spc_500_dp_100_cr_0p30-3p00_calibration_NMX_4VMM_extPulse_dummyreadout.root
 //////////////////////////////////////////////////////////
 
-#ifndef VMM3a_Analysis_h
-#define VMM3a_Analysis_h
+#ifndef VMM3a_h
+#define VMM3a_h
 
+#include <iostream>
+#include <TROOT.h>
 #include <TROOT.h>
 #include <TChain.h>
 #include <TFile.h>
@@ -17,6 +19,17 @@
 #include <TTreeReaderArray.h>
 #include <TH1D.h>
 #include <TCanvas.h>
+#include <TGraph.h>
+#include "TDatime.h"
+#include "TH1F.h"
+#include "TH2F.h"
+#include "TMath.h"
+#include "TColor.h"
+#include "TText.h"
+#include "TPaveText.h"
+#include "TView3D.h"
+#include <stdio.h>
+
 
 
 // Headers needed by this particular selector
@@ -24,14 +37,58 @@
 
 
 
-class VMM3a_Analysis : public TSelector {
+class VMM3a : public TSelector {
 public :
    TTreeReader     fReader;  //!the tree reader
    TTree          *fChain = 0;   //!pointer to the analyzed TTree or TChain
 
+   TH2F *hXQCLS;
+   TH2F *hYQCLS;
+
+   TH1F *hXHits;
+   TH1F *hXQ;
+   TH1F *hXNormalizedCharge;
+   TH1F *hXCharge;
+   TH2F *hXChargeVsTime;
+   TH2F *hXChargeVsPosition;
+
+   TH1F *hYHits;
+   TH1F *hYQ;
+   TH1F *hYNormalizedCharge;
+   TH1F *hYCharge;
+   TH2F *hYChargeVsTime;
+   TH2F *hYChargeVsPosition;
+
+   TH2F *hXYCharge;
+   TH2F *hXYNormalizedCharge;
+   TH2F *hXYHits;
+
+   TDatime dtime;
+   Double_t bin_content;
+   Int_t x_bin;
+   Int_t y_bin;
+
+   TCanvas *cXQ;
+   TCanvas *cYQ;
+   TCanvas *cXNormalizedCharge;
+   TCanvas *cYNormalizedCharge;
+   TCanvas *cXHits;
+   TCanvas *cYHits;
+
+   TCanvas *cXCharge;
+   TCanvas *cYCharge;
+   TCanvas *cXChargeVsTime;
+   TCanvas *cYChargeVsTime;
+   TCanvas *cXChargeVsPosition;
+   TCanvas *cYChargeVsPosition;
+   TCanvas *cXYCharge;
+   TCanvas *cXYNormalizedCharge;
+   TCanvas *cXYHits;
+   TView *view;
 
    TH1D *hClusterTimeDifference;
    TCanvas *cClusterTimeDifference;
+
 
    // Readers to access the data (delete the ones you do not need).
    TTreeReaderArray<unsigned int> hits_id = {fReader, "hits.id"};
@@ -53,27 +110,30 @@ public :
    TTreeReaderArray<UChar_t> clusters_plane_det = {fReader, "clusters_plane.det"};
    TTreeReaderArray<UChar_t> clusters_plane_plane = {fReader, "clusters_plane.plane"};
    TTreeReaderArray<unsigned short> clusters_plane_size = {fReader, "clusters_plane.size"};
-   TTreeReaderArray<unsigned int> clusters_plane_adc = {fReader, "clusters_plane.adc"};
+   TTreeReaderArray<unsigned short> clusters_plane_adc = {fReader, "clusters_plane.adc"};
    TTreeReaderArray<Double_t> clusters_plane_time = {fReader, "clusters_plane.time"};
    TTreeReaderArray<Double_t> clusters_plane_time_utpc = {fReader, "clusters_plane.time_utpc"};
    TTreeReaderArray<Double_t> clusters_plane_time_charge2 = {fReader, "clusters_plane.time_charge2"};
+   TTreeReaderArray<Double_t> clusters_plane_time_algo = {fReader, "clusters_plane.time_algo"};
    TTreeReaderArray<Double_t> clusters_plane_pos = {fReader, "clusters_plane.pos"};
    TTreeReaderArray<Double_t> clusters_plane_pos_utpc = {fReader, "clusters_plane.pos_utpc"};
    TTreeReaderArray<Double_t> clusters_plane_pos_charge2 = {fReader, "clusters_plane.pos_charge2"};
+   TTreeReaderArray<Double_t> clusters_plane_pos_algo = {fReader, "clusters_plane.pos_algo"};
    TTreeReaderArray<Bool_t> clusters_plane_plane_coincidence = {fReader, "clusters_plane.plane_coincidence"};
    TTreeReaderArray<unsigned short> clusters_plane_max_delta_time = {fReader, "clusters_plane.max_delta_time"};
    TTreeReaderArray<unsigned short> clusters_plane_max_missing_strip = {fReader, "clusters_plane.max_missing_strip"};
    TTreeReaderArray<unsigned short> clusters_plane_span_cluster = {fReader, "clusters_plane.span_cluster"};
    TTreeReaderArray<vector<double>> clusters_plane_strips = {fReader, "clusters_plane.strips"};
    TTreeReaderArray<vector<double>> clusters_plane_times = {fReader, "clusters_plane.times"};
+   TTreeReaderArray<vector<double>> clusters_plane_adcs = {fReader, "clusters_plane.adcs"};
    TTreeReaderArray<unsigned int> clusters_detector_id = {fReader, "clusters_detector.id"};
    TTreeReaderArray<unsigned int> clusters_detector_id0 = {fReader, "clusters_detector.id0"};
    TTreeReaderArray<unsigned int> clusters_detector_id1 = {fReader, "clusters_detector.id1"};
    TTreeReaderArray<UChar_t> clusters_detector_det = {fReader, "clusters_detector.det"};
    TTreeReaderArray<unsigned short> clusters_detector_size0 = {fReader, "clusters_detector.size0"};
    TTreeReaderArray<unsigned short> clusters_detector_size1 = {fReader, "clusters_detector.size1"};
-   TTreeReaderArray<unsigned int> clusters_detector_adc0 = {fReader, "clusters_detector.adc0"};
-   TTreeReaderArray<unsigned int> clusters_detector_adc1 = {fReader, "clusters_detector.adc1"};
+   TTreeReaderArray<unsigned short> clusters_detector_adc0 = {fReader, "clusters_detector.adc0"};
+   TTreeReaderArray<unsigned short> clusters_detector_adc1 = {fReader, "clusters_detector.adc1"};
    TTreeReaderArray<Double_t> clusters_detector_pos0 = {fReader, "clusters_detector.pos0"};
    TTreeReaderArray<Double_t> clusters_detector_pos1 = {fReader, "clusters_detector.pos1"};
    TTreeReaderArray<Double_t> clusters_detector_pos2 = {fReader, "clusters_detector.pos2"};
@@ -89,6 +149,11 @@ public :
    TTreeReaderArray<Double_t> clusters_detector_pos2_charge2 = {fReader, "clusters_detector.pos2_charge2"};
    TTreeReaderArray<Double_t> clusters_detector_time0_charge2 = {fReader, "clusters_detector.time0_charge2"};
    TTreeReaderArray<Double_t> clusters_detector_time1_charge2 = {fReader, "clusters_detector.time1_charge2"};
+   TTreeReaderArray<Double_t> clusters_detector_pos0_algo = {fReader, "clusters_detector.pos0_algo"};
+   TTreeReaderArray<Double_t> clusters_detector_pos1_algo = {fReader, "clusters_detector.pos1_algo"};
+   TTreeReaderArray<Double_t> clusters_detector_pos2_algo = {fReader, "clusters_detector.pos2_algo"};
+   TTreeReaderArray<Double_t> clusters_detector_time0_algo = {fReader, "clusters_detector.time0_algo"};
+   TTreeReaderArray<Double_t> clusters_detector_time1_algo = {fReader, "clusters_detector.time1_algo"};
    TTreeReaderArray<Double_t> clusters_detector_dt0 = {fReader, "clusters_detector.dt0"};
    TTreeReaderArray<Double_t> clusters_detector_dt1 = {fReader, "clusters_detector.dt1"};
    TTreeReaderArray<Double_t> clusters_detector_delta_plane = {fReader, "clusters_detector.delta_plane"};
@@ -102,11 +167,12 @@ public :
    TTreeReaderArray<vector<double>> clusters_detector_times0 = {fReader, "clusters_detector.times0"};
    TTreeReaderArray<vector<double>> clusters_detector_strips1 = {fReader, "clusters_detector.strips1"};
    TTreeReaderArray<vector<double>> clusters_detector_times1 = {fReader, "clusters_detector.times1"};
- 
+   TTreeReaderArray<vector<double>> clusters_detector_adcs0 = {fReader, "clusters_detector.adcs0"};
+   TTreeReaderArray<vector<double>> clusters_detector_adcs1 = {fReader, "clusters_detector.adcs1"};
 
 
-   VMM3a_Analysis(TTree * /*tree*/ =0) { }
-   virtual ~VMM3a_Analysis() { }
+   VMM3a(TTree * /*tree*/ =0) { }
+   virtual ~VMM3a() { }
    virtual Int_t   Version() const { return 2; }
    virtual void    Begin(TTree *tree);
    virtual void    SlaveBegin(TTree *tree);
@@ -121,14 +187,14 @@ public :
    virtual void    SlaveTerminate();
    virtual void    Terminate();
 
-   ClassDef(VMM3a_Analysis,0);
+   ClassDef(VMM3a,0);
 
 };
 
 #endif
 
-#ifdef VMM3a_Analysis_cxx
-void VMM3a_Analysis::Init(TTree *tree)
+#ifdef VMM3a_cxx
+void VMM3a::Init(TTree *tree)
 {
    // The Init() function is called when the selector needs to initialize
    // a new tree or chain. Typically here the reader is initialized.
@@ -140,7 +206,7 @@ void VMM3a_Analysis::Init(TTree *tree)
    fReader.SetTree(tree);
 }
 
-Bool_t VMM3a_Analysis::Notify()
+Bool_t VMM3a::Notify()
 {
    // The Notify() function is called when a new file is opened. This
    // can be either for a new TTree in a TChain or when when a new TTree
@@ -152,4 +218,4 @@ Bool_t VMM3a_Analysis::Notify()
 }
 
 
-#endif // #ifdef VMM3a_Analysis_cxx
+#endif // #ifdef VMM3a_cxx

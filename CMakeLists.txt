@@ -3,17 +3,17 @@ cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 project(vmm-sdat)
 
 set(CMAKE_BUILD_TYPE RelWithDebInfo)
-#set(CMAKE_CXX_STANDARD 11)
+#set(CMAKE_CXX_STANDARD 17)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -fsanitize=address -O0 -ggdb")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb")
 
 
 # Directory with EFU installation
 #Standard path
-#set(EFU_DIR "$ENV{HOME}/essdaq/efu/event-formation-unit"  CACHE STRING "EFU directory")
+set(EFU_DIR "$ENV{HOME}/essdaq/efu/event-formation-unit"  CACHE STRING "EFU directory")
 #Individual path
 # Could also use commandline: cmake -DEFU_DIR=~/dev/event-formation-unit/ ..
-set(EFU_DIR "$ENV{HOME}/programming/essdaq/efu/event-formation-unit"  CACHE STRING "EFU directory")
+#set(EFU_DIR "$ENV{HOME}/programming/essdaq/efu/event-formation-unit"  CACHE STRING "EFU directory")
 message(STATUS "EFU directory: ${EFU_DIR}")
 
 #=============================================================================

@@ -50,8 +50,10 @@ int main(int argc, char **argv) {
       Gem::ParserVMM3 *parser = new Gem::ParserVMM3(2000, nmxstats, srs_time);
       Gem::CalibrationFile calfile(m_config.pCalFilename);
       ReaderPcap pcap(m_config.pFileName);
-      if (pcap.open() < 0) {
-        std::cout << "Error opening file: " << m_config.pFileName << std::endl;
+      int ret = pcap.open();
+      if (ret < 0) {
+        std::cout << "Error opening file: " << m_config.pFileName 
+        << ": return value " << ret<<std::endl;
         return -1;
       }
       uint64_t pcappackets = 0;
@@ -93,39 +95,39 @@ int main(int argc, char **argv) {
         }
         if (m_config.pShowStats) {
           pcappackets++;
-          m_stats.IncrementCounter("parser_frame_seq_errors", parser->pd.fecId,
-                                   nmxstats.parser_frame_seq_errors);
-          m_stats.IncrementCounter("parser_frame_missing_errors", parser->pd.fecId,
-                                   nmxstats.parser_frame_missing_errors);
-          m_stats.IncrementCounter("parser_framecounter_overflows", parser->pd.fecId,
-                                   nmxstats.parser_framecounter_overflows);
-          nmxstats.parser_frame_seq_errors = 0;
-          nmxstats.parser_frame_missing_errors = 0;
-          nmxstats.parser_framecounter_overflows = 0;
+          m_stats.IncrementCounter("ParserFrameSeqErrors", parser->pd.fecId,
+                                   nmxstats.ParserFrameSeqErrors);
+          m_stats.IncrementCounter("ParserFrameMissingErrors", parser->pd.fecId,
+                                   nmxstats.ParserFrameMissingErrors);
+          m_stats.IncrementCounter("ParserFramecounterOverflows", parser->pd.fecId,
+                                   nmxstats.ParserFramecounterOverflows);
+          nmxstats.ParserFrameSeqErrors = 0;
+          nmxstats.ParserFrameMissingErrors = 0;
+          nmxstats.ParserFramecounterOverflows = 0;
 
-          m_stats.IncrementCounter("parser_readouts", parser->pd.fecId,
-                                   nmxstats.parser_readouts);
-          m_stats.IncrementCounter("parser_markers", parser->pd.fecId,
-                                   nmxstats.parser_markers);
-          m_stats.IncrementCounter("parser_data", parser->pd.fecId,
-                                   nmxstats.parser_data);
-          nmxstats.parser_readouts = 0;
-          nmxstats.parser_markers = 0;
-          nmxstats.parser_data = 0;
+          m_stats.IncrementCounter("ParserReadouts", parser->pd.fecId,
+                                   nmxstats.ParserReadouts);
+          m_stats.IncrementCounter("ParserMarkers", parser->pd.fecId,
+                                   nmxstats.ParserMarkers);
+          m_stats.IncrementCounter("ParserData", parser->pd.fecId,
+                                   nmxstats.ParserData);
+          nmxstats.ParserReadouts = 0;
+          nmxstats.ParserMarkers = 0;
+          nmxstats.ParserData = 0;
 
-          m_stats.IncrementCounter("parser_timestamp_seq_errors", parser->pd.fecId,
-                                   nmxstats.parser_timestamp_seq_errors);
-          m_stats.IncrementCounter("parser_timestamp_overflows", parser->pd.fecId,
-                                   nmxstats.parser_timestamp_overflows);
-          nmxstats.parser_timestamp_seq_errors = 0;
-          nmxstats.parser_timestamp_overflows = 0;
+          m_stats.IncrementCounter("ParserTimestampSeqErrors", parser->pd.fecId,
+                                   nmxstats.ParserTimestampSeqErrors);
+          m_stats.IncrementCounter("ParserTimestampOverflows", parser->pd.fecId,
+                                   nmxstats.ParserTimestampOverflows);
+          nmxstats.ParserTimestampSeqErrors = 0;
+          nmxstats.ParserTimestampOverflows = 0;
         }
       }
       if (m_config.pShowStats) {
-        m_stats.IncrementCounter("parser_bad_frames", parser->pd.fecId,
-                                 nmxstats.parser_bad_frames);
-        m_stats.IncrementCounter("parser_good_frames", parser->pd.fecId,
-                                 nmxstats.parser_good_frames);
+        m_stats.IncrementCounter("ParserBadFrames", parser->pd.fecId,
+                                 nmxstats.ParserBadFrames);
+        m_stats.IncrementCounter("ParserGoodFrames", parser->pd.fecId,
+                                 nmxstats.ParserGoodFrames);
       }
       delete parser;
     } else {
@@ -179,7 +181,7 @@ int main(int argc, char **argv) {
             RowData.chip_id, RowData.channel, RowData.bcid, RowData.tdc,
             RowData.adc, RowData.over_threshold, RowData.chiptime);
         total_hits++;
-        m_stats.IncrementCounter("parser_data", RowData.fec);
+        m_stats.IncrementCounter("ParserData", RowData.fec);
         if (result == false ||
             (total_hits >= m_config.nHits && m_config.nHits > 0))
           break;
