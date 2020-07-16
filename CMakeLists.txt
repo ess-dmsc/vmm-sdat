@@ -2,19 +2,14 @@
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 project(vmm-sdat)
 
+# Temporary hack allowing conditional compilation of efu code
+add_definitions("-DVMM_SDAT")
+
 set(CMAKE_BUILD_TYPE RelWithDebInfo)
 #set(CMAKE_CXX_STANDARD 17)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -fsanitize=address -O0 -ggdb")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb")
 
-
-# Directory with EFU installation
-#Standard path
-set(EFU_DIR "$ENV{HOME}/essdaq/efu/event-formation-unit"  CACHE STRING "EFU directory")
-#Individual path
-# Could also use commandline: cmake -DEFU_DIR=~/dev/event-formation-unit/ ..
-#set(EFU_DIR "$ENV{HOME}/programming/essdaq/efu/event-formation-unit"  CACHE STRING "EFU directory")
-message(STATUS "EFU directory: ${EFU_DIR}")
 
 #=============================================================================
 # Augment CMake with our custom scripts
@@ -67,8 +62,21 @@ endif()
 
 if(ENABLE_DTRACE)
     message(STATUS "DTrace enabled")
-    add_definitions(-DTRC_LEVEL=TRC_L_DEB)   
- endif()  
+    add_definitions(-DTRC_LEVEL=TRC_L_DEB)
+ endif()
+
+
+ #
+ # Specify location of EFU repository
+ #
+ if (NOT DEFINED EFU_DIR)
+   set(EFU_DIR "$ENV{HOME}/essdaq/efu/event-formation-unit"  CACHE STRING "EFU directory")
+ endif()
+
+ if (NOT EXISTS ${EFU_DIR})
+   message(FATAL_ERROR "efu directory ${EFU_DIR} does not exist. Use -DEFU_DIR=efupath")
+ endif()
+
 
 
 # You need to tell CMake where to find the ROOT installation. This can be done in a number of ways:
@@ -77,9 +85,7 @@ if(ENABLE_DTRACE)
 list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
 
 find_package(Boost REQUIRED COMPONENTS system)
-
 find_package(HDF5 1.10 REQUIRED)
-
 find_package(h5cpp REQUIRED)
 
 #---Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
@@ -110,3 +116,10 @@ target_link_libraries(convertFile vmm-sdat)
 target_link_libraries(accessTree vmm-sdat)
 
 target_compile_definitions(vmm-sdat PUBLIC __FAVOR_BSD)
+
+# Final reporting
+#
+message(STATUS "#######################################################")
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "EFU directory: ${EFU_DIR}")
+message(STATUS "#######################################################")
