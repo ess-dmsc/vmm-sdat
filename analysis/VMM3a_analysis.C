@@ -1,4 +1,4 @@
-#define VMM3a_cxx
+#define VMM3a_analysis_cxx
 // The class definition in VMM3a.h has been generated automatically
 // by the ROOT utility TTree::MakeSelector(). This class is derived
 // from the ROOT class TSelector. For more information on the TSelector
@@ -19,17 +19,17 @@
 //
 // To use this file, try the following session on your Tree T:
 //
-// root> T->Process("VMM3a.C")
-// root> T->Process("VMM3a.C","some options")
-// root> T->Process("VMM3a.C+")
+// root> T->Process("VMM3a_analysis.C")
+// root> T->Process("VMM3a_analysis.C","some options")
+// root> T->Process("VMM3a_analysis.C+")
 //
 
 
-#include "VMM3a.h"
+#include "VMM3a_analysis.h"
 #include <TH2.h>
 #include <TStyle.h>
 
-void VMM3a::Begin(TTree * /*tree*/)
+void VMM3a_analysis::Begin(TTree * /*tree*/)
 {
    // The Begin() function is called at the start of the query.
    // When running with PROOF Begin() is only called on the client.
@@ -137,7 +137,7 @@ void VMM3a::Begin(TTree * /*tree*/)
   cYCharge->SetPhi(-360);
   cYCharge->SetFrameBorderMode(0);
  
-  cYChargeVsTime = new TCanvas("cXChargeVsTime", "cXChargeVsTime",120,190,700,500);
+  cYChargeVsTime = new TCanvas("cYChargeVsTime", "cYChargeVsTime",120,190,700,500);
   cYChargeVsTime->Range(-0.75,-0.75,0.75,0.75);
   cYChargeVsTime->SetFillColor(0);
   cYChargeVsTime->SetBorderMode(0);
@@ -214,7 +214,7 @@ void VMM3a::Begin(TTree * /*tree*/)
 
 }
 
-void VMM3a::SlaveBegin(TTree * /*tree*/)
+void VMM3a_analysis::SlaveBegin(TTree * /*tree*/)
 {
    // The SlaveBegin() function is called after the Begin() function.
    // When running with PROOF SlaveBegin() is called on each slave server.
@@ -224,7 +224,7 @@ void VMM3a::SlaveBegin(TTree * /*tree*/)
 
 }
 
-Bool_t VMM3a::Process(Long64_t entry)
+Bool_t VMM3a_analysis::Process(Long64_t entry)
 {
    // The Process() function is called for each entry in the tree (or possibly
    // keyed object in the case of PROOF) to be processed. The entry argument
@@ -243,53 +243,48 @@ Bool_t VMM3a::Process(Long64_t entry)
    // The return value is currently not used.
 
    fReader.SetLocalEntry(entry);
-   //if(entry<100000){
-   if(1){
-   if (entry%1000==0) cout << "entry: " << entry << "\r" << flush;
+   if (entry%100==0) cout << "entry: " << entry << "\r" << flush;
    
-	   for (int n=0;  n< clusters_detector_pos0.GetSize(); n++) 
-	   	{
-   		x_bin = TMath::FloorNint(clusters_detector_pos0.At(n));
-   		y_bin = TMath::FloorNint(clusters_detector_pos1.At(n));
+	   for (unsigned long n=0;  n< clusters_detector_pos0.GetSize(); n++)   	{
+			x_bin = TMath::FloorNint(clusters_detector_pos0.At(n));
+			y_bin = TMath::FloorNint(clusters_detector_pos1.At(n));
 
-		hXCharge->Fill(clusters_detector_adc0.At(n));
-   		hYCharge->Fill(clusters_detector_adc1.At(n));
+			hXCharge->Fill(clusters_detector_adc0.At(n));
+			hYCharge->Fill(clusters_detector_adc1.At(n));
 
-		hXChargeVsTime->Fill(entry,clusters_detector_adc0.At(n));
-   		hYChargeVsTime->Fill(entry,clusters_detector_adc1.At(n));
+			hXChargeVsTime->Fill(clusters_detector_time0.At(n),clusters_detector_adc0.At(n));
+			hYChargeVsTime->Fill(clusters_detector_time1.At(n),clusters_detector_adc1.At(n));
 
-		hXChargeVsPosition->Fill(clusters_detector_pos0.At(n),clusters_detector_adc0.At(n));
-   		hYChargeVsPosition->Fill(clusters_detector_pos1.At(n),clusters_detector_adc1.At(n));
+			hXChargeVsPosition->Fill(clusters_detector_pos0.At(n),clusters_detector_adc0.At(n));
+			hYChargeVsPosition->Fill(clusters_detector_pos1.At(n),clusters_detector_adc1.At(n));
+			hXHits->Fill(x_bin);
+			hYHits->Fill(y_bin);
+			hXYHits->Fill(x_bin,y_bin);
 
-   		hXHits->Fill(x_bin);
-   		hYHits->Fill(y_bin);
-   		hXYHits->Fill(x_bin,y_bin);
+			bin_content = hXQ->GetBinContent(x_bin);
+			hXQ->SetBinContent(x_bin,bin_content+clusters_detector_adc0.At(n));
 
-   		bin_content = hXQ->GetBinContent(x_bin);
-   		hXQ->SetBinContent(x_bin,bin_content+clusters_detector_adc0.At(n));
+			bin_content = hYQ->GetBinContent(y_bin);
+			hYQ->SetBinContent(y_bin,bin_content+clusters_detector_adc1.At(n));
 
-   		bin_content = hYQ->GetBinContent(y_bin);
-   		hYQ->SetBinContent(y_bin,bin_content+clusters_detector_adc1.At(n));
+			bin_content = hXYCharge->GetBinContent(x_bin,y_bin);
+			hXYCharge->SetBinContent(x_bin,y_bin,bin_content+clusters_detector_adc0.At(n)+clusters_detector_adc1.At(n));
 
-   		bin_content = hXYCharge->GetBinContent(x_bin,y_bin);
-   		hXYCharge->SetBinContent(x_bin,y_bin,bin_content+clusters_detector_adc0.At(n)+clusters_detector_adc1.At(n));
-
-   		hXQCLS->Fill(clusters_detector_size0.At(n),clusters_detector_adc0.At(n));
-   		hYQCLS->Fill(clusters_detector_size1.At(n),clusters_detector_adc1.At(n));
+			hXQCLS->Fill(clusters_detector_size0.At(n),clusters_detector_adc0.At(n));
+			hYQCLS->Fill(clusters_detector_size1.At(n),clusters_detector_adc1.At(n));
 
 
-		hClusterTimeDifference->Fill(clusters_detector_time0.At(n) - clusters_detector_time1.At(n));
+			hClusterTimeDifference->Fill(clusters_detector_time0.At(n) - clusters_detector_time1.At(n));
 
-        	}
+    	}
+  
    
-
 
    return kTRUE;
-   }
-   else return kFALSE;
+
 }
 
-void VMM3a::SlaveTerminate()
+void VMM3a_analysis::SlaveTerminate()
 {
    // The SlaveTerminate() function is called after all entries or objects
    // have been processed. When running with PROOF SlaveTerminate() is called
@@ -297,12 +292,15 @@ void VMM3a::SlaveTerminate()
 
 }
 
-void VMM3a::Terminate()
+void VMM3a_analysis::Terminate()
 {
    // The Terminate() function is the last function to be called during
    // a query. It always runs on the client, it can be used to present
    // the results graphically or save the results to file.
    cout << "graphing...."<< endl;
+
+   cXHits->cd();
+   hXHits->Draw();
 
    cXCharge->cd();
    hXCharge->Draw();
@@ -340,8 +338,7 @@ void VMM3a::Terminate()
    cYQ->cd();
    hYQ->Draw();
 
-   cXHits->cd();
-   hXHits->Draw();
+
 
    cYHits->cd();
    hYHits->Draw();
