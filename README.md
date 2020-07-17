@@ -21,20 +21,20 @@ To build the program, start in the program directory vmm-sdat
 mkdir build
 cd build
 cmake .. or (to enable debug info) cmake -DENABLE_DTRACE=ON ..
-
-The program uses conan to install all the ESS dependencies.
 ```
+The program uses conan to install all the ESS dependencies.
+
 ## Built With
 * [CMAKE](https://cmake.org/) - Cross platform makefile generation
 
 ## Deployment
 How to run the program:
-For help concerning the possible parameters, type:
+The executable is called convertFile, it has been created in the build directory. For help concerning the possible parameters, type:
 ```
 ./convertFile 
 ```
 
-Complete command line:
+Example command line:
 ```
 ./convertFile -f data.pcapng 
 -vmm "[[1,0,2,2],[1,0,2,3],[1,0,2,0],[1,0,2,1],[1,1,2,8],[1,1,2,9],[1,1,2,6],[1,1,2,7]]" 
