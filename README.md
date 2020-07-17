@@ -16,7 +16,7 @@ For more information about ROOT see [here](https://root.cern.ch/)
 
 ## Installing
 
-To build the program, start in the program directory vmm-hdf5-to-root
+To build the program, start in the program directory vmm-sdat
 ```
 mkdir build
 cd build
@@ -110,7 +110,7 @@ a position and a time is calculated using three different algorithms:
     - center-of-mass2 (charge squared as weight)
     - utpc (latest time)
 The user can define additional algorithms in the method Clusterer::AlgorithmUTPC() in
-https://github.com/ess-dmsc/vmm-hdf5-to-root/blob/master/Clusterer.cpp
+https://github.com/ess-dmsc/vmm-sdat/blob/master/src/Clusterer.cpp
 
 The additional algorithm is picked depending on the -algo parameter. At the moment, two additional algorithms are 
 defined there 
@@ -278,8 +278,8 @@ The script accessTree in the build directory shows how to access the produced tr
 * **Dorothea Pfeiffer** - *Initial work, implementation of new features* - [dorotheapfeiffer](https://github.com/dorotheapfeiffer)
 * **Lucian Scharenberg** - *Debugging, testing, proposing new features, Python analysis*  - [lscharenberg](https://github.com/lscharenberg)
 
-See also the list of [contributors](https://github.com/ess-dmsc/vmm-hdf5-to-root/contributors) who participated in this project.
+See also the list of [contributors](https://github.com/ess-dmsc/vmm-sdat/contributors) who participated in this project.
 
 ## License
 
-This project is licensed under the BSD 2-Clause "Simplified" License - see the [license](https://github.com/ess-dmsc/vmm-hdf5-to-root/contributors/LICENSE.md) file for details.
+This project is licensed under the BSD 2-Clause "Simplified" License - see the [license](https://github.com/ess-dmsc/vmm-sdat/contributors/LICENSE.md) file for details.
