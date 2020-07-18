@@ -1,7 +1,7 @@
 
 # vmm-sdat
 
-VMM3a/SRS Data Analysis Tool: Analysis software for VMM3a data, recorded with the SRS as PCAP or HDF5 files (GdGEM pipeline of the EFU). From the PCAP or HDF5 file, a root tree with the hits and clusters is created.
+VMM3a/SRS Data Analysis Tool: Analysis software for VMM3a data, recorded with the SRS as PCAPNG or HDF5 files (GdGEM pipeline of the EFU). From the PCAP or HDF5 file, a root tree with the hits and clusters is created.
 For more information about ROOT see [here](https://root.cern.ch/)
 
 ## Getting Started
@@ -52,8 +52,8 @@ and the SRS readout, the Readout.h file can be found in
 https://github.com/ess-dmsc/event-formation-unit/blob/master/src/gdgem/nmx/Readout.h
 
 ### Time calculation
-The convertFile utility of the vmm-sdat package analyses pcapng or the hdf5 files of the gdgem/SRS pipeline. There 
-are two time stamps in the hdf5 file, the srs_timestamp coming from the SRS front end card (FEC), and the 
+The convertFile utility of the vmm-sdat package analyses pcapng directly from the SRS FEC, or the hdf5 files of the 
+gdgem/SRS pipeline. There are two time stamps in the hdf5 file, the srs_timestamp coming from the SRS front end card (FEC), and the 
 chiptime coming from the VMM ASIC. To obtain the total time, these two timestamps are added, and the new field in the 
 root file is just called time.
 
@@ -166,7 +166,7 @@ the two planes (charge plane 0 / charge plane 1) or (charge plane 1 / charge pla
             - plane 0 is at the bottom and goes from left (0) to right (255)
             - plane 1 is at the right and goes from bottom (0) to top (255)
         If the plane axis is FLIPPED:
-            - plane 0 is at the bottom and goes from right (255) to left (0)
+            - plane 0 is at the bottom and goes from right (0) to left (255)
             - plane 1 is at the right and goes from top (0) to bottom (255)
     
     -sc: Scale coordinates. Per detector a tuple with three values in mm, 
@@ -227,9 +227,9 @@ the two planes (charge plane 0 / charge plane 1) or (charge plane 1 / charge pla
         bit 1      : clusters plane" << std::endl;
         bit 2 (MSB): clusters detector" << std::endl;
         Examples:
-            0001: hits only 
-            0100: clusters detector only 
-            0111: everything, hits, clusters plane, clusters detector
+            001: hits only 
+            100: clusters detector only 
+            111: everything, hits, clusters plane, clusters detector
    
     -stats: Show statistics of the run (default 1, show all stats)
 
@@ -270,7 +270,7 @@ the two planes (charge plane 0 / charge plane 1) or (charge plane 1 / charge pla
   
 
 ## Accessing the produced ROOT tree
-The script accessTree in the build directory shows how to access the produced trees. An example.root tree is provided in the source directory.
+In the analysis folder are example data (h5 and root) and analysis scripts. Please refer to the README in the folder.
 
 
 ## Authors
