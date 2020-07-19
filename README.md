@@ -269,8 +269,18 @@ the two planes (charge plane 0 / charge plane 1) or (charge plane 1 / charge pla
 
   
 
+## Running the program
+In the run folder there are two scripts and example data that show how to use the convertFile utility. 
+runConversionPcapng.py converts the Wireshark pcapng file example.pcapng into a root tree, whereas 
+runConversionH5.py does the same with the example.h5 hdf5 file. 
+Building on these two scripts you can construct your own scripts for file conversion. The meaning of the 
+command line parameters is explained above. For sure you will have to change the mapping of FECs and VMMs
+to the axes of your detector.
+  
+
 ## Accessing the produced ROOT tree
-In the analysis folder are example data (h5 and root) and analysis scripts. Please refer to the README in the folder.
+The script accessTree in the build directory shows how to access the produced root trees. 
+An example.root tree is provided in the source directory.
 
 
 ## Authors
