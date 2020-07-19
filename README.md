@@ -267,10 +267,18 @@ the two planes (charge plane 0 / charge plane 1) or (charge plane 1 / charge pla
     	ADC and/or time correction in the form of a slope and an offset correction. 
     	The calibration file can be produced with the VMM slow control tool. Optional parameter. 
 
+## Running the program
+In the run folder there are two scripts and example data that show how to use the convertFile utility. 
+runConversionPcapng.py converts the Wireshark pcapng file example.pcapng into a root tree, whereas 
+runConversionH5.py does the same with the example.h5 hdf5 file. 
+Building on these two scripts you can construct your own scripts for file conversion. The meaning of the 
+command line parameters is explained above. For sure you will have to change the mapping of FECs and VMMs
+to the axes of your detector.
   
 
 ## Accessing the produced ROOT tree
-The script accessTree in the build directory shows how to access the produced trees. An example.root tree is provided in the source directory.
+The script accessTree in the build directory shows how to access the produced root trees. 
+An example.root tree is provided in the source directory.
 
 
 ## Authors
