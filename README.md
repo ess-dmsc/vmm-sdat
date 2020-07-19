@@ -279,8 +279,8 @@ to the axes of your detector.
   
 
 ## Accessing the produced ROOT tree
-The script accessTree in the build directory shows how to access the produced root trees. 
-An example.root tree is provided in the source directory.
+The script accessTree in the build directory shows how to access the produced root trees. The data in the 
+root trees can be further analyzed and plotted. An example.root tree is provided in the source directory.
 
 
 ## Authors
