@@ -9,7 +9,7 @@
 #include "Configuration.h"
 #include <gdgem/srs/CalibrationFile.h>
 #include <gdgem/srs/ParserVMM3.h>
-#include <tools/ReaderPcap.h>
+#include <udpgenpcap/ReaderPcap.h>
 #include <gdgem/nmx/Readout.h>
 
 using namespace hdf5;

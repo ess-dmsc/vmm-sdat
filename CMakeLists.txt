@@ -6,7 +6,7 @@ project(vmm-sdat)
 add_definitions("-DVMM_SDAT")
 
 set(CMAKE_BUILD_TYPE RelWithDebInfo)
-#set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 17)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -fsanitize=address -O0 -ggdb")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb")
 
@@ -33,7 +33,6 @@ create_version_header(
   ${VERSION_INCLUDE_DIR}/common/Version.h
 )
 
-
 #=============================================================================
 # Conan
 #=============================================================================
@@ -41,7 +40,7 @@ create_version_header(
 SET(CONAN_PROFILE "default" CACHE STRING "Name of conan profile to use, uses default by default")
 SET(CONAN "AUTO" CACHE STRING "conan options AUTO (conan must be in path), MANUAL (expects conanbuildinfo.cmake in build directory) or DISABLE")
 if(${CONAN} MATCHES "AUTO")
-  include(${CMAKE_MODULE_PATH}/conan.cmake)
+  include(${EXTRA_MODULES_DIR}/modules/conan.cmake)
   conan_cmake_run(CONANFILE conanfile.txt
       PROFILE ${CONAN_PROFILE}
       BASIC_SETUP NO_OUTPUT_DIRS KEEP_RPATHS NO_IMPORTS
@@ -96,15 +95,17 @@ include(${ROOT_USE_FILE})
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
 include_directories(${EFU_DIR}/src)
+include_directories(${EFU_DIR}/src/modules)
+include_directories(${EFU_DIR}/src/udpgenpcap)
 include_directories(${VERSION_INCLUDE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/analysis)
 
 
-ROOT_GENERATE_DICTIONARY(vmm-sdatDict ${EFU_DIR}/src/gdgem/nmx/Readout.h ${EFU_DIR}/src/gdgem/srs/ParserVMM3.h ${EFU_DIR}/src/gdgem/srs/SRSTime.h ${EFU_DIR}/src/gdgem/srs/CalibrationFile.h ${EFU_DIR}/src/tools/ReaderPcap.h  ${CMAKE_CURRENT_SOURCE_DIR}/src/Clusterer.h ${CMAKE_CURRENT_SOURCE_DIR}/src/RootFile.h ${CMAKE_CURRENT_SOURCE_DIR}/src/DataStructures.h ${CMAKE_CURRENT_SOURCE_DIR}/src/Configuration.h ${CMAKE_CURRENT_SOURCE_DIR}/src/Statistics.h LINKDEF ${CMAKE_CURRENT_SOURCE_DIR}/src/convertLinkDef.h MODULE vmm-sdat)
+ROOT_GENERATE_DICTIONARY(vmm-sdatDict ${EFU_DIR}/src/modules/gdgem/nmx/Readout.h ${EFU_DIR}/src/modules/gdgem/srs/ParserVMM3.h ${EFU_DIR}/src/modules/gdgem/srs/SRSTime.h ${EFU_DIR}/src/modules/gdgem/srs/CalibrationFile.h ${EFU_DIR}/src/udpgenpcap/ReaderPcap.h  ${CMAKE_CURRENT_SOURCE_DIR}/src/Clusterer.h ${CMAKE_CURRENT_SOURCE_DIR}/src/RootFile.h ${CMAKE_CURRENT_SOURCE_DIR}/src/DataStructures.h ${CMAKE_CURRENT_SOURCE_DIR}/src/Configuration.h ${CMAKE_CURRENT_SOURCE_DIR}/src/Statistics.h LINKDEF ${CMAKE_CURRENT_SOURCE_DIR}/src/convertLinkDef.h MODULE vmm-sdat)
 
 
 #---Create a shared library with generated dictionary
-add_library(vmm-sdat SHARED ${EFU_DIR}/src/gdgem/srs/ParserVMM3.cpp ${EFU_DIR}/src/gdgem/srs/SRSTime.cpp ${EFU_DIR}/src/gdgem/srs/CalibrationFile.cpp ${EFU_DIR}/src/tools/ReaderPcap.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Clusterer.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/RootFile.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Configuration.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Statistics.cpp vmm-sdatDict.cxx)
+add_library(vmm-sdat SHARED ${EFU_DIR}/src/modules/gdgem/srs/ParserVMM3.cpp ${EFU_DIR}/src/modules/gdgem/srs/SRSTime.cpp ${EFU_DIR}/src/modules/gdgem/srs/CalibrationFile.cpp ${EFU_DIR}/src/udpgenpcap/ReaderPcap.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Clusterer.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/RootFile.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Configuration.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Statistics.cpp vmm-sdatDict.cxx)
 target_link_libraries(vmm-sdat ${ROOT_LIBRARIES} ${Boost_SYSTEM_LIBRARY} ${HDF5_LIBRARIES} h5cpp fmt graylog_logger_static pcap)
 
 #---Create  a main program using the library

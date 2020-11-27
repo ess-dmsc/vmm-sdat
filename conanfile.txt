@@ -1,12 +1,19 @@
 [requires]
-google-benchmark/1.4.1-dm2@ess-dmsc/testing
+asio/1.16.1
 CLI11/1.8.0@cliutils/stable
-graylog-logger/1.1.8-dm1@ess-dmsc/stable
-gtest/3121b20-dm3@ess-dmsc/stable
-fmt/5.2.0@bincrafters/stable
+fmt/6.2.0
+google-benchmark/1.4.1-dm2@ess-dmsc/testing
+graylog-logger/2.0.3-dm1@ess-dmsc/stable
+gtest/1.8.1@bincrafters/stable
+h5cpp/0.3.3@ess-dmsc/stable
+jsonformoderncpp/3.7.0
 libpcap/1.8.1@bincrafters/stable
-h5cpp/0.1.2@ess-dmsc/testing
-jsonformoderncpp/3.6.1@vthiery/stable
+librdkafka/0.11.5-dm2@ess-dmsc/stable
+logical-geometry/705ea61@ess-dmsc/stable
+readerwriterqueue/07e22ec@ess-dmsc/stable
+concurrentqueue/8f7e861@ess-dmsc/stable
+streaming-data-types/70c9a71@ess-dmsc/stable
+trompeloeil/v31@ess-dmsc/stable
 
 [generators]
 cmake
