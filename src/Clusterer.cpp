@@ -179,7 +179,7 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
   	}
   }
   else {
-  	if ((adc >= m_config.pADCThreshold || overThresholdFlag)) {
+  	if ((adc >= m_config.pADCThreshold)) {
     	m_hits_new[std::make_pair(det, plane)].emplace_back(totalTime,  (uint16_t)pos, adc);
   	}
   

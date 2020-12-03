@@ -83,7 +83,7 @@ The ESS DAQ has the option to load JSON calibration files, that contain for each
 an ADC (adc_offset and adc_slope) and a time (adc_offset and adc_slope) correction.
 https://github.com/ess-dmsc/event-formation-unit/blob/master/src/gdgem/srs/CalibrationFile.cpp
 The JSON calibration file can either be produced automatically with the VMM Slow Control program
-https://gitlab.cern.ch/mguth/VMM-software-RD51
+https://gitlab.cern.ch/rd51-slow-control/vmmsc
 or by other means. If the calibration file is loaded during the data acquisition with the ESS DAQ, then the 
 chip_time has been calculated using the following formula:
 - new_chiptime = BCID * 25 ns + ( 25 ns - tdc_time - time_offset) * time_slope
