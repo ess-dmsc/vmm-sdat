@@ -69,13 +69,26 @@ int main(int argc, char **argv) {
 
         for (int i = 0; i < hits; i++) {
           auto &d = parser->data[i];
-          if (d.hasDataMarker && d.fecTimeStamp > 0) {
-
-            double srs_timestamp =
+          int8_t triggerOffset = 0;
+          if(m_config.pDataFormat == "SRS_ESS") {
+            //triggerOffset goes from -1 to 15, a value of -16 indicates a latency violation
+            triggerOffset = static_cast<int8_t>(d.triggerOffset);
+          }
+          else if(m_config.pDataFormat == "ESS") {
+            //ESS format not implemented yet
+            triggerOffset = -16;
+          }
+          //data format SRS
+          else {
+            //triggerOffset goes from 0 to 31
+            triggerOffset = static_cast<uint8_t>(d.triggerOffset);
+          } 
+          if (d.hasDataMarker && d.fecTimeStamp > 0 && triggerOffset != -16) {
+            
+            uint64_t srs_timestamp =
                 (static_cast<uint64_t>(d.fecTimeStamp) *
                      Gem::SRSTime::internal_SRS_clock_period_ns +
-                 static_cast<uint64_t>(d.triggerOffset) *
-                     srs_time.trigger_period_ns());
+                 triggerOffset * srs_time.trigger_period_ns());
           
             auto calib = calfile.getCalibration(
                 parser->pd.fecId, d.vmmid, d.chno);

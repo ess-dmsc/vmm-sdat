@@ -22,9 +22,10 @@ public:
 	~Clusterer();
 
 	// Analyzing and storing the hits
-        bool AnalyzeHits(double srsTimestamp, uint8_t fecId, 
-        uint8_t vmmId, uint16_t chNo, uint16_t bcid, uint16_t tdc, uint16_t adc, bool overThresholdFlag, float chipTime);
-       
+        bool AnalyzeHits(uint64_t srsTimestamp, uint8_t fecId, 
+        uint8_t vmmId, uint16_t chNo, uint16_t bcid, uint16_t tdc, 
+        uint16_t adc, bool overThresholdFlag, float chipTime);
+
         // Analyzing and storing the clusters in plane 0 and 1
         void AnalyzeClustersPlane(std::pair<uint8_t, uint8_t> dp);
 
@@ -40,8 +41,8 @@ public:
         int ClusterByStrip(std::pair<uint8_t, uint8_t> dp,ClusterContainer &cluster, uint16_t maxDeltaTime);
   
         void AlgorithmUTPC(int idx_min_largest_time, int idx_max_largest_time, std::vector<double> & vADC,
-                std::vector<double> & vStrips, std::vector<double> & vTimes, double &positionUTPC, double &timeUTPC, 
-                double &positionAlgo, double &timeAlgo);
+                std::vector<double> & vStrips, std::vector<uint64_t> & vTimes, double &positionUTPC, uint64_t &timeUTPC, 
+                double &positionAlgo, uint64_t &timeAlgo);
 
         void MatchClustersDetector(uint8_t det);
 
@@ -57,12 +58,12 @@ private:
         int m_lineNr = 0;
         int m_eventNr = 0;
         
-        double last_time0 = 0;
-        double last_time1 = 0;
-        double last_time0_utpc = 0;
-        double last_time1_utpc = 0;
-        double last_time0_charge2 = 0;
-        double last_time1_charge2 = 0;
+        uint64_t last_time0 = 0;
+        uint64_t last_time1 = 0;
+        uint64_t last_time0_utpc = 0;
+        uint64_t last_time1_utpc = 0;
+        uint64_t last_time0_charge2 = 0;
+        uint64_t last_time1_charge2 = 0;
 
         uint8_t m_oldVmmId = 0;
         uint8_t m_oldFecId = 0;

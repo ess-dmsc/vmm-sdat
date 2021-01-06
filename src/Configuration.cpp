@@ -14,7 +14,8 @@ bool Configuration::PrintUsage(const std::string &errorMessage, char *argv)
     std::cout << "./convertFile -f ../../FAN0_gdgem_readouts_20190528-165706_00000.h5 "
               << "-vmm \"[[1,0,2,0],[1,0,2,1],[1,0,2,2],[1,0,2,3],[1,1,2,6],[1,1,2,7],[1,1,2,8],[1,1,2,9]]\" "
               << "-axis \"[[1,0],0],[[1,1],0]\" -sc \"[[0.4,0.4,1]]\" -tl \"[[-51.2, -51.2, 100]]\" -ro \"[[0,0,45]]\" -tr \"[[S,T,R2]]\" "
-              << "-bc 40 -tac 60 -th 0 -cs 1 -ccs 3 -dt 200 -mst 1 -spc 500 -dp 200 -coin center-of-mass -crl 0.75 -cru 3.0 -save 111 -swap 0 -json 0 -n 0 " << std::endl;
+              << "-bc 40 -tac 60 -th 0 -cs 1 -ccs 3 -dt 200 -mst 1 -spc 500 "
+              << "-dp 200 -coin center-of-mass -crl 0.75 -cru 3.0 -save 111 -swap 0 -json 0 -n 0 -df SRS" << std::endl;
 
     std::cout << "\n\nFlags:\n"
               << std::endl;
@@ -102,6 +103,12 @@ bool Configuration::PrintUsage(const std::string &errorMessage, char *argv)
     std::cout << "-stats: Show statistics of the run (default 0, do not show any stats).\n"
               << std::endl;
     std::cout << "-cal:   Name of the calibration file. A calibration file is a JSON file containing an ADC and/or time correction in the form of a slope and an offset value. Optional parameter.\n"<< std::endl;
+    std::cout << "-info:  Additional info the user wants to be added to the end of the newly created file name.\n"<<  	std::endl;
+    std::cout << "-df:    Data format: The pcap or h5 files can have different data formats, "
+    << "depending on the firmware on the FEC or assister card.\n"
+    << "        SRS (default): FEC card, and offset in file is interpreted ad unsigned number and goes from 0-31\n"
+    << "        SRS_ESS: FEC card, offset in file is interpreted as signed number and valid offsets goes from -1 to 15\n"
+    << "        ESS: used for assister cards" << std::endl;
     std::cout << "-info:  Additional info the user wants to be added to the end of the newly created file name.\n"<<  	std::endl;
     std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;
     if (argv != nullptr)
@@ -476,6 +483,14 @@ bool Configuration::ParseCommandLine(int argc, char **argv)
         else if (strncmp(argv[i], "-swap", 5) == 0) {
         	swapOddEven = atoi(argv[i + 1]);
         }
+        else if (strncmp(argv[i], "-df", 3) == 0) {
+        	pDataFormat = argv[i + 1];
+            std::vector<std::string> v_valid_values = {"ESS","SRS", "SRS_ESS", "ess", "srs", "srs_ess"};
+            auto searchValid = std::find(v_valid_values.begin(), v_valid_values.end(), pDataFormat);
+            if (searchValid == v_valid_values.end()) {
+                return PrintUsage("The data format parameter -df accepts only the values SRS, SRS_ESS, ESS!", nullptr);
+            } 
+        }    
         else
         {
             return PrintUsage("Wrong type of argument!", argv[i]);

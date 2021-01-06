@@ -8,40 +8,40 @@
 
 void Statistics::CreatePCAPStats(Configuration &config) {
   for (auto const &fec : config.pFecs) {
-    m_counter_names.push_back("parser_frame_seq_errors");
+    m_counter_names.push_back("ParserFrameSeqErrors");
     m_counters.emplace(
-        std::make_pair(std::make_pair(fec, "parser_frame_seq_errors"), 0));
+        std::make_pair(std::make_pair(fec, "ParserFrameSeqErrors"), 0));
 
-    m_counter_names.push_back("parser_frame_missing_errors");
+    m_counter_names.push_back("ParserFrameMissingErrors");
     m_counters.emplace(
-        std::make_pair(std::make_pair(fec, "parser_frame_missing_errors"), 0));
+        std::make_pair(std::make_pair(fec, "ParserFrameMissingErrors"), 0));
 
-    m_counter_names.push_back("parser_framecounter_overflows");
+    m_counter_names.push_back("ParserFramecounterOverflows");
     m_counters.emplace(
-        std::make_pair(std::make_pair(fec, "parser_framecounter_overflows"), 0));
+        std::make_pair(std::make_pair(fec, "ParserFramecounterOverflows"), 0));
 
-    m_counter_names.push_back("parser_timestamp_seq_errors");
+    m_counter_names.push_back("ParserTimestampSeqErrors");
     m_counters.emplace(
-        std::make_pair(std::make_pair(fec, "parser_timestamp_seq_errors"), 0));
+        std::make_pair(std::make_pair(fec, "ParserTimestampSeqErrors"), 0));
 
-    m_counter_names.push_back("parser_timestamp_overflows");
+    m_counter_names.push_back("ParserTimestampOverflows");
     m_counters.emplace(
-        std::make_pair(std::make_pair(fec, "parser_timestamp_overflows"), 0));
+        std::make_pair(std::make_pair(fec, "ParserTimestampOverflows"), 0));
 
-    m_counter_names.push_back("parser_bad_frames");
-    m_counters.emplace(std::make_pair(std::make_pair(fec, "parser_bad_frames"), 0));
+    m_counter_names.push_back("ParserBadFrames");
+    m_counters.emplace(std::make_pair(std::make_pair(fec, "ParserBadFrames"), 0));
 
-    m_counter_names.push_back("parser_good_frames");
-    m_counters.emplace(std::make_pair(std::make_pair(fec, "parser_good_frames"), 0));
+    m_counter_names.push_back("ParserGoodFrames");
+    m_counters.emplace(std::make_pair(std::make_pair(fec, "ParserGoodFrames"), 0));
 
-    m_counter_names.push_back("parser_readouts");
-    m_counters.emplace(std::make_pair(std::make_pair(fec, "parser_readouts"), 0));
+    m_counter_names.push_back("ParserReadouts");
+    m_counters.emplace(std::make_pair(std::make_pair(fec, "ParserReadouts"), 0));
 
-    m_counter_names.push_back("parser_markers");
-    m_counters.emplace(std::make_pair(std::make_pair(fec, "parser_markers"), 0));
+    m_counter_names.push_back("ParserMarkers");
+    m_counters.emplace(std::make_pair(std::make_pair(fec, "ParserMarkers"), 0));
 
-    m_counter_names.push_back("parser_data");
-    m_counters.emplace(std::make_pair(std::make_pair(fec, "parser_data"), 0));
+    m_counter_names.push_back("ParserData");
+    m_counters.emplace(std::make_pair(std::make_pair(fec, "ParserData"), 0));
   }
 }
 
@@ -49,22 +49,22 @@ void Statistics::CreateFECStats(Configuration &config) {
   for (auto const &fec : config.pFecs) {
     m_deltaTriggerTimestamp.emplace(std::make_pair(fec, 0));
     m_oldTriggerTimestamp.emplace(std::make_pair(fec, 0));
-    m_counter_names.push_back("time_stamp_too_large");
+    m_counter_names.push_back("TimestampTooLarge");
     m_counters.emplace(
-        std::make_pair(std::make_pair(fec, "time_stamp_too_large"), 0));
-    m_counter_names.push_back("time_stamp_order_error");
+        std::make_pair(std::make_pair(fec, "TimestampTooLarge"), 0));
+    m_counter_names.push_back("TimestampOrderError");
     m_counters.emplace(
-        std::make_pair(std::make_pair(fec, "time_stamp_order_error"), 0));
-    m_counter_names.push_back("time_stamp_overflow");
+        std::make_pair(std::make_pair(fec, "TimestampOrderError"), 0));
+    m_counter_names.push_back("TimestampOverflow");
     m_counters.emplace(
-        std::make_pair(std::make_pair(fec, "time_stamp_overflow"), 0));
-    m_counter_names.push_back("trigger_period_error");
+        std::make_pair(std::make_pair(fec, "TimestampOverflow"), 0));
+    m_counter_names.push_back("TriggerPeriodError");
     m_counters.emplace(
-        std::make_pair(std::make_pair(fec, "trigger_period_error"), 0));
+        std::make_pair(std::make_pair(fec, "TriggerPeriodError"), 0));
 
     if(!config.pIsPcap) {
-      m_counter_names.push_back("parser_data");
-      m_counters.emplace(std::make_pair(std::make_pair(fec, "parser_data"), 0));
+      m_counter_names.push_back("ParserData");
+      m_counters.emplace(std::make_pair(std::make_pair(fec, "ParserData"), 0));
     }  
 
   }
@@ -81,113 +81,113 @@ void Statistics::CreateClusterStats(Configuration &config) {
     m_lowestCommonTriggerTimestamp_plane[plane0] = 0;
     m_lowestCommonTriggerTimestamp_plane[plane1] = 0;
 
-    m_units.emplace(std::make_pair("delta_time_hits", "ns"));
-    m_factors.emplace(std::make_pair("delta_time_hits", 0.02));
-    m_limits.emplace(std::make_pair("delta_time_hits",
+    m_units.emplace(std::make_pair("DeltaTimeHits", "ns"));
+    m_factors.emplace(std::make_pair("DeltaTimeHits", 0.02));
+    m_limits.emplace(std::make_pair("DeltaTimeHits",
                                     1 + config.pDeltaTimeHits *
-                                            m_factors["delta_time_hits"]));
-    size = static_cast<int>(m_limits["delta_time_hits"]);
+                                            m_factors["DeltaTimeHits"]));
+    size = static_cast<int>(m_limits["DeltaTimeHits"]);
     std::vector<long> v(size, 0);
-    m_stats_plane_names.push_back("delta_time_hits");
+    m_stats_plane_names.push_back("DeltaTimeHits");
     m_stats_plane.emplace(
-        std::make_pair(std::make_pair(plane0, "delta_time_hits"), v));
+        std::make_pair(std::make_pair(plane0, "DeltaTimeHits"), v));
     m_stats_plane.emplace(
-        std::make_pair(std::make_pair(plane1, "delta_time_hits"), v));
+        std::make_pair(std::make_pair(plane1, "DeltaTimeHits"), v));
 
-    m_units.emplace(std::make_pair("missing_strips_cluster", "strips"));
-    m_factors.emplace(std::make_pair("missing_strips_cluster", 1));
+    m_units.emplace(std::make_pair("MissingStripsCluster", "strips"));
+    m_factors.emplace(std::make_pair("MissingStripsCluster", 1));
     m_limits.emplace(std::make_pair(
-        "missing_strips_cluster", 1 + config.pMissingStripsCluster *
-                                          m_factors["missing_strips_cluster"]));
-    size = static_cast<int>(m_limits["missing_strips_cluster"]);
+        "MissingStripsCluster", 1 + config.pMissingStripsCluster *
+                                          m_factors["MissingStripsCluster"]));
+    size = static_cast<int>(m_limits["MissingStripsCluster"]);
     v.resize(size);
     std::fill(v.begin(), v.end(), 0);
-    m_stats_plane_names.push_back("missing_strips_cluster");
+    m_stats_plane_names.push_back("MissingStripsCluster");
     m_stats_plane.emplace(
-        std::make_pair(std::make_pair(plane0, "missing_strips_cluster"), v));
+        std::make_pair(std::make_pair(plane0, "MissingStripsCluster"), v));
     m_stats_plane.emplace(
-        std::make_pair(std::make_pair(plane1, "missing_strips_cluster"), v));
+        std::make_pair(std::make_pair(plane1, "MissingStripsCluster"), v));
 
-    m_units.emplace(std::make_pair("span_cluster_time", "ns"));
-    m_factors.emplace(std::make_pair("span_cluster_time", 0.02));
-    m_limits.emplace(std::make_pair("span_cluster_time",
+    m_units.emplace(std::make_pair("SpanClusterTime", "ns"));
+    m_factors.emplace(std::make_pair("SpanClusterTime", 0.02));
+    m_limits.emplace(std::make_pair("SpanClusterTime",
                                     1 + config.pSpanClusterTime *
-                                            m_factors["span_cluster_time"]));
-    size = static_cast<int>(m_limits["span_cluster_time"]);
+                                            m_factors["SpanClusterTime"]));
+    size = static_cast<int>(m_limits["SpanClusterTime"]);
     v.resize(size);
     std::fill(v.begin(), v.end(), 0);
-    m_stats_plane_names.push_back("span_cluster_time");
+    m_stats_plane_names.push_back("SpanClusterTime");
     m_stats_plane.emplace(
-        std::make_pair(std::make_pair(plane0, "span_cluster_time"), v));
+        std::make_pair(std::make_pair(plane0, "SpanClusterTime"), v));
     m_stats_plane.emplace(
-        std::make_pair(std::make_pair(plane1, "span_cluster_time"), v));
+        std::make_pair(std::make_pair(plane1, "SpanClusterTime"), v));
 
-    m_units.emplace(std::make_pair("cluster_size", "strips"));
-    m_factors.emplace(std::make_pair("cluster_size", 1));
+    m_units.emplace(std::make_pair("ClusterSize", "strips"));
+    m_factors.emplace(std::make_pair("ClusterSize", 1));
     m_limits.emplace(
-        std::make_pair("cluster_size", 1 + 64 * m_factors["cluster_size"]));
-    size = static_cast<int>(m_limits["cluster_size"]);
+        std::make_pair("ClusterSize", 1 + 64 * m_factors["ClusterSize"]));
+    size = static_cast<int>(m_limits["ClusterSize"]);
     v.resize(size);
     std::fill(v.begin(), v.end(), 0);
-    m_stats_plane_names.push_back("cluster_size");
+    m_stats_plane_names.push_back("ClusterSize");
     m_stats_plane.emplace(
-        std::make_pair(std::make_pair(plane0, "cluster_size"), v));
+        std::make_pair(std::make_pair(plane0, "ClusterSize"), v));
     m_stats_plane.emplace(
-        std::make_pair(std::make_pair(plane1, "cluster_size"), v));
+        std::make_pair(std::make_pair(plane1, "ClusterSize"), v));
 
-    m_units.emplace(std::make_pair("cluster_cnt_plane", ""));
-    m_factors.emplace(std::make_pair("cluster_cnt_plane", 1));
-    m_limits.emplace(std::make_pair("cluster_cnt_plane", 1));
-    size = static_cast<int>(m_limits["cluster_cnt_plane"]);
+    m_units.emplace(std::make_pair("ClusterCntPlane", ""));
+    m_factors.emplace(std::make_pair("ClusterCntPlane", 1));
+    m_limits.emplace(std::make_pair("ClusterCntPlane", 1));
+    size = static_cast<int>(m_limits["ClusterCntPlane"]);
     v.resize(size);
     std::fill(v.begin(), v.end(), 0);
-    m_stats_plane_names.push_back("cluster_cnt_plane");
+    m_stats_plane_names.push_back("ClusterCntPlane");
     m_stats_plane.emplace(
-        std::make_pair(std::make_pair(plane0, "cluster_cnt_plane"), v));
+        std::make_pair(std::make_pair(plane0, "ClusterCntPlane"), v));
     m_stats_plane.emplace(
-        std::make_pair(std::make_pair(plane1, "cluster_cnt_plane"), v));
+        std::make_pair(std::make_pair(plane1, "ClusterCntPlane"), v));
 
-    m_units.emplace(std::make_pair("delta_time_planes", "ns"));
-    m_factors.emplace(std::make_pair("delta_time_planes", 0.02));
-    m_limits.emplace(std::make_pair("delta_time_planes",
+    m_units.emplace(std::make_pair("DeltaTimePlanes", "ns"));
+    m_factors.emplace(std::make_pair("DeltaTimePlanes", 0.02));
+    m_limits.emplace(std::make_pair("DeltaTimePlanes",
                                     1 + config.pDeltaTimePlanes *
-                                            m_factors["delta_time_planes"]));
-    size = static_cast<int>(m_limits["delta_time_planes"]);
+                                            m_factors["DeltaTimePlanes"]));
+    size = static_cast<int>(m_limits["DeltaTimePlanes"]);
     v.resize(size);
     std::fill(v.begin(), v.end(), 0);
-    m_stats_detector_names.push_back("delta_time_planes");
+    m_stats_detector_names.push_back("DeltaTimePlanes");
     m_stats_detector.emplace(
-        std::make_pair(std::make_pair(det.first, "delta_time_planes"), v));
+        std::make_pair(std::make_pair(det.first, "DeltaTimePlanes"), v));
 
-    m_units.emplace(std::make_pair("charge_ratio_0_1", "%"));
-    m_factors.emplace(std::make_pair("charge_ratio_0_1", 0.1));
-    m_limits.emplace(std::make_pair("charge_ratio_0_1", 11));
-    size = static_cast<int>(m_limits["charge_ratio_0_1"]);
+    m_units.emplace(std::make_pair("ChargeRatio_0_1", "%"));
+    m_factors.emplace(std::make_pair("ChargeRatio_0_1", 0.1));
+    m_limits.emplace(std::make_pair("ChargeRatio_0_1", 11));
+    size = static_cast<int>(m_limits["ChargeRatio_0_1"]);
     v.resize(size);
     std::fill(v.begin(), v.end(), 0);
-    m_stats_detector_names.push_back("charge_ratio_0_1");
+    m_stats_detector_names.push_back("ChargeRatio_0_1");
     m_stats_detector.emplace(
-        std::make_pair(std::make_pair(det.first, "charge_ratio_0_1"), v));
+        std::make_pair(std::make_pair(det.first, "ChargeRatio_0_1"), v));
 
-    m_units.emplace(std::make_pair("charge_ratio_1_0", "%"));
-    m_factors.emplace(std::make_pair("charge_ratio_1_0", 0.1));
-    m_limits.emplace(std::make_pair("charge_ratio_1_0", 10));
-    size = static_cast<int>(m_limits["charge_ratio_1_0"]);
+    m_units.emplace(std::make_pair("ChargeRatio_1_0", "%"));
+    m_factors.emplace(std::make_pair("ChargeRatio_1_0", 0.1));
+    m_limits.emplace(std::make_pair("ChargeRatio_1_0", 10));
+    size = static_cast<int>(m_limits["ChargeRatio_1_0"]);
     v.resize(size);
     std::fill(v.begin(), v.end(), 0);
-    m_stats_detector_names.push_back("charge_ratio_1_0");
+    m_stats_detector_names.push_back("ChargeRatio_1_0");
     m_stats_detector.emplace(
-        std::make_pair(std::make_pair(det.first, "charge_ratio_1_0"), v));
+        std::make_pair(std::make_pair(det.first, "ChargeRatio_1_0"), v));
 
-    m_units.emplace(std::make_pair("cluster_cnt_detector", ""));
-    m_factors.emplace(std::make_pair("cluster_cnt_detector", 1));
-    m_limits.emplace(std::make_pair("cluster_cnt_detector", 1));
-    size = static_cast<int>(m_limits["cluster_cnt_detector"]);
+    m_units.emplace(std::make_pair("ClusterCntDetector", ""));
+    m_factors.emplace(std::make_pair("ClusterCntDetector", 1));
+    m_limits.emplace(std::make_pair("ClusterCntDetector", 1));
+    size = static_cast<int>(m_limits["ClusterCntDetector"]);
     v.resize(size);
     std::fill(v.begin(), v.end(), 0);
-    m_stats_detector_names.push_back("cluster_cnt_detector");
+    m_stats_detector_names.push_back("ClusterCntDetector");
     m_stats_detector.emplace(
-        std::make_pair(std::make_pair(det.first, "cluster_cnt_detector"), v));
+        std::make_pair(std::make_pair(det.first, "ClusterCntDetector"), v));
   }
 }
 
@@ -234,53 +234,53 @@ long Statistics::GetCounter(std::string error, uint8_t fecId) {
   return m_counters[std::make_pair(fecId, error)];
 }
 
-double Statistics::GetDeltaTriggerTimestamp(uint8_t fecId) {
+uint64_t Statistics::GetDeltaTriggerTimestamp(uint8_t fecId) {
   return m_deltaTriggerTimestamp[fecId];
 }
 
-void Statistics::SetDeltaTriggerTimestamp(uint8_t fecId, double val) {
+void Statistics::SetDeltaTriggerTimestamp(uint8_t fecId, uint64_t val) {
   m_deltaTriggerTimestamp[fecId] = val;
 }
 
-double Statistics::GetOldTriggerTimestamp(uint8_t fecId) {
+uint64_t Statistics::GetOldTriggerTimestamp(uint8_t fecId) {
   return m_oldTriggerTimestamp[fecId];
 }
 
-void Statistics::SetOldTriggerTimestamp(uint8_t fecId, double srsTimestamp) {
+void Statistics::SetOldTriggerTimestamp(uint8_t fecId, uint64_t srsTimestamp) {
   m_oldTriggerTimestamp[fecId] = srsTimestamp;
 }
 
-double Statistics::GetFirstTriggerTimestamp(uint8_t fecId) {
+uint64_t Statistics::GetFirstTriggerTimestamp(uint8_t fecId) {
   return m_firstTriggerTimestamp[fecId];
 }
 
-void Statistics::SetFirstTriggerTimestamp(uint8_t fecId, double srsTimestamp) {
+void Statistics::SetFirstTriggerTimestamp(uint8_t fecId, uint64_t srsTimestamp) {
   m_firstTriggerTimestamp[fecId] = srsTimestamp;
 }
 
-double Statistics::GetMaxTriggerTimestamp(uint8_t fecId) {
+uint64_t Statistics::GetMaxTriggerTimestamp(uint8_t fecId) {
   return m_maxTriggerTimestamp[fecId];
 }
 
-void Statistics::SetMaxTriggerTimestamp(uint8_t fecId, double srsTimestamp) {
+void Statistics::SetMaxTriggerTimestamp(uint8_t fecId, uint64_t srsTimestamp) {
   m_maxTriggerTimestamp[fecId] = srsTimestamp;
 }
 
-double Statistics::GetLowestCommonTriggerTimestampDet(uint8_t det) {
+uint64_t Statistics::GetLowestCommonTriggerTimestampDet(uint8_t det) {
   return m_lowestCommonTriggerTimestamp_det[det];
 }
 
-void Statistics::SetLowestCommonTriggerTimestampDet(uint8_t det, double val) {
+void Statistics::SetLowestCommonTriggerTimestampDet(uint8_t det, uint64_t val) {
   m_lowestCommonTriggerTimestamp_det[det] = val;
 }
 
-double Statistics::GetLowestCommonTriggerTimestampPlane(
+uint64_t Statistics::GetLowestCommonTriggerTimestampPlane(
     std::pair<uint8_t, uint8_t> dp) {
   return m_lowestCommonTriggerTimestamp_plane[dp];
 }
 
 void Statistics::SetLowestCommonTriggerTimestampPlane(
-    std::pair<uint8_t, uint8_t> dp, double val) {
+    std::pair<uint8_t, uint8_t> dp, uint64_t val) {
   m_lowestCommonTriggerTimestamp_plane[dp] = val;
 }
 
@@ -294,14 +294,14 @@ void Statistics::PrintClusterStats(Configuration &config) {
     auto dp0 = std::make_pair(det.first, 0);
     auto dp1 = std::make_pair(det.first, 1);
     long cnt =
-        m_stats_detector[std::make_pair(det.first, "cluster_cnt_detector")][0];
+        m_stats_detector[std::make_pair(det.first, "ClusterCntDetector")][0];
     long cnt0 = 1;
-    if (m_stats_plane[std::make_pair(dp0, "cluster_cnt_plane")][0] > 0) {
-      cnt0 = m_stats_plane[std::make_pair(dp0, "cluster_cnt_plane")][0];
+    if (m_stats_plane[std::make_pair(dp0, "ClusterCntPlane")][0] > 0) {
+      cnt0 = m_stats_plane[std::make_pair(dp0, "ClusterCntPlane")][0];
     }
     long cnt1 = 1;
-    if (m_stats_plane[std::make_pair(dp1, "cluster_cnt_plane")][0] > 0) {
-      cnt1 = m_stats_plane[std::make_pair(dp1, "cluster_cnt_plane")][0];
+    if (m_stats_plane[std::make_pair(dp1, "ClusterCntPlane")][0] > 0) {
+      cnt1 = m_stats_plane[std::make_pair(dp1, "ClusterCntPlane")][0];
     }
     if (config.GetAxes(dp0) && config.GetAxes(dp1)) {
       bothPlanes = true;
@@ -356,10 +356,10 @@ void Statistics::PrintFECStats(Configuration &config) {
       std::cout << m_counter_names[n] << ": "
                 << GetCounter(m_counter_names[n], fec) << std::endl;
     }
-    double first = GetFirstTriggerTimestamp(fec);
-    double max = GetMaxTriggerTimestamp(fec);
-    double last = GetOldTriggerTimestamp(fec);
-    int overflow = GetCounter("time_stamp_overflow", fec);
+    uint64_t first = GetFirstTriggerTimestamp(fec);
+    uint64_t max = GetMaxTriggerTimestamp(fec);
+    uint64_t last = GetOldTriggerTimestamp(fec);
+    int overflow = GetCounter("TimestampOverflow", fec);
     m_acq_time = 0;
 
     if (overflow >= 1) {
@@ -377,15 +377,15 @@ void Statistics::PrintFECStats(Configuration &config) {
     std::cout << "Stats (acquisition):" << std::endl;
     std::cout << "****************************************" << std::endl;
     std::cout << "Acq time: " << m_acq_time << " ms" << std::endl;
-    std::cout << "Hit rate FEC: " << std::scientific << 1000*GetCounter("parser_data", fec)/m_acq_time << " hit/s" << std::endl;
-    std::cout << "Data rate FEC: " << std::scientific << 1000*GetCounter("parser_data", fec)*48/m_acq_time << " bit/s" << std::endl;
+    std::cout << "Hit rate FEC: " << std::scientific << 1000*GetCounter("ParserData", fec)/m_acq_time << " hit/s" << std::endl;
+    std::cout << "Data rate FEC: " << std::scientific << 1000*GetCounter("ParserData", fec)*48/m_acq_time << " bit/s" << std::endl;
     std::cout << "****************************************" << std::endl;
 
   }
   std::cout << "\n****************************************" << std::endl;
   long cnt = 0;
     for (auto const &det : config.pDets) {
-      cnt += GetStatsDetector("cluster_cnt_detector", det.first, 0); 
+      cnt += GetStatsDetector("ClusterCntDetector", det.first, 0); 
     }
     std::cout << "Total Cluster rate: " << std::scientific << 1000*cnt/m_acq_time << " particles/s" << std::endl;
   std::cout << "****************************************" << std::endl;
