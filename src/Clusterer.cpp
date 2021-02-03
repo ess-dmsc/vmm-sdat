@@ -29,7 +29,7 @@ Clusterer::Clusterer(Configuration &config, Statistics &stats)
 Clusterer::~Clusterer() { RootFile::Dispose(); }
 
 //====================================================================================================================
-bool Clusterer::AnalyzeHits(uint64_t srsTimestamp, uint8_t fecId, uint8_t vmmId,
+bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
                             uint16_t chNo, uint16_t bcid, uint16_t tdc,
                             uint16_t adc, bool overThresholdFlag,
                             float chipTime) {
@@ -57,7 +57,7 @@ bool Clusterer::AnalyzeHits(uint64_t srsTimestamp, uint8_t fecId, uint8_t vmmId,
             static_cast<uint64_t>(srsTimestamp), (int)fecId, (int)vmmId);
     }
     if (srsTimestamp < m_stats.GetOldTriggerTimestamp(fecId)) {
-      // 42 bit: 0x3FFFFFFFFFF
+      // 42 bit: 0x1FFFFFFFFFF
       // 32 bit: 0xFFFFFFFF
       if (m_stats.GetOldTriggerTimestamp(fecId) > 0x1FFFFFFFFFF + srsTimestamp) {
         m_stats.IncrementCounter("TimestampOverflow", fecId);
@@ -272,8 +272,8 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
   int maxMissingStrip = 0;
   uint16_t spanCluster = 0;
 
-  uint64_t startTime = 0;
-  uint64_t largestTime = 0;
+  double startTime = 0;
+  double largestTime = 0;
   double centerOfGravity = 0;
   double centerOfTime = 0;
   double centerOfGravity2 = 0;
@@ -281,7 +281,7 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
   long int totalADC = 0;
   long int totalADC2 = 0;
 
-  uint64_t time1 = 0;
+  double time1 = 0;
   int idx_left = 0;
   int idx_right = 0;
   int adc1 = 0;
@@ -291,7 +291,7 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
   int clusterCount = 0;
   std::vector<double> vADC;
   std::vector<double> vStrips;
-  std::vector<uint64_t> vTimes;
+  std::vector<double> vTimes;
   auto det = std::get<0>(dp);
   auto plane = std::get<1>(dp);
 
@@ -383,9 +383,9 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
         clusterPlane.time_charge2 = centerOfTime2;
         clusterPlane.pos_charge2 = centerOfGravity2;
         
-        uint64_t time_utpc = 0;
+        double time_utpc = 0;
         double pos_utpc = 0;
-        uint64_t time_algo = 0;
+        double time_algo = 0;
         double pos_algo = 0;
         AlgorithmUTPC(idx_left, idx_right, vADC, vStrips, vTimes, pos_utpc, time_utpc, pos_algo, time_algo);
         
@@ -455,9 +455,9 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
     clusterPlane.time_charge2 = centerOfTime2;
     clusterPlane.pos_charge2 = centerOfGravity2;
 
-    uint64_t time_utpc = 0;
+    double time_utpc = 0;
     double pos_utpc = 0;
-    uint64_t time_algo = 0;
+    double time_algo = 0;
     double pos_algo = 0;
     AlgorithmUTPC(idx_left, idx_right, vADC, vStrips, vTimes, pos_utpc, time_utpc, pos_algo, time_algo);
     
@@ -489,9 +489,9 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
 }
 
 void Clusterer::AlgorithmUTPC(int idx_min_largest_time, int idx_max_largest_time, std::vector<double> & vADC,
-  std::vector<double> & vStrips, std::vector<uint64_t> & vTimes,
-  double &positionUTPC, uint64_t &timeUTPC,
-  double &positionAlgo, uint64_t &timeAlgo) {
+  std::vector<double> & vStrips, std::vector<double> & vTimes,
+  double &positionUTPC, double &timeUTPC,
+  double &positionAlgo, double &timeAlgo) {
   double a1 = 0, a2 = 0, a3 = 0, p1 = 0, p2 = 0, p3 = 0, t1 = 0, t2 = 0, t3 = 0;
   int idx_largest_time = 0;
   //One largest time exists
