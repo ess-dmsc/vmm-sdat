@@ -28,7 +28,8 @@ public:
     void SetFirstTriggerTimestamp(uint8_t fecId, uint64_t srsTimestamp);
     uint64_t GetMaxTriggerTimestamp(uint8_t fecId);
     void SetMaxTriggerTimestamp(uint8_t fecId, uint64_t srsTimestamp);
-    
+    uint64_t GetLastFrameCounter(uint8_t fecId);
+    void SetLastFrameCounter(uint8_t fecId, uint64_t frameCounter);
     uint64_t GetLowestCommonTriggerTimestampDet(uint8_t det);
     void SetLowestCommonTriggerTimestampDet(uint8_t det, uint64_t val);
     uint64_t GetLowestCommonTriggerTimestampPlane(std::pair<uint8_t, uint8_t> dp);
@@ -61,6 +62,7 @@ private:
     std::map<uint8_t, double> m_maxTriggerTimestamp;
     std::map<uint8_t, double> m_firstTriggerTimestamp;
     std::map<uint8_t, double> m_lastTriggerTimestamp;
+    std::map<uint8_t, double> m_lastFrameCounter;
 };
 
 

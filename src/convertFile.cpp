@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
         return -1;
       }
       uint64_t pcappackets = 0;
-
+      int lastFecID = 0;
       int rdsize;
       bool doContinue = true;
       while (doContinue && (rdsize = pcap.read((char *)&buffer, sizeof(buffer))) != -1) {
@@ -111,15 +111,32 @@ int main(int argc, char **argv) {
         }
         if (m_config.pShowStats) {
           pcappackets++;
-          m_stats.IncrementCounter("ParserFrameSeqErrors", parser->pd.fecId,
-                                   nmxstats.ParserFrameSeqErrors);
-          m_stats.IncrementCounter("ParserFrameMissingErrors", parser->pd.fecId,
-                                   nmxstats.ParserFrameMissingErrors);
-          m_stats.IncrementCounter("ParserFramecounterOverflows", parser->pd.fecId,
-                                   nmxstats.ParserFramecounterOverflows);
-          nmxstats.ParserFrameSeqErrors = 0;
-          nmxstats.ParserFrameMissingErrors = 0;
-          nmxstats.ParserFramecounterOverflows = 0;
+          uint64_t nextFrameCounter = m_stats.GetLastFrameCounter(parser->pd.fecId)+1;
+          if (nextFrameCounter != parser->hdr.frameCounter) {
+            if(parser->hdr.frameCounter > nextFrameCounter) {
+              if(m_stats.GetCounter("ParserGoodFrames",parser->pd.fecId) > 0) {
+                m_stats.IncrementCounter("ParserFrameMissingErrors",parser->pd.fecId,parser->hdr.frameCounter - nextFrameCounter);
+              }
+            }
+            else {
+              if (nextFrameCounter - parser->hdr.frameCounter > 0x0FFFFFFF) {
+                m_stats.IncrementCounter("ParserFramecounterOverflows",parser->pd.fecId, 1);
+              }
+              else {
+                m_stats.IncrementCounter("ParserFrameSeqErrors",parser->pd.fecId, 1);
+              }
+            }
+          }
+          else {
+            if(parser->hdr.frameCounter == 0) {
+              m_stats.IncrementCounter("ParserFramecounterOverflows",parser->pd.fecId, 1);
+            }
+          }
+          m_stats.SetLastFrameCounter(parser->pd.fecId, parser->hdr.frameCounter);
+          
+          //nmxstats.ParserFrameSeqErrors = 0;
+          //nmxstats.ParserFrameMissingErrors = 0;
+          //nmxstats.ParserFramecounterOverflows = 0;
 
           m_stats.IncrementCounter("ParserReadouts", parser->pd.fecId,
                                    nmxstats.ParserReadouts);
@@ -137,14 +154,17 @@ int main(int argc, char **argv) {
                                    nmxstats.ParserTimestampOverflows);
           nmxstats.ParserTimestampSeqErrors = 0;
           nmxstats.ParserTimestampOverflows = 0;
+
+          m_stats.IncrementCounter("ParserBadFrames", parser->pd.fecId,
+                                 nmxstats.ParserBadFrames);
+          m_stats.IncrementCounter("ParserGoodFrames", parser->pd.fecId,
+                                 nmxstats.ParserGoodFrames);
+
+          nmxstats.ParserBadFrames = 0;
+          nmxstats.ParserGoodFrames = 0;
         }
       }
-      if (m_config.pShowStats) {
-        m_stats.IncrementCounter("ParserBadFrames", parser->pd.fecId,
-                                 nmxstats.ParserBadFrames);
-        m_stats.IncrementCounter("ParserGoodFrames", parser->pd.fecId,
-                                 nmxstats.ParserGoodFrames);
-      }
+
       delete parser;
     } else {
       auto DataFile = file::open(m_config.pFileName);

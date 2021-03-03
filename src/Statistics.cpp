@@ -7,66 +7,56 @@
 
 
 void Statistics::CreatePCAPStats(Configuration &config) {
+  m_counter_names.push_back("ParserFrameSeqErrors");
+  m_counter_names.push_back("ParserFrameMissingErrors");
+  m_counter_names.push_back("ParserFramecounterOverflows");
+  m_counter_names.push_back("ParserTimestampSeqErrors");
+  m_counter_names.push_back("ParserTimestampOverflows");
+  m_counter_names.push_back("ParserBadFrames");
+  m_counter_names.push_back("ParserGoodFrames");
+  m_counter_names.push_back("ParserReadouts");
+  m_counter_names.push_back("ParserMarkers");
+  m_counter_names.push_back("ParserData");
   for (auto const &fec : config.pFecs) {
-    m_counter_names.push_back("ParserFrameSeqErrors");
     m_counters.emplace(
         std::make_pair(std::make_pair(fec, "ParserFrameSeqErrors"), 0));
-
-    m_counter_names.push_back("ParserFrameMissingErrors");
     m_counters.emplace(
         std::make_pair(std::make_pair(fec, "ParserFrameMissingErrors"), 0));
-
-    m_counter_names.push_back("ParserFramecounterOverflows");
     m_counters.emplace(
         std::make_pair(std::make_pair(fec, "ParserFramecounterOverflows"), 0));
-
-    m_counter_names.push_back("ParserTimestampSeqErrors");
     m_counters.emplace(
         std::make_pair(std::make_pair(fec, "ParserTimestampSeqErrors"), 0));
-
-    m_counter_names.push_back("ParserTimestampOverflows");
     m_counters.emplace(
         std::make_pair(std::make_pair(fec, "ParserTimestampOverflows"), 0));
-
-    m_counter_names.push_back("ParserBadFrames");
     m_counters.emplace(std::make_pair(std::make_pair(fec, "ParserBadFrames"), 0));
-
-    m_counter_names.push_back("ParserGoodFrames");
     m_counters.emplace(std::make_pair(std::make_pair(fec, "ParserGoodFrames"), 0));
-
-    m_counter_names.push_back("ParserReadouts");
     m_counters.emplace(std::make_pair(std::make_pair(fec, "ParserReadouts"), 0));
-
-    m_counter_names.push_back("ParserMarkers");
     m_counters.emplace(std::make_pair(std::make_pair(fec, "ParserMarkers"), 0));
-
-    m_counter_names.push_back("ParserData");
     m_counters.emplace(std::make_pair(std::make_pair(fec, "ParserData"), 0));
   }
 }
 
 void Statistics::CreateFECStats(Configuration &config) {
+   m_counter_names.push_back("TimestampTooLarge");
+   m_counter_names.push_back("TimestampOrderError");
+   m_counter_names.push_back("TimestampOverflow");
+   m_counter_names.push_back("TriggerPeriodError");
+ 
   for (auto const &fec : config.pFecs) {
     m_deltaTriggerTimestamp.emplace(std::make_pair(fec, 0));
     m_oldTriggerTimestamp.emplace(std::make_pair(fec, 0));
-    m_counter_names.push_back("TimestampTooLarge");
+    m_lastFrameCounter.emplace(std::make_pair(fec, 0));
     m_counters.emplace(
         std::make_pair(std::make_pair(fec, "TimestampTooLarge"), 0));
-    m_counter_names.push_back("TimestampOrderError");
+    
     m_counters.emplace(
         std::make_pair(std::make_pair(fec, "TimestampOrderError"), 0));
-    m_counter_names.push_back("TimestampOverflow");
+    
     m_counters.emplace(
         std::make_pair(std::make_pair(fec, "TimestampOverflow"), 0));
-    m_counter_names.push_back("TriggerPeriodError");
+    
     m_counters.emplace(
         std::make_pair(std::make_pair(fec, "TriggerPeriodError"), 0));
-
-    if(!config.pIsPcap) {
-      m_counter_names.push_back("ParserData");
-      m_counters.emplace(std::make_pair(std::make_pair(fec, "ParserData"), 0));
-    }  
-
   }
 }
 
@@ -264,6 +254,14 @@ uint64_t Statistics::GetMaxTriggerTimestamp(uint8_t fecId) {
 
 void Statistics::SetMaxTriggerTimestamp(uint8_t fecId, uint64_t srsTimestamp) {
   m_maxTriggerTimestamp[fecId] = srsTimestamp;
+}
+
+uint64_t Statistics::GetLastFrameCounter(uint8_t fecId) {
+  return m_lastFrameCounter[fecId];
+}
+
+void Statistics::SetLastFrameCounter(uint8_t fecId, uint64_t frameCounter) {
+  m_lastFrameCounter[fecId] = frameCounter;
 }
 
 uint64_t Statistics::GetLowestCommonTriggerTimestampDet(uint8_t det) {

@@ -56,7 +56,9 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
             "for FEC %d and vmmId %d!\n",
             static_cast<uint64_t>(srsTimestamp), (int)fecId, (int)vmmId);
     }
+
     if (srsTimestamp < m_stats.GetOldTriggerTimestamp(fecId)) {
+      //std::cout << (uint64_t)srsTimestamp << " " << m_stats.GetOldTriggerTimestamp(fecId) << std::endl;
       // 42 bit: 0x1FFFFFFFFFF
       // 32 bit: 0xFFFFFFFF
       if (m_stats.GetOldTriggerTimestamp(fecId) > 0x1FFFFFFFFFF + srsTimestamp) {
@@ -70,7 +72,6 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
               
       } else {
         m_stats.IncrementCounter("TimestampOrderError", fecId);
-        //std::cout << "********************** " << static_cast<uint64_t>(srsTimestamp)/25 << " " << static_cast<uint64_t>(m_stats.GetOldTriggerTimestamp(fecId))/25 << std::endl;
         DTRACE(DEB,
               "\n*********************************** TIME ERROR  fecId %d, "
               "m_lineNr %d, eventNr  %d, "
@@ -213,7 +214,8 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
   int delta = (srsTimestamp - static_cast<uint64_t>(m_stats.GetOldTriggerTimestamp(fecId)))/25;
 
   m_stats.SetOldTriggerTimestamp(fecId, srsTimestamp);
-  if(m_lineNr == 1) {
+
+  if(m_stats.GetFirstTriggerTimestamp(fecId) == 0) {  
     m_stats.SetFirstTriggerTimestamp(fecId, srsTimestamp);  
   }
   if(m_stats.GetMaxTriggerTimestamp(fecId) < srsTimestamp) {
