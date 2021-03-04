@@ -236,7 +236,7 @@ int main(int argc, char **argv) {
     std::cout << "\n****************************************" << std::endl;
     std::cout << "Stats (analysis):" << std::endl;
     std::cout << "****************************************" << std::endl;
-    std::cout << "Analysis time: " << elapsed_seconds << " ms" << std::endl;
+    std::cout << "Analysis time: " << std::setprecision(1) << std::fixed << elapsed_seconds << " ms" << std::endl;
     std::cout << "Hit rate: " << std::scientific << static_cast<double>(1000*total_hits/elapsed_seconds) << " hit/s" << std::endl;
     std::cout << "Data rate: " << std::scientific  << static_cast<double>(1000*total_hits*48/elapsed_seconds) << " bit/s" << std::endl;
     std::cout << "****************************************" << std::endl;

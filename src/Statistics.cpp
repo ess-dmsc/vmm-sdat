@@ -374,7 +374,7 @@ void Statistics::PrintFECStats(Configuration &config) {
     std::cout << "\n****************************************" << std::endl;
     std::cout << "Stats (acquisition):" << std::endl;
     std::cout << "****************************************" << std::endl;
-    std::cout << "Acq time: " << m_acq_time << " ms" << std::endl;
+    std::cout << "Acq time: " << std::setprecision(1) << std::fixed << m_acq_time << " ms" << std::endl;
     std::cout << "Hit rate FEC: " << std::scientific << 1000*GetCounter("ParserData", fec)/m_acq_time << " hit/s" << std::endl;
     std::cout << "Data rate FEC: " << std::scientific << 1000*GetCounter("ParserData", fec)*48/m_acq_time << " bit/s" << std::endl;
     std::cout << "****************************************" << std::endl;
@@ -399,19 +399,22 @@ void Statistics::StatsOutput(int n, long val, std::string stat, long cnt,
                 << static_cast<unsigned int>(n / m_factors[stat] +
                                              1 / m_factors[stat] - 1)
                 << " " << m_units[stat] << ":  " << val << " ("
-                << (100 * val / cnt) << " %)" << std::endl;
+                << std::setprecision(1) << std::fixed << (100 * (double)val / (double)cnt)
+               << " %)" << std::endl;
     } else {
       std::cout << static_cast<unsigned int>(n / m_factors[stat]) << " "
-                << m_units[stat] << ":  " << val << " (" << (100 * val / cnt)
+                << m_units[stat] << ":  " << val << " (" << std::setprecision(1) << std::fixed << (100 * (double)val / (double)cnt)
                 << " %)" << std::endl;
     }
   } else {
     if (cnt0 > 0 && cnt1 > 0) {
-      std::cout << val << " (common cluster in detector, " << (100 * val / cnt0)
-                << " % plane 0, " << (100 * val / cnt1) << " % plane 1)"
+      std::cout << val << " (common cluster in detector, " << std::setprecision(1) << (100 * (double)val / (double)cnt0)
+                << " % plane 0, " << std::setprecision(1) << std::fixed  << (100 * (double)val / (double)cnt1)
+                << " % plane 1)"
                 << std::endl;
     } else {
-      std::cout << val << " (" << (100 * val / cnt) << " %)" << std::endl;
+      std::cout << val << " (" << std::setprecision(1) << std::fixed  << (100 * (double)val / (double)cnt)
+                << " %)" << std::endl;
     }
   }
 }
