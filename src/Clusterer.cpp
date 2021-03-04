@@ -114,6 +114,9 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
     }
     if (m_config.pSaveWhat >= 10) {
       int factor = 0;
+      if(m_config.pFecs.size() > 1) {
+        factor = 32;
+      }
       for (auto const &searchDetPlaneFec : m_config.pDetectorPlane_Fec) {
         auto fec = searchDetPlaneFec.second;
         auto det_plane = searchDetPlaneFec.first;
