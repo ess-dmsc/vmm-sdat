@@ -223,35 +223,35 @@ long Statistics::GetCounter(std::string error, uint8_t fecId) {
   return m_counters[std::make_pair(fecId, error)];
 }
 
-uint64_t Statistics::GetDeltaTriggerTimestamp(uint8_t fecId) {
+double Statistics::GetDeltaTriggerTimestamp(uint8_t fecId) {
   return m_deltaTriggerTimestamp[fecId];
 }
 
-void Statistics::SetDeltaTriggerTimestamp(uint8_t fecId, uint64_t val) {
+void Statistics::SetDeltaTriggerTimestamp(uint8_t fecId, double val) {
   m_deltaTriggerTimestamp[fecId] = val;
 }
 
-uint64_t Statistics::GetOldTriggerTimestamp(uint8_t fecId) {
+double Statistics::GetOldTriggerTimestamp(uint8_t fecId) {
   return m_oldTriggerTimestamp[fecId];
 }
 
-void Statistics::SetOldTriggerTimestamp(uint8_t fecId, uint64_t srsTimestamp) {
+void Statistics::SetOldTriggerTimestamp(uint8_t fecId, double srsTimestamp) {
   m_oldTriggerTimestamp[fecId] = srsTimestamp;
 }
 
-uint64_t Statistics::GetFirstTriggerTimestamp(uint8_t fecId) {
+double Statistics::GetFirstTriggerTimestamp(uint8_t fecId) {
   return m_firstTriggerTimestamp[fecId];
 }
 
-void Statistics::SetFirstTriggerTimestamp(uint8_t fecId, uint64_t srsTimestamp) {
+void Statistics::SetFirstTriggerTimestamp(uint8_t fecId, double srsTimestamp) {
   m_firstTriggerTimestamp[fecId] = srsTimestamp;
 }
 
-uint64_t Statistics::GetMaxTriggerTimestamp(uint8_t fecId) {
+double Statistics::GetMaxTriggerTimestamp(uint8_t fecId) {
   return m_maxTriggerTimestamp[fecId];
 }
 
-void Statistics::SetMaxTriggerTimestamp(uint8_t fecId, uint64_t srsTimestamp) {
+void Statistics::SetMaxTriggerTimestamp(uint8_t fecId, double srsTimestamp) {
   m_maxTriggerTimestamp[fecId] = srsTimestamp;
 }
 
@@ -263,21 +263,21 @@ void Statistics::SetLastFrameCounter(uint8_t fecId, uint64_t frameCounter) {
   m_lastFrameCounter[fecId] = frameCounter;
 }
 
-uint64_t Statistics::GetLowestCommonTriggerTimestampDet(uint8_t det) {
+double Statistics::GetLowestCommonTriggerTimestampDet(uint8_t det) {
   return m_lowestCommonTriggerTimestamp_det[det];
 }
 
-void Statistics::SetLowestCommonTriggerTimestampDet(uint8_t det, uint64_t val) {
+void Statistics::SetLowestCommonTriggerTimestampDet(uint8_t det, double val) {
   m_lowestCommonTriggerTimestamp_det[det] = val;
 }
 
-uint64_t Statistics::GetLowestCommonTriggerTimestampPlane(
+double Statistics::GetLowestCommonTriggerTimestampPlane(
     std::pair<uint8_t, uint8_t> dp) {
   return m_lowestCommonTriggerTimestamp_plane[dp];
 }
 
 void Statistics::SetLowestCommonTriggerTimestampPlane(
-    std::pair<uint8_t, uint8_t> dp, uint64_t val) {
+    std::pair<uint8_t, uint8_t> dp, double val) {
   m_lowestCommonTriggerTimestamp_plane[dp] = val;
 }
 

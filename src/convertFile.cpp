@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
         }
         int hits = parser->receive(buffer, rdsize);
         total_hits += hits;
-
+  
         for (int i = 0; i < hits; i++) {
           auto &d = parser->data[i];
        
@@ -112,6 +112,7 @@ int main(int argc, char **argv) {
         if (m_config.pShowStats) {
           pcappackets++;
           uint64_t nextFrameCounter = m_stats.GetLastFrameCounter(parser->pd.fecId)+1;
+        
           if (nextFrameCounter != parser->hdr.frameCounter) {
             if(parser->hdr.frameCounter > nextFrameCounter) {
               if(m_stats.GetCounter("ParserGoodFrames",parser->pd.fecId) > 0) {

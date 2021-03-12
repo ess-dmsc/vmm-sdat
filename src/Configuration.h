@@ -109,7 +109,7 @@ public:
     int pAlgo = 0;
     bool pIsPcap = false;
     bool pShowStats = true;
-    std::string pDataFormat = "SRS";
+    std::string pDataFormat = "SRS_ESS";
     int pPositions[NUMFECS][16][64];
     int pDetectors[NUMFECS][16];
     int pPlanes[NUMFECS][16];

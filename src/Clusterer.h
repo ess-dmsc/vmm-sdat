@@ -44,7 +44,7 @@ public:
                 std::vector<double> & vStrips, std::vector<double> & vTimes, double &positionUTPC, 
                 double &timeUTPC, double &positionAlgo, double &timeAlgo);
 
-        void MatchClustersDetector(uint8_t det);
+        int MatchClustersDetector(uint8_t det);
 
 	void FinishAnalysis();
 
