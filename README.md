@@ -40,7 +40,7 @@ Example command line:
 -vmm "[[1,0,2,2],[1,0,2,3],[1,0,2,0],[1,0,2,1],[1,1,2,8],[1,1,2,9],[1,1,2,6],[1,1,2,7]]" 
 -axis "[[1,0],0],[[1,1],0]" -bc 40 -tac 60 -th 0 -cs 1 -ccs 2 -dt 200 -mst 1 -spc 500 
 -dp 200 -coin center-of-mass -crl 0.5 -cru 2 -save 111 -json 0 -n 0 -algo 0 -swap 0 
--cal CalibrationFile.json
+-cal CalibrationFile.json -df SRS_ESS
 
 ```
 
@@ -135,6 +135,8 @@ the two planes (charge plane 0 / charge plane 1) or (charge plane 1 / charge pla
 ## Explanation of parameters
   
     -f: h5 data file with the extension .h5 or .pcapng. The data file was created by ESS DAQ tool
+    
+    -df: data format of pcapng file. Default is SRS_ESS format (valid offsets: -1 - 15). Data format SRS (offsets 0-31)
     
     -vmm: mapping of detectors, plane, fecs and chips starting and ending with " and separated by brackets
         and comma [[det, plane, fec,chip], [det, plane, fec, chip], etc.]
