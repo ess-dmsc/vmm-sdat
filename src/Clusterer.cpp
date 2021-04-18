@@ -45,8 +45,8 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
   if(m_config.pShowStats) {
     //Biggest possible time should be:
     //from FEC: 2^42-1 = 0x3FFFFFFFFFF clock cycles
-    //converted to ns: 0x3FFFFFFFFFF*25 = 109951162777575 ns
-    //added 31 offsets of 4096*25 ns: 3174400
+    //converted to ns: 0x3FFFFFFFFFF * bc period = 109951162777575 ns
+    //added 31 offsets of 4096 * bc period ns: 3174400
     //total: 109951165951975 ns
     if (srsTimestamp > 109951165951975) {
       m_stats.IncrementCounter("TimestampTooLarge", fecId);
@@ -80,17 +80,17 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
     }
 
     double remainder = std::fmod(m_stats.GetDeltaTriggerTimestamp(fecId),
-                                m_config.pTriggerPeriod);
+                                m_config.pOffsetPeriod);
     if (remainder > 0) {
       m_stats.IncrementCounter("TriggerPeriodError", fecId);
       uint64_t offset =
-          m_stats.GetDeltaTriggerTimestamp(fecId) / m_config.pTriggerPeriod;
+          m_stats.GetDeltaTriggerTimestamp(fecId) / m_config.pOffsetPeriod;
           DTRACE(DEB,
             "\n******* ERROR: SRS timestamp wrong increment: fec "
             "%d,vmmId %d, chNo %d, line %d, "
             "trigger period %d, offset %llu, remainder %llu, new time %llu, old "
             "time %llu\n",
-            fecId, vmmId, chNo, m_lineNr, m_config.pTriggerPeriod, offset,
+            fecId, vmmId, chNo, m_lineNr, m_config.pOffsetPeriod, offset,
             static_cast<uint64_t>(remainder),
             static_cast<uint64_t>(srsTimestamp),
             static_cast<uint64_t>(m_stats.GetOldTriggerTimestamp(fecId)));
@@ -99,7 +99,7 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
   bool newEvent = false;
   int factor = 16;
   if (srsTimestamp >= m_stats.GetOldTriggerTimestamp(fecId)
-  + factor * m_config.pTriggerPeriod) {
+  + factor * m_config.pOffsetPeriod) {
     if(m_config.pShowStats) {
       m_stats.SetDeltaTriggerTimestamp(
           fecId, srsTimestamp - m_stats.GetOldTriggerTimestamp(fecId));
@@ -137,7 +137,7 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
 		 }
       }
     }
-    int delta = (srsTimestamp - static_cast<uint64_t>(m_stats.GetOldTriggerTimestamp(fecId)))/25;
+    int delta = (srsTimestamp - static_cast<uint64_t>(m_stats.GetOldTriggerTimestamp(fecId)))/pBCTime_ns;
 
     m_stats.SetOldTriggerTimestamp(fecId, srsTimestamp);
   }

@@ -89,15 +89,13 @@ int main(int argc, char **argv) {
 
           if (d.hasDataMarker && d.fecTimeStamp > 0 && triggerOffset != -16) {
             double srs_timestamp =
-                (static_cast<uint64_t>(d.fecTimeStamp) *
-                     Gem::SRSTime::internal_SRS_clock_period_ns +
-                      triggerOffset * srs_time.trigger_period_ns());
-          
+                (static_cast<uint64_t>(d.fecTimeStamp) * m_config.pBCTime_ns  + m_config.pOffsetPeriod * triggerOffset;
+             
             auto calib = calfile.getCalibration(
                 parser->pd.fecId, d.vmmid, d.chno);
-            float chiptime = static_cast<float>(srs_time.chip_time_ns(
-                d.bcid, d.tdc, calib.time_offset, calib.time_slope));
-            uint16_t adc = (d.adc - calib.adc_offset) * calib.adc_slope;
+            float chiptime = static_cast<double>(d.bcid) * m_config.pBCTime_ns +
+				m_config.pBCTime_ns - static_cast<double>(d.tdc) * static_cast<double>(m_config.pTAC)/255 - calib.time_offset) * calib.time_slope;
+			uint16_t adc = (d.adc - calib.adc_offset) * calib.adc_slope;
 
             bool result = m_Clusterer->AnalyzeHits(
                 srs_timestamp, parser->pd.fecId, d.vmmid, d.chno, d.bcid, d.tdc,

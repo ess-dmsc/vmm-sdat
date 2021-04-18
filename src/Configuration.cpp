@@ -145,9 +145,9 @@ bool Configuration::ParseCommandLine(int argc, char **argv)
         }
         else if (strncmp(argv[i], "-bc", 3) == 0)
         {
-            pBC = atoi(argv[i + 1]);
-            pBCTime_ns = 1000 / (int)pBC;
-            pTriggerPeriod = 1000 * 4096 / pBC;
+            pBC = atof(argv[i + 1]);
+            pBCTime_ns = 1000.0 / pBC;
+            pOffsetPeriod = 1000.0 * 4096.0 / pBC;
         }
         else if (strncmp(argv[i], "-vmm", 4) == 0)
         {
@@ -404,7 +404,7 @@ bool Configuration::ParseCommandLine(int argc, char **argv)
         }
         else if (strncmp(argv[i], "-tac", 4) == 0)
         {
-            pTAC = atoi(argv[i + 1]);
+            pTAC = atof(argv[i + 1]);
         }
         else if (strncmp(argv[i], "-th", 3) == 0)
         {

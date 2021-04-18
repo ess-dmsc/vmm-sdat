@@ -63,8 +63,8 @@ public:
 
     std::string pFileName = "";
    
-    uint16_t pTAC = 60;
-    uint16_t pBC = 40;
+    double pTAC = 60.0;
+    double pBC = 40.0;
     float pADCThreshold = 0;
     uint16_t pMinClusterSize = 1;
     uint16_t pCoincidentClusterSize = 3;
@@ -93,8 +93,8 @@ public:
     std::string pCalFilename = "";
     std::string pInfo = "";
 
-    uint32_t pBCTime_ns = 1000 / (int)pBC;
-    uint32_t pTriggerPeriod = 1000 * 4096 / (int)pBC;
+    double pBCTime_ns = 1000 / (double)pBC;
+    double pOffsetPeriod = 1000 * 4096 / (double)pBC;
 
     std::map<std::tuple<uint8_t, uint8_t>, int> pChannels;
     std::map<std::pair<uint8_t, uint8_t>, std::pair<uint8_t, uint8_t>> pFecChip_DetectorPlane;
