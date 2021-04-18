@@ -89,12 +89,12 @@ int main(int argc, char **argv) {
 
           if (d.hasDataMarker && d.fecTimeStamp > 0 && triggerOffset != -16) {
             double srs_timestamp =
-                (static_cast<uint64_t>(d.fecTimeStamp) * m_config.pBCTime_ns  + m_config.pOffsetPeriod * triggerOffset;
+                (static_cast<uint64_t>(d.fecTimeStamp) * m_config.pBCTime_ns  + m_config.pOffsetPeriod * triggerOffset);
              
             auto calib = calfile.getCalibration(
                 parser->pd.fecId, d.vmmid, d.chno);
             float chiptime = static_cast<double>(d.bcid) * m_config.pBCTime_ns +
-				m_config.pBCTime_ns - static_cast<double>(d.tdc) * static_cast<double>(m_config.pTAC)/255 - calib.time_offset) * calib.time_slope;
+				(m_config.pBCTime_ns - static_cast<double>(d.tdc) * static_cast<double>(m_config.pTAC)/255 - calib.time_offset) * calib.time_slope;
 			uint16_t adc = (d.adc - calib.adc_offset) * calib.adc_slope;
 
             bool result = m_Clusterer->AnalyzeHits(

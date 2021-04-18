@@ -88,7 +88,7 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
           DTRACE(DEB,
             "\n******* ERROR: SRS timestamp wrong increment: fec "
             "%d,vmmId %d, chNo %d, line %d, "
-            "trigger period %d, offset %llu, remainder %llu, new time %llu, old "
+            "offset period %f, offset %llu, remainder %llu, new time %llu, old "
             "time %llu\n",
             fecId, vmmId, chNo, m_lineNr, m_config.pOffsetPeriod, offset,
             static_cast<uint64_t>(remainder),
@@ -137,7 +137,7 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
 		 }
       }
     }
-    int delta = (srsTimestamp - static_cast<uint64_t>(m_stats.GetOldTriggerTimestamp(fecId)))/pBCTime_ns;
+    int delta = (srsTimestamp - static_cast<uint64_t>(m_stats.GetOldTriggerTimestamp(fecId)))/m_config.pBCTime_ns;
 
     m_stats.SetOldTriggerTimestamp(fecId, srsTimestamp);
   }
