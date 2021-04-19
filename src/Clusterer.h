@@ -55,8 +55,7 @@ private:
         Configuration& m_config;
         Statistics &m_stats;
       
-        int m_lineNr = 0;
-        int m_eventNr = 0;
+        int m_hitNr = 0;
         
         double last_time0 = 0;
         double last_time1 = 0;

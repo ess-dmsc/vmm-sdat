@@ -1,6 +1,3 @@
-#include <iostream>
-#include <sstream>
-#include <vector>
 #include <string>
 #include <cstring>
 #include <regex>
@@ -146,8 +143,15 @@ bool Configuration::ParseCommandLine(int argc, char **argv)
         else if (strncmp(argv[i], "-bc", 3) == 0)
         {
             pBC = atof(argv[i + 1]);
-            pBCTime_ns = 1000.0 / pBC;
-            pOffsetPeriod = 1000.0 * 4096.0 / pBC;
+            //ESS SRS firmware has 44.444444 MHz clock
+            if(pBC >= 44.44 && pBC <= 44.45) {
+            	pBCTime_ns = 22.5;
+            	pOffsetPeriod = 4096.0 * pBCTime_ns;
+            }
+            else {
+            	pBCTime_ns = 1000.0 / pBC;
+            	pOffsetPeriod = 4096.0 * 25;
+        	}   
         }
         else if (strncmp(argv[i], "-vmm", 4) == 0)
         {
@@ -541,9 +545,11 @@ bool Configuration::ParseCommandLine(int argc, char **argv)
     std::string sChargeRatioUpper = std::to_string(pChargeRatioUpper);
     std::replace(sChargeRatioUpper.begin(), sChargeRatioUpper.end(), '.', 'p');
     sChargeRatioUpper = std::regex_replace(sChargeRatioUpper, std::regex("00000"), "0");
-
-
-    pRootFilename = pRootFilename + "_bc_" + std::to_string(pBC) + "_tac_" + std::to_string((int)pTAC) + "_ccs_" +
+    std::stringstream sBC;
+    sBC << std::setprecision(3) << std::fixed << pBC;
+    std::string strBc = sBC.str();
+    std::replace(strBc.begin(), strBc.end(), '.', 'p');
+    pRootFilename = pRootFilename + "_bc_" + strBc + "_tac_" + std::to_string((int)pTAC) + "_ccs_" +
                     std::to_string((int)pCoincidentClusterSize) + "_cs_" + std::to_string((int)pMinClusterSize) + "_dt_" + std::to_string((int)pDeltaTimeHits) + "_mst_" +    std::to_string((int)pMissingStripsCluster) + "_spc_" + std::to_string((int)pSpanClusterTime) + "_dp_" + std::to_string((int)pDeltaTimePlanes) 
                     + "_cr_" + sChargeRatioLower + "-"  + sChargeRatioUpper  + "_coin_" + pConditionCoincidence + strParams;
 

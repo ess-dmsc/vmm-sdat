@@ -2,7 +2,6 @@
 #include <vector>
 struct Hit {
     uint32_t id;
-    uint32_t event;
     uint8_t det;
     uint8_t plane;
     uint8_t fec;

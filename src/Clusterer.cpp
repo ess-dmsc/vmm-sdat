@@ -63,18 +63,18 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
         m_stats.IncrementCounter("TimestampOverflow", fecId);
         DTRACE(DEB,
               "\n*********************************** OVERFLOW  fecId %d, "
-              "m_lineNr %d, eventNr  %d, "
+              "m_hitNr %d, "
               "srsTimestamp %llu, old srsTimestamp %llu\n",
-              fecId, m_lineNr, m_eventNr, static_cast<uint64_t>(srsTimestamp),
+              fecId, m_hitNr, static_cast<uint64_t>(srsTimestamp),
               static_cast<uint64_t>(m_stats.GetMaxTriggerTimestamp(fecId)));
               
       } else {
         m_stats.IncrementCounter("TimestampOrderError", fecId);
         DTRACE(DEB,
               "\n*********************************** TIME ERROR  fecId %d, "
-              "m_lineNr %d, eventNr  %d, "
+              "m_hitNr %d, "
               "srsTimestamp %llu, old srsTimestamp %llu\n",
-              fecId, m_lineNr, m_eventNr, static_cast<uint64_t>(srsTimestamp),
+              fecId, m_hitNr, static_cast<uint64_t>(srsTimestamp),
               static_cast<uint64_t>(m_stats.GetMaxTriggerTimestamp(fecId)));
       }
     }
@@ -87,16 +87,16 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
           m_stats.GetDeltaTriggerTimestamp(fecId) / m_config.pOffsetPeriod;
           DTRACE(DEB,
             "\n******* ERROR: SRS timestamp wrong increment: fec "
-            "%d,vmmId %d, chNo %d, line %d, "
+            "%d,vmmId %d, chNo %d, hit %d, "
             "offset period %f, offset %llu, remainder %llu, new time %llu, old "
             "time %llu\n",
-            fecId, vmmId, chNo, m_lineNr, m_config.pOffsetPeriod, offset,
+            fecId, vmmId, chNo, m_hitNr, m_config.pOffsetPeriod, offset,
             static_cast<uint64_t>(remainder),
             static_cast<uint64_t>(srsTimestamp),
             static_cast<uint64_t>(m_stats.GetOldTriggerTimestamp(fecId)));
     }
   }
-  bool newEvent = false;
+  bool newData = false;
   int factor = 16;
   if (srsTimestamp >= m_stats.GetOldTriggerTimestamp(fecId)
   + factor * m_config.pOffsetPeriod) {
@@ -104,11 +104,10 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
       m_stats.SetDeltaTriggerTimestamp(
           fecId, srsTimestamp - m_stats.GetOldTriggerTimestamp(fecId));
     }
-    newEvent = true;
+    newData = true;
   }
 
-  if (newEvent) {
-    m_eventNr++;
+  if (newData) {
     if(m_config.pSaveWhat % 2 == 1) {
       m_rootFile->SaveHits();
     }
@@ -137,19 +136,16 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
 		 }
       }
     }
-    int delta = (srsTimestamp - static_cast<uint64_t>(m_stats.GetOldTriggerTimestamp(fecId)))/m_config.pBCTime_ns;
-
     m_stats.SetOldTriggerTimestamp(fecId, srsTimestamp);
   }
 
-  m_lineNr++;
+  m_hitNr++;
   double totalTime = srsTimestamp + chipTime;
   auto det = m_config.pDetectors[fecId][vmmId];
   auto plane = m_config.pPlanes[fecId][vmmId];
   if (m_config.pSaveWhat % 2  == 1) {
     Hit theHit;
-    theHit.id = m_lineNr;
-    theHit.event = m_eventNr;
+    theHit.id = m_hitNr;
     theHit.det = det;
     theHit.plane = plane;
     theHit.fec = fecId;
@@ -180,11 +176,6 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
   
   }
   
-
-  if (newEvent) {
-    DTRACE(DEB, "\neventNr  %d\n", m_eventNr);
-    // DTRACE(DEB, "fecId  %d\n", fecId);
-  }
   if (m_stats.GetDeltaTriggerTimestamp(fecId) > 0) {
     DTRACE(DEB, "\tTriggerTimestamp %llu [ns]\n",
            static_cast<uint64_t>(srsTimestamp));
@@ -193,10 +184,10 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
            (double)(1000000 / m_stats.GetDeltaTriggerTimestamp(fecId)));
   }
 
-  if (m_oldFecId != fecId || newEvent) {
+  if (m_oldFecId != fecId || newData) {
     DTRACE(DEB, "\tfecId  %d\n", fecId);
   }
-  if (m_oldVmmId != vmmId || newEvent) {
+  if (m_oldVmmId != vmmId || newData) {
     DTRACE(DEB, "\tDetector %d, plane %d, vmmId  %d\n", (int)det, (int)plane,
            vmmId);
   }
