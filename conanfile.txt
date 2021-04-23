@@ -1,19 +1,19 @@
 [requires]
 asio/1.16.1
-CLI11/1.8.0@cliutils/stable
+cli11/1.9.1
 fmt/6.2.0
-google-benchmark/1.4.1-dm2@ess-dmsc/testing
+benchmark/1.5.2
 graylog-logger/2.0.3-dm1@ess-dmsc/stable
-gtest/1.8.1@bincrafters/stable
-h5cpp/0.3.3@ess-dmsc/stable
-jsonformoderncpp/3.7.0
+gtest/1.10.0
+h5cpp/0.4.0@ess-dmsc/stable
+nlohmann_json/3.9.1 
 libpcap/1.8.1@bincrafters/stable
 librdkafka/0.11.5-dm2@ess-dmsc/stable
 logical-geometry/705ea61@ess-dmsc/stable
 readerwriterqueue/07e22ec@ess-dmsc/stable
 concurrentqueue/8f7e861@ess-dmsc/stable
-streaming-data-types/70c9a71@ess-dmsc/stable
-trompeloeil/v31@ess-dmsc/stable
+streaming-data-types/6a41aee@ess-dmsc/stable
+trompeloeil/40
 
 [generators]
 cmake
@@ -21,7 +21,6 @@ virtualrunenv
 
 [options]
 gtest:shared=True
-
 
 [imports]
 lib, * -> ./lib
