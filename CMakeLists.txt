@@ -83,7 +83,7 @@ if(ENABLE_DTRACE)
 #   - ROOT built with CMake. Add in CMAKE_PREFIX_PATH the installation prefix for ROOT
 list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
 
-find_package(Boost REQUIRED COMPONENTS system)
+#find_package(Boost REQUIRED COMPONENTS system)
 find_package(HDF5 1.10 REQUIRED)
 find_package(h5cpp REQUIRED)
 

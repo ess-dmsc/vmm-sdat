@@ -2,7 +2,7 @@
 #include <cstring>
 #include <regex>
 #include <cmath>
-
+#include <iomanip>
 #include "Configuration.h"
 
 bool Configuration::PrintUsage(const std::string &errorMessage, char *argv)
