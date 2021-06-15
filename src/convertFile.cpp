@@ -95,8 +95,29 @@ int main(int argc, char **argv) {
                 parser->pd.fecId, d.vmmid, d.chno);
             float chiptime = static_cast<double>(d.bcid) * m_config.pBCTime_ns +
 				(m_config.pBCTime_ns - static_cast<double>(d.tdc) * static_cast<double>(m_config.pTAC)/255 - calib.time_offset) * calib.time_slope;
-			uint16_t adc = (d.adc - calib.adc_offset) * calib.adc_slope;
-
+			
+			
+			if (calib.adc_slope == 0) {
+          		std::cout
+              	<< "Error in calibration file: adc_slope correction for fec "
+              	<< parser->pd.fecId << ", chip " << d.vmmid << ", channel "
+              	<< d.chno << " is 0!\nIs that intentional?" << std::endl;
+        	}
+        	int corrected_adc = (d.adc - calib.adc_offset) * calib.adc_slope;
+        	
+        	if(corrected_adc > 2047)  {
+        		std::cout
+				  << "After correction, ADC value much larger than 10bit!  Uncorrected ADC value:"
+				  << d.adc << ", corrected value " << corrected_adc << std::endl;
+				corrected_adc = 2047;	
+        	}        
+        	else if(corrected_adc < 0)  {
+        		std::cout
+				  << "After correction, ADC value smaller than 0!  Uncorrected ADC value:"
+				  << d.adc << ", corrected value " << corrected_adc << std::endl;
+				corrected_adc = 0;	  	
+    		}
+    		uint16_t adc = static_cast<uint16_t>(corrected_adc);
             bool result = m_Clusterer->AnalyzeHits(
                 srs_timestamp, parser->pd.fecId, d.vmmid, d.chno, d.bcid, d.tdc,
                 adc, d.overThreshold != 0, chiptime);
@@ -208,9 +229,21 @@ int main(int argc, char **argv) {
               << RowData.fec << ", chip " << RowData.chip_id << ", channel "
               << RowData.channel << " is 0!\nIs that intentional?" << std::endl;
         }
-        RowData.adc = static_cast<uint16_t>((RowData.adc - calib.adc_offset) *
-                                            calib.adc_slope);
-
+        int corrected_adc = (RowData.adc - calib.adc_offset) * calib.adc_slope;
+      
+        if(corrected_adc > 2047)  {
+        	std::cout
+				  << "After correction, ADC value much than 10bit!  Uncorrected ADC value:"
+				  << RowData.adc << ", corrected value " << corrected_adc << std::endl;	
+			corrected_adc = 2047;
+        }        
+        else if(corrected_adc < 0)  {
+        	std::cout
+				  << "After correction, ADC value smaller than 0!  Uncorrected ADC value:"
+				  << RowData.adc << ", corrected value " << corrected_adc << std::endl;	
+			corrected_adc = 0;
+    	}
+        RowData.adc = static_cast<uint16_t>(corrected_adc);
         bool result = m_Clusterer->AnalyzeHits(
             static_cast<double>(RowData.srs_timestamp), RowData.fec,
             RowData.chip_id, RowData.channel, RowData.bcid, RowData.tdc,
