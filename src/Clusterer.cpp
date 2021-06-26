@@ -124,16 +124,14 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
       for (auto const &det : m_config.pDets) {
         auto dp0 = std::make_pair(det.first, 0);
         auto dp1 = std::make_pair(det.first, 1);
-        if(m_stats.GetLowestCommonTriggerTimestampDet(1) < ts) {
-			m_stats.SetLowestCommonTriggerTimestampPlane(dp0, ts);
-			m_stats.SetLowestCommonTriggerTimestampPlane(dp1, ts);
-			m_stats.SetLowestCommonTriggerTimestampDet(
-				det.first, ts);
-	 
-			AnalyzeClustersPlane(dp0);
-			AnalyzeClustersPlane(dp1);
-			AnalyzeClustersDetector(det.first);
-		 }
+        if(m_stats.GetLowestCommonTriggerTimestampDet(det.first) < ts) {
+			    m_stats.SetLowestCommonTriggerTimestampPlane(dp0, ts);
+			    m_stats.SetLowestCommonTriggerTimestampPlane(dp1, ts);
+			    m_stats.SetLowestCommonTriggerTimestampDet(det.first, ts);
+			    AnalyzeClustersPlane(dp0);
+			    AnalyzeClustersPlane(dp1);
+			    AnalyzeClustersDetector(det.first);
+		    }
       }
     }
     m_stats.SetOldTriggerTimestamp(fecId, srsTimestamp);
@@ -1000,7 +998,6 @@ bool Clusterer::ChooseClustersToBeMatched(std::pair<uint8_t, uint8_t> dp) {
 }
 
 void Clusterer::FinishAnalysis() {
-  std::cout << "FINISH " << std::endl;
   double ts = 0;
   for (auto const &fec : m_config.pFecs) {
   	if(ts <  m_stats.GetMaxTriggerTimestamp(fec)) {
@@ -1010,7 +1007,7 @@ void Clusterer::FinishAnalysis() {
   for (auto const &det : m_config.pDets) {
     auto dp0 = std::make_pair(det.first, 0);
     auto dp1 = std::make_pair(det.first, 1);
-
+    
     //Set the largest timestamp of plane to detector
     //cluster all remaining data in plane
     m_stats.SetLowestCommonTriggerTimestampPlane(dp0, ts);

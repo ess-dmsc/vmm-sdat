@@ -859,6 +859,6 @@ bool Configuration::CreateMapping()
 
         }
     }
- 
+
     return true;
 }
