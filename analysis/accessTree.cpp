@@ -24,7 +24,7 @@ int main(int argc, char**argv)
  	TString rootFileName = "";
 	if(argc != 2)
 	{
-                rootFileName="../example.root";
+                rootFileName="../analysis/example.root";
 	}
 	else
 	{
