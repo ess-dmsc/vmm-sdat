@@ -224,11 +224,11 @@ the two planes (charge plane 0 / charge plane 1) or (charge plane 1 / charge pla
 	-swap: Same connectors on readout boards unintentionally swap odd and even channels. 
 		With -swap 1 one can correct this. Optional parameter (default 0).
 
-    -save:  select which data to store in root file. Input is a list of lists of detectors, e.g. [[1,2],[1,2],[1,2,3]]." << std::endl;
-            first list : detectors for which to write the hits (hit is a VMM3a channel over threshold)" << std::endl;
-            second list : clusters plane" << std::endl;
-            third list : clusters detector" << std::endl;
-            Examples:" << std::endl; 
+    -save:  select which data to store in root file. Input is a list of lists of detectors, e.g. [[1,2],[1,2],[1,2,3]]
+            first list : detectors for which to write the hits (hit is a VMM3a channel over threshold)
+            second list : clusters plane
+            third list : clusters detector
+            Examples:
                 [[1,2],[],[]]: hits for detectors 1 and 2 only 
                 [[],[],[1,2]]: clusters detector for detector 1 and 2 only 
                 [[2],[1],[1]]: hits for detector 2, clusters plane, clusters detector for detector 1 
