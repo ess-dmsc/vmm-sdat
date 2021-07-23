@@ -37,29 +37,32 @@ RootFile::RootFile(Configuration &config) : m_config(config) {
   m_file = TFile::Open(m_fileName, "RECREATE");
   m_eventNr = 0;
 
-  m_tree = new TTree("events", "vmm3 events");
-  m_tree->SetDirectory(m_file);
-
+  m_tree_hits = new TTree("hits", "hits");
+  m_tree_hits->SetDirectory(m_file);
+  m_tree_clusters_plane = new TTree("clusters_plane", "clusters plane");
+  m_tree_clusters_plane->SetDirectory(m_file);
+  m_tree_clusters_detector = new TTree("clusters_detector", "clusters detector");
+  m_tree_clusters_detector->SetDirectory(m_file);
 
   switch (m_config.pSaveWhat) {
-    case 1: m_tree->Branch("hits", &m_hits);
+    case 1: m_tree_hits->Branch("hits", &m_hits);
             break;
-    case 10: m_tree->Branch("clusters_plane", &m_clusters_plane);
+    case 10: m_tree_clusters_plane->Branch("clusters_plane", &m_clusters_plane);
             break;
-    case 11: m_tree->Branch("hits", &m_hits);
-            m_tree->Branch("clusters_plane", &m_clusters_plane);
+    case 11: m_tree_hits->Branch("hits", &m_hits);
+            m_tree_clusters_plane->Branch("clusters_plane", &m_clusters_plane);
             break;
-    case 100: m_tree->Branch("clusters_detector", &m_clusters_detector);
+    case 100: m_tree_clusters_detector->Branch("clusters_detector", &m_clusters_detector);
             break;
-    case 101: m_tree->Branch("hits", &m_hits);
-              m_tree->Branch("clusters_detector", &m_clusters_detector);
+    case 101: m_tree_hits->Branch("hits", &m_hits);
+              m_tree_clusters_detector->Branch("clusters_detector", &m_clusters_detector);
             break;
-    case 110: m_tree->Branch("clusters_plane", &m_clusters_plane);
-              m_tree->Branch("clusters_detector", &m_clusters_detector);
+    case 110: m_tree_clusters_plane->Branch("clusters_plane", &m_clusters_plane);
+              m_tree_clusters_detector->Branch("clusters_detector", &m_clusters_detector);
             break;
-    case 111: m_tree->Branch("hits", &m_hits);
-              m_tree->Branch("clusters_plane", &m_clusters_plane);
-              m_tree->Branch("clusters_detector", &m_clusters_detector);
+    case 111: m_tree_hits->Branch("hits", &m_hits);
+              m_tree_clusters_plane->Branch("clusters_plane", &m_clusters_plane);
+              m_tree_clusters_detector->Branch("clusters_detector", &m_clusters_detector);
             break;
 
   }
@@ -222,24 +225,29 @@ void RootFile::AddHits(Hit &&the_hit) { m_hits.emplace_back(the_hit); }
 
 void RootFile::SaveHits() {
   if (m_hits.size() > 0) {
-    m_tree->Fill();
+    m_tree_hits->Fill();
     m_hits.clear();
   }
 }
 
 void RootFile::SaveClustersPlane(ClusterVectorPlane &&clusters_plane) {
-  m_clusters_plane = clusters_plane;
-  if (m_clusters_plane.size() > 0) {
-      m_tree->Fill();
-      m_clusters_plane.clear();
+  if (clusters_plane.size() > 0) {
+    for (auto &it : clusters_plane) {
+      if(std::find (m_config.pSaveClustersPlane.begin(), m_config.pSaveClustersPlane.end(), it.det) != m_config.pSaveClustersPlane.end()) {
+        m_clusters_plane.push_back(it);
+      }
+    }
+    m_tree_clusters_plane->Fill();
+    m_clusters_plane.clear();
   }
 }
 
 void RootFile::SaveClustersDetector(ClusterVectorDetector &&clusters_detector) {
-  m_clusters_detector = clusters_detector;
-  for (auto &it : m_clusters_detector) {
-    // if (m_config.GetAxes(it.det, 0) && m_config.GetAxes(it.det, 1))
-    {
+  
+  for (auto &it : clusters_detector) {
+    if(std::find (m_config.pSaveClustersDetector.begin(), m_config.pSaveClustersDetector.end(), it.det) != m_config.pSaveClustersDetector.end()) {
+      m_clusters_detector.push_back(it);
+      
       int idx = m_map_TH1D[std::make_pair(it.det, "delta_time_planes")];
       m_TH1D[idx]->Fill(it.time0 - it.time1);
 
@@ -287,7 +295,7 @@ void RootFile::SaveClustersDetector(ClusterVectorDetector &&clusters_detector) {
     }
   }
   if (m_clusters_detector.size() > 0) {
-    m_tree->Fill();
+    m_tree_clusters_detector->Fill();
     m_clusters_detector.clear();
   }
 }

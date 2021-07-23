@@ -84,14 +84,14 @@ bool Configuration::PrintUsage(const std::string &errorMessage, char *argv)
     
     std::cout << "-swap:  Same connectors on readout boards unintentionally swap odd and even channels. With -swap 1 one can correct this.\n" 
               << "        Optional parameter (default 0).\n" << std::endl;
-    std::cout << "-save:  select which data to store in root file. Input is a 3 bit binary number." << std::endl;
-    std::cout << "        bit 0 (LSB): hits (a hit is a VMM3a channel over threshold)" << std::endl;
-    std::cout << "        bit 1      : clusters plane" << std::endl;
-    std::cout << "        bit 2 (MSB): clusters detector" << std::endl;
+    std::cout << "-save:  select which data to store in root file. Input is a list of lists of detectors, e.g. [[1,2],[1,2],[1,2,3]]." << std::endl;
+    std::cout << "        first list : detectors for which to write the hits (hit is a VMM3a channel over threshold)" << std::endl;
+    std::cout << "        second list : clusters plane" << std::endl;
+    std::cout << "        third list : clusters detector" << std::endl;
     std::cout << "        Examples:" << std::endl; 
-    std::cout << "            001: hits only" << std::endl; 
-    std::cout << "            100: clusters detector only" << std::endl; 
-    std::cout << "            111: everything, hits, clusters plane, clusters detector\n" << std::endl; 
+    std::cout << "            [[1,2],[],[]]: hits for detectors 1 and 2 only" << std::endl; 
+    std::cout << "            [[],[],[1,2]]: clusters detector for detector 1 and 2 only" << std::endl; 
+    std::cout << "            [[2],[1],[1]]: hits for detector 2, clusters plane, clusters detector for detector 1 \n" << std::endl; 
    
     std::cout << "-json:  create a json file of the detector images. Optional argument (default 1).\n"
               << std::endl;
@@ -440,12 +440,72 @@ bool Configuration::ParseCommandLine(int argc, char **argv)
         }
         else if (strncmp(argv[i], "-save", 5) == 0)
         {
-            pSaveWhat = atoi(argv[i + 1]);
-            std::vector<int> v_valid_values = {1,10,11,100,101,110,111};
-            auto searchValid = std::find(v_valid_values.begin(), v_valid_values.end(), pSaveWhat);
-            if (searchValid == v_valid_values.end()) {
-                return PrintUsage("The -save parameter accepts only the values 1,10,11,101,110,111!", nullptr);
+            std::string parameterString = argv[i + 1];
+            char removeChars[] = " ";
+            for (unsigned int i = 0; i < strlen(removeChars); ++i)
+            {
+                parameterString.erase(std::remove(parameterString.begin(), parameterString.end(), removeChars[i]), parameterString.end());
+            }
+
+            parameterString = std::regex_replace(parameterString, std::regex("\\[\\["), "; ");
+            parameterString = std::regex_replace(parameterString, std::regex("\\]\\]"), ";");
+            parameterString = std::regex_replace(parameterString, std::regex("\\],\\["), "| ");
+            parameterString.erase(std::remove(parameterString.begin(), parameterString.end(), ';'), parameterString.end());
+            std::vector<std::string> vTokens;
+            std::string token;
+            std::istringstream tokenStream(parameterString);
+            int n = 0;
+            while (std::getline(tokenStream, token, '|'))
+            {
+                vTokens.push_back(token);
+                if(token != " ") {
+                    if(n == 0) {
+                        pSaveWhat = 1;
+                    }
+                    else if(n == 1) {
+                        pSaveWhat += 10;
+                    }
+                    else if(n == 2) {
+                        pSaveWhat += 100;
+                    }
+                }
+                n++;
+            }
+            if (vTokens.size() != 3) {
+                return PrintUsage("The -save parameter accepts only a list of lists of detectors (numbers) in the format [[],[1,2],[1,2,3]]!", nullptr);    
             } 
+            pSaveHits.clear();
+            pSaveClustersPlane.clear();
+            pSaveClustersDetector.clear();
+            n = 0;
+            for (auto &s : vTokens)
+            {
+                std::vector<std::string> v;
+                std::string token;
+                for (unsigned int i = 0; i < strlen(removeChars); ++i)
+                {
+                    s.erase(std::remove(s.begin(), s.end(), removeChars[i]), s.end());
+                }
+                std::istringstream tokenStream(s);
+                while (std::getline(tokenStream, token, ','))
+                {
+                    if(token != " ") {
+                        if(token.find_first_not_of("0123456789") != std::string::npos) {
+                            return PrintUsage("The -save parameter accepts only a list of lists of detectors (numbers) in the format [[],[1,2],[1,2,3]]!", nullptr);    
+                        }
+                    }
+                    if(n == 0 && token != " ") {
+                        pSaveHits.push_back(std::stoi( token ));
+                    }
+                    else if(n==1 && token != " ") {
+                        pSaveClustersPlane.push_back(std::stoi( token ));
+                    }
+                    else if(n==2 && token != " ") {
+                        pSaveClustersDetector.push_back(std::stoi( token ));  
+                    }
+                }
+                n++;
+            }
         }
         else if (strncmp(argv[i], "-n", 2) == 0)
         {

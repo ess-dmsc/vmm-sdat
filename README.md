@@ -224,14 +224,14 @@ the two planes (charge plane 0 / charge plane 1) or (charge plane 1 / charge pla
 	-swap: Same connectors on readout boards unintentionally swap odd and even channels. 
 		With -swap 1 one can correct this. Optional parameter (default 0).
 
-    -save: Select which data to store in root file. Input is a 3 bit binary number.
-        bit 0 (LSB): hits (a hit is a VMM3a channel over threshold)
-        bit 1      : clusters plane" << std::endl;
-        bit 2 (MSB): clusters detector" << std::endl;
-        Examples:
-            001: hits only 
-            100: clusters detector only 
-            111: everything, hits, clusters plane, clusters detector
+    -save:  select which data to store in root file. Input is a list of lists of detectors, e.g. [[1,2],[1,2],[1,2,3]]." << std::endl;
+            first list : detectors for which to write the hits (hit is a VMM3a channel over threshold)" << std::endl;
+            second list : clusters plane" << std::endl;
+            third list : clusters detector" << std::endl;
+            Examples:" << std::endl; 
+                [[1,2],[],[]]: hits for detectors 1 and 2 only 
+                [[],[],[1,2]]: clusters detector for detector 1 and 2 only 
+                [[2],[1],[1]]: hits for detector 2, clusters plane, clusters detector for detector 1 
    
     -stats: Show statistics of the run (default 1, show all stats)
 

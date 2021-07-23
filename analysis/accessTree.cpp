@@ -34,7 +34,7 @@ int main(int argc, char**argv)
 	TFile * f = new TFile(rootFileName);
 	
 	
-	TTree * t = (TTree*)f->Get("events");
+	TTree * t = (TTree*)f->Get("clusters_detector");
 	 
 	std::vector<ClusterDetector> *  m_clusters_detector = nullptr;
 		

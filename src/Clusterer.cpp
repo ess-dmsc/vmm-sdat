@@ -142,23 +142,25 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
   auto det = m_config.pDetectors[fecId][vmmId];
   auto plane = m_config.pPlanes[fecId][vmmId];
   if (m_config.pSaveWhat % 2  == 1) {
-    Hit theHit;
-    theHit.id = m_hitNr;
-    theHit.det = det;
-    theHit.plane = plane;
-    theHit.fec = fecId;
-    theHit.vmm = vmmId;
-    theHit.readout_time = srsTimestamp;
-    theHit.ch = chNo;
-    theHit.pos = (uint16_t)pos;
+    if(std::find (m_config.pSaveHits.begin(), m_config.pSaveHits.end(), det) != m_config.pSaveHits.end()) {
+      Hit theHit;
+      theHit.id = m_hitNr;
+      theHit.det = det;
+      theHit.plane = plane;
+      theHit.fec = fecId;
+      theHit.vmm = vmmId;
+      theHit.readout_time = srsTimestamp;
+      theHit.ch = chNo;
+      theHit.pos = (uint16_t)pos;
 
-    theHit.bcid = bcid;
-    theHit.tdc = tdc;
-    theHit.adc = adc;
-    theHit.over_threshold = overThresholdFlag;
-    theHit.chip_time = chipTime;
-    theHit.time = totalTime;
-    m_rootFile->AddHits(std::move(theHit));
+      theHit.bcid = bcid;
+      theHit.tdc = tdc;
+      theHit.adc = adc;
+      theHit.over_threshold = overThresholdFlag;
+      theHit.chip_time = chipTime;
+      theHit.time = totalTime;
+      m_rootFile->AddHits(std::move(theHit));
+    }
   }
 
   if (m_config.pADCThreshold < 0) {
@@ -726,8 +728,6 @@ int Clusterer::MatchClustersDetector(uint8_t det) {
              clusterDetector.size1);
       DTRACE(DEB, "\tdelta time planes: %d", (int)clusterDetector.delta_plane);
       m_clusters_detector[det].emplace_back(std::move(clusterDetector));
-
-      
     }
   }
   

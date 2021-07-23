@@ -80,7 +80,7 @@ public:
     bool createJSON = false;
     bool useCalibration = false;
     bool swapOddEven = false;
-    int pSaveWhat = 0;
+    int pSaveWhat = 111;
     std::string pConditionCoincidence = "center-of-mass";
     float pChargeRatioLower = 0.5;
     float pChargeRatioUpper = 2;
@@ -103,6 +103,10 @@ public:
     std::map<std::pair<uint8_t, uint8_t>, uint32_t> p_DetPlane_idx;
     std::map<uint8_t, uint8_t> pDets;
     std::vector<uint8_t> pFecs;
+
+    std::vector<uint8_t> pSaveHits;
+    std::vector<uint8_t> pSaveClustersPlane;
+    std::vector<uint8_t> pSaveClustersDetector;
 
     bool fFound = false;
     bool vmmsFound = false;

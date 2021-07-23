@@ -38,7 +38,10 @@ private:
     static RootFile* m_rootFile;
     TString m_fileName;
     TFile * m_file;
-    TTree * m_tree;
+    TTree * m_tree_hits;
+    TTree * m_tree_clusters_plane;
+    TTree * m_tree_clusters_detector;
+    TTree * m_tree_plots;
     int m_eventNr;
 
     HitVector m_hits;

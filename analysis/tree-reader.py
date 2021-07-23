@@ -26,7 +26,7 @@ import sys
 # --------------------------------------------------------------------
 
 # Get the tree in the ROOT file
-tree = uproot.open(sys.argv[1])['events']
+tree = uproot.open(sys.argv[1])['clusters_detector']
 
 # Now get the branch of interest
 adc0 = tree.array('clusters_detector.adc0').flatten()
