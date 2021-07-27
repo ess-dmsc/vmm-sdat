@@ -441,6 +441,7 @@ bool Configuration::ParseCommandLine(int argc, char **argv)
         else if (strncmp(argv[i], "-save", 5) == 0)
         {
             std::string parameterString = argv[i + 1];
+             std::cout<< "parameterString " << parameterString << std::endl;
             char removeChars[] = " ";
             for (unsigned int i = 0; i < strlen(removeChars); ++i)
             {
@@ -455,6 +456,7 @@ bool Configuration::ParseCommandLine(int argc, char **argv)
             std::string token;
             std::istringstream tokenStream(parameterString);
             int n = 0;
+            pSaveWhat = 0;
             while (std::getline(tokenStream, token, '|'))
             {
                 vTokens.push_back(token);
