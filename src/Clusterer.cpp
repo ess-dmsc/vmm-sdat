@@ -1,5 +1,5 @@
 #include "Clusterer.h"
-#include "Trace.h"
+#include <parser/Trace.h>
 #include <algorithm>
 #include <cmath>
 

@@ -2,9 +2,6 @@
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 project(vmm-sdat)
 
-# Temporary hack allowing conditional compilation of efu code
-add_definitions("-DVMM_SDAT")
-
 set(CMAKE_BUILD_TYPE RelWithDebInfo)
 set(CMAKE_CXX_STANDARD 14)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -fsanitize=address -O0 -ggdb")
@@ -65,19 +62,7 @@ if(ENABLE_DTRACE)
  endif()
 
 
- #
- # Specify location of EFU repository
- #
- if (NOT DEFINED EFU_DIR)
-   set(EFU_DIR "$ENV{HOME}/essdaq/efu/event-formation-unit"  CACHE STRING "EFU directory")
- endif()
-
- if (NOT EXISTS ${EFU_DIR})
-   message(FATAL_ERROR "efu directory ${EFU_DIR} does not exist. Use -DEFU_DIR=efupath")
- endif()
-
-
-
+ 
 # You need to tell CMake where to find the ROOT installation. This can be done in a number of ways:
 #   - ROOT built with classic configure/make use the provided $ROOTSYS/etc/cmake/FindROOT.cmake
 #   - ROOT built with CMake. Add in CMAKE_PREFIX_PATH the installation prefix for ROOT
@@ -94,18 +79,16 @@ find_package(ROOT REQUIRED)
 include(${ROOT_USE_FILE})
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
-include_directories(${EFU_DIR}/src)
-include_directories(${EFU_DIR}/src/modules)
-include_directories(${EFU_DIR}/src/udpgenpcap)
 include_directories(${VERSION_INCLUDE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/analysis)
 
 
-ROOT_GENERATE_DICTIONARY(vmm-sdatDict ${EFU_DIR}/src/modules/gdgem/nmx/Readout.h ${EFU_DIR}/src/modules/gdgem/srs/ParserVMM3.h ${EFU_DIR}/src/modules/gdgem/srs/SRSTime.h ${EFU_DIR}/src/modules/gdgem/srs/CalibrationFile.h ${EFU_DIR}/src/udpgenpcap/ReaderPcap.h  ${CMAKE_CURRENT_SOURCE_DIR}/src/Clusterer.h ${CMAKE_CURRENT_SOURCE_DIR}/src/RootFile.h ${CMAKE_CURRENT_SOURCE_DIR}/src/DataStructures.h ${CMAKE_CURRENT_SOURCE_DIR}/src/Configuration.h ${CMAKE_CURRENT_SOURCE_DIR}/src/Statistics.h LINKDEF ${CMAKE_CURRENT_SOURCE_DIR}/src/convertLinkDef.h MODULE vmm-sdat)
+ROOT_GENERATE_DICTIONARY(vmm-sdatDict ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/Readout.h ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ParserSRS.h ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/SRSTime.h  ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/CalibrationFile.h ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ReaderPcap.h  ${CMAKE_CURRENT_SOURCE_DIR}/src/Clusterer.h ${CMAKE_CURRENT_SOURCE_DIR}/src/RootFile.h ${CMAKE_CURRENT_SOURCE_DIR}/src/DataStructures.h ${CMAKE_CURRENT_SOURCE_DIR}/src/Configuration.h ${CMAKE_CURRENT_SOURCE_DIR}/src/Statistics.h LINKDEF ${CMAKE_CURRENT_SOURCE_DIR}/src/convertLinkDef.h MODULE vmm-sdat)
 
 
 #---Create a shared library with generated dictionary
-add_library(vmm-sdat SHARED ${EFU_DIR}/src/modules/gdgem/srs/ParserVMM3.cpp ${EFU_DIR}/src/modules/gdgem/srs/SRSTime.cpp ${EFU_DIR}/src/modules/gdgem/srs/CalibrationFile.cpp ${EFU_DIR}/src/udpgenpcap/ReaderPcap.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Clusterer.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/RootFile.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Configuration.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Statistics.cpp vmm-sdatDict.cxx)
+add_library(vmm-sdat SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ParserSRS.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/SRSTime.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/CalibrationFile.cpp 
+${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ReaderPcap.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Clusterer.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/RootFile.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Configuration.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Statistics.cpp vmm-sdatDict.cxx)
 target_link_libraries(vmm-sdat ${ROOT_LIBRARIES} ${Boost_SYSTEM_LIBRARY} ${HDF5_LIBRARIES} h5cpp fmt graylog_logger_static pcap)
 
 #---Create  a main program using the library
@@ -122,5 +105,4 @@ target_compile_definitions(vmm-sdat PUBLIC __FAVOR_BSD)
 #
 message(STATUS "#######################################################")
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
-message(STATUS "EFU directory: ${EFU_DIR}")
 message(STATUS "#######################################################")

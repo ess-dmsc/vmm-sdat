@@ -7,21 +7,12 @@
 
 #include <cstdio>
 #include <libgen.h>
-#ifdef GRAYLOG
-#include <graylog_logger/GraylogInterface.hpp>
-#include <graylog_logger/Log.hpp>
-#define GLOG_DEB(x) Log::Msg(Severity::Debug, x)
-#define GLOG_INF(x) Log::Msg(Severity::Informational, x)
-#define GLOG_WAR(x) Log::Msg(Severity::Warning, x)
-#define GLOG_ERR(x) Log::Msg(Severity::Error, x)
-#define GLOG_CRI(x) Log::Msg(Severity::Critical, x)
-#else
+#include <fmt/format.h>
 #define GLOG_DEB(x)
 #define GLOG_INF(x)
 #define GLOG_WAR(x)
 #define GLOG_ERR(x)
 #define GLOG_CRI(x)
-#endif
 
 /** Add trace groups below - must be powers of two */
 // clang-format off
@@ -74,9 +65,3 @@
 #define DTRACE(level, fmt, ...)                                                \
   (void)((TRC_L_##level >= TRC_LEVEL) ? printf(fmt, ##__VA_ARGS__) : 0)
 #endif
-
-// #define XTRACE(group, level, fmt, ...)                                         \
-//   (void)(((TRC_L_##level >= TRC_LEVEL) && (TRC_MASK & TRC_G_##group))          \
-//              ? printf("%-3s %-8s" fmt, #level,\
-//                       #group, ##__VA_ARGS__)                                   \
-//              : 0)

@@ -7,10 +7,10 @@
 
 #include "Clusterer.h"
 #include "Configuration.h"
-#include <gdgem/srs/CalibrationFile.h>
-#include <gdgem/srs/ParserVMM3.h>
-#include <udpgenpcap/ReaderPcap.h>
-#include <gdgem/nmx/Readout.h>
+#include <parser/CalibrationFile.h>
+#include <parser/ParserSRS.h>
+#include <parser/ReaderPcap.h>
+#include <parser/Readout.h>
 
 using namespace hdf5;
 
@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
       srs_time.tac_slope_ns(m_config.pTAC);
 
       Gem::NMXStats nmxstats;
-      Gem::ParserVMM3 *parser = new Gem::ParserVMM3(2000, nmxstats, srs_time);
+      Gem::ParserSRS *parser = new Gem::ParserSRS(2000, nmxstats, srs_time);
       Gem::CalibrationFile calfile(m_config.pCalFilename);
       ReaderPcap pcap(m_config.pFileName);
       int ret = pcap.open();

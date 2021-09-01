@@ -1,18 +1,12 @@
 #pragma once
 
+#include "RootFile.h"
+#include "Statistics.h"
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include <map>
 #include <sstream>
-
-#include <thread>   // sleep_for
-#include <future>   // async
-#include <atomic>   // async
-#include <queue>   // async
-
-#include "RootFile.h"
-#include "Statistics.h"
 
 class Clusterer {
 public:
