@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2018 European Spallation Source, ERIC. See LICENSE file */
+// Copyright (C) 2021 European Spallation Source, ERIC. See LICENSE file
 //===----------------------------------------------------------------------===//
 ///
 ///                              WARNING
@@ -28,7 +28,7 @@
 ///
 /// \file
 ///
-/// \brief Readout struct for NMX event formation
+/// \brief Readout struct for LOKI event formation
 ///
 //===----------------------------------------------------------------------===//
 
@@ -36,68 +36,76 @@
 
 #include <parser/DumpFile.h>
 
-namespace Gem {
+namespace VMM3 {
 
-struct __attribute__ ((packed)) Readout {
+struct __attribute__((packed)) Readout {
   /// \todo use constexpr string_view when c++17 arrives
-  static std::string DatasetName() { return "srs_hits"; }
-  static uint16_t FormatVersion() { return 1; }
+  static std::string DatasetName() { return "vmm3_readouts"; }
+  static uint16_t FormatVersion() { return 0; }
 
   /// \todo consider reordering these to optimize
   /// !!! DO NOT MODIFY BELOW - READ HEADER FIRST !!!
-  uint8_t fec{0};
-  uint8_t chip_id{0};
-  uint64_t srs_timestamp{0};
-  uint16_t channel{0};
-  uint16_t bcid{0};
-  uint16_t tdc{0};
-  uint16_t adc{0};
-  bool over_threshold{false};
-  float chiptime{0.0};
-  /// !!! DO NOT MODIFY ABOVE -- READ HEADER FIRST !!!
+  uint32_t PulseTimeHigh{0};
+  uint32_t PulseTimeLow{0};
+  uint32_t PrevPulseTimeHigh{0};
+  uint32_t PrevPulseTimeLow{0};
 
-  bool operator==(const Readout &other) const {
-    return (
-        (fec == other.fec) &&
-            (chip_id == other.chip_id) &&
-            (srs_timestamp == other.srs_timestamp) &&
-            (channel == other.channel) &&
-            (bcid == other.bcid) &&
-            (tdc == other.tdc) && (adc == other.adc) &&
-            (over_threshold == other.over_threshold) &&
-            (chiptime == other.chiptime)
-    );
-  }
+  uint32_t EventTimeHigh{0};
+  uint32_t EventTimeLow{0};
+  uint16_t BC{0};
+  uint16_t OTADC{0};
+  uint8_t  GEO{0}; // also used for CBC HI
+  uint8_t  TDC{0}; // also used for CBC LO
+  uint8_t  VMM{0};
+  uint8_t  Channel{0};
+
+  uint8_t OutputQueue{0};
+  uint8_t RingId;
+  uint8_t FENId;
+
+
+  // !!! DO NOT MODIFY ABOVE -- READ HEADER FIRST !!!
+
+  // \brief prints values for to_string purposes
+  std::string debug() const;
 };
 
-}
+} // namespace VMM3
 
 namespace hdf5 {
 
 namespace datatype {
-template<>
-class TypeTrait<Gem::Readout> {
+template <> class TypeTrait<VMM3::Readout> {
 public:
-  H5_COMPOUND_DEFINE_TYPE(Gem::Readout) {
+  H5_COMPOUND_DEFINE_TYPE(VMM3::Readout) {
     H5_COMPOUND_INIT;
     /// Make sure ALL member variables are inserted
-    H5_COMPOUND_INSERT_MEMBER(fec);
-    H5_COMPOUND_INSERT_MEMBER(chip_id);
-    H5_COMPOUND_INSERT_MEMBER(srs_timestamp);
-    H5_COMPOUND_INSERT_MEMBER(channel);
-    H5_COMPOUND_INSERT_MEMBER(bcid);
-    H5_COMPOUND_INSERT_MEMBER(tdc);
-    H5_COMPOUND_INSERT_MEMBER(adc);
-    H5_COMPOUND_INSERT_MEMBER(over_threshold);
-    H5_COMPOUND_INSERT_MEMBER(chiptime);
+    H5_COMPOUND_INSERT_MEMBER(PulseTimeHigh);
+    H5_COMPOUND_INSERT_MEMBER(PulseTimeLow);
+    H5_COMPOUND_INSERT_MEMBER(PrevPulseTimeHigh);
+    H5_COMPOUND_INSERT_MEMBER(PrevPulseTimeLow);
+    H5_COMPOUND_INSERT_MEMBER(EventTimeHigh);
+    H5_COMPOUND_INSERT_MEMBER(EventTimeLow);
+
+    H5_COMPOUND_INSERT_MEMBER(BC);
+    H5_COMPOUND_INSERT_MEMBER(OTADC);
+    H5_COMPOUND_INSERT_MEMBER(GEO);
+    H5_COMPOUND_INSERT_MEMBER(TDC);
+    H5_COMPOUND_INSERT_MEMBER(VMM);
+    H5_COMPOUND_INSERT_MEMBER(Channel);
+
+    H5_COMPOUND_INSERT_MEMBER(OutputQueue);
+    H5_COMPOUND_INSERT_MEMBER(RingId);
+    H5_COMPOUND_INSERT_MEMBER(FENId);
+
     H5_COMPOUND_RETURN;
   }
 };
-}
+} // namespace datatype
 
-}
+} // namespace hdf5
 
-namespace Gem {
+namespace VMM3 {
 
 using ReadoutFile = DumpFile<Readout>;
 

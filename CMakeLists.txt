@@ -4,8 +4,8 @@ project(vmm-sdat)
 
 set(CMAKE_BUILD_TYPE RelWithDebInfo)
 set(CMAKE_CXX_STANDARD 14)
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -fsanitize=address -O0 -ggdb")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -fsanitize=address -O0 -ggdb")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb")
 
 
 #=============================================================================
@@ -83,11 +83,24 @@ include_directories(${VERSION_INCLUDE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/analysis)
 
 
-ROOT_GENERATE_DICTIONARY(vmm-sdatDict ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/Readout.h ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ParserSRS.h ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/SRSTime.h  ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/CalibrationFile.h ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ReaderPcap.h  ${CMAKE_CURRENT_SOURCE_DIR}/src/Clusterer.h ${CMAKE_CURRENT_SOURCE_DIR}/src/RootFile.h ${CMAKE_CURRENT_SOURCE_DIR}/src/DataStructures.h ${CMAKE_CURRENT_SOURCE_DIR}/src/Configuration.h ${CMAKE_CURRENT_SOURCE_DIR}/src/Statistics.h LINKDEF ${CMAKE_CURRENT_SOURCE_DIR}/src/convertLinkDef.h MODULE vmm-sdat)
+ROOT_GENERATE_DICTIONARY(vmm-sdatDict ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ReadoutSRS.h 
+${CMAKE_CURRENT_SOURCE_DIR}/src/parser/Readout.h
+${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ParserSRS.h 
+${CMAKE_CURRENT_SOURCE_DIR}/src/parser/VMM3Parser.h
+${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ReadoutParser.h
+${CMAKE_CURRENT_SOURCE_DIR}/src/parser/SRSTime.h  
+${CMAKE_CURRENT_SOURCE_DIR}/src/parser/CalibrationFile.h 
+${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ReaderPcap.h  
+${CMAKE_CURRENT_SOURCE_DIR}/src/Clusterer.h 
+${CMAKE_CURRENT_SOURCE_DIR}/src/RootFile.h 
+${CMAKE_CURRENT_SOURCE_DIR}/src/DataStructures.h 
+${CMAKE_CURRENT_SOURCE_DIR}/src/Configuration.h ${CMAKE_CURRENT_SOURCE_DIR}/src/Statistics.h LINKDEF ${CMAKE_CURRENT_SOURCE_DIR}/src/convertLinkDef.h MODULE vmm-sdat)
 
 
 #---Create a shared library with generated dictionary
-add_library(vmm-sdat SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ParserSRS.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/SRSTime.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/CalibrationFile.cpp 
+add_library(vmm-sdat SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ParserSRS.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/VMM3Parser.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ReadoutParser.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/src/parser/SRSTime.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/CalibrationFile.cpp 
 ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ReaderPcap.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Clusterer.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/RootFile.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Configuration.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Statistics.cpp vmm-sdatDict.cxx)
 target_link_libraries(vmm-sdat ${ROOT_LIBRARIES} ${Boost_SYSTEM_LIBRARY} ${HDF5_LIBRARIES} h5cpp fmt graylog_logger_static pcap)
 

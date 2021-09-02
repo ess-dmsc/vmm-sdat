@@ -99,14 +99,14 @@ RootFile::RootFile(Configuration &config) : m_config(config) {
         cnt1D++;
 
         name = std::to_string(det.first) + "_dt0";
-        h1 = new TH1D(name.c_str(), name.c_str(), 11000, -500, 50000);
+        h1 = new TH1D(name.c_str(), name.c_str(), 11000, -1000, 109000);
         m_TH1D.push_back(h1);
         m_map_TH1D.emplace(
             std::make_pair(std::make_pair(det.first, "dt0"), cnt1D));
         cnt1D++;
 
         name = std::to_string(det.first) + "_dt1";
-        h1 = new TH1D(name.c_str(), name.c_str(), 11000, -500, 50000);
+        h1 = new TH1D(name.c_str(), name.c_str(), 11000, -1000, 109000);
         m_TH1D.push_back(h1);
         m_map_TH1D.emplace(
             std::make_pair(std::make_pair(det.first, "dt1"), cnt1D));

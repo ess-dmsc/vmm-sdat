@@ -68,13 +68,13 @@ int ParserSRS::parse(uint32_t data1, uint16_t data2, struct VMM3Data *vd) {
 
     uint64_t timestamp_42bit = (timestamp_upper_32bit << 10)
         + timestamp_lower_10bit;
-    XTRACE(PROCESS, DEB, "SRS Marker vmmid %d: timestamp lower 10bit %u, timestamp upper 32 bit %u, 42 bit timestamp %"
+    XTRACE(PROCESS, DEB, "SRS Marker vmmid %d: timestamp lower 10bit %llu, timestamp upper 32 bit %llu, 42 bit timestamp %"
         PRIu64"", vmmid, timestamp_lower_10bit, timestamp_upper_32bit, timestamp_42bit);
 
     if(markers[idx].fecTimeStamp > timestamp_42bit) {
       if (markers[idx].fecTimeStamp < 0x1FFFFFFF + timestamp_42bit) {
         stats.ParserTimestampSeqErrors++;
-        XTRACE(PROCESS, DEB, "ParserTimestampSeqErrors:  fc %d, ts %llu, marker ts %llu", timestamp_42bit, markers[idx].fecTimeStamp);
+        XTRACE(PROCESS, DEB, "ParserTimestampSeqErrors:  ts %llu, marker ts %llu", timestamp_42bit, markers[idx].fecTimeStamp);
       }
       else {
         stats.ParserTimestampOverflows++;

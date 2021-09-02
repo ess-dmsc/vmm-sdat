@@ -42,7 +42,7 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
     return true;
   }
 
-  if(m_config.pShowStats) {
+  if(m_config.pShowStats && m_config.pDataFormat == "SRS") {
     //Biggest possible time should be:
     //from FEC: 2^42-1 = 0x3FFFFFFFFFF clock cycles
     //converted to ns: 0x3FFFFFFFFFF * bc period = 109951162777575 ns
@@ -96,15 +96,25 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
             static_cast<uint64_t>(m_stats.GetOldTriggerTimestamp(fecId)));
     }
   }
+
   bool newData = false;
-  int factor = 16;
-  if (srsTimestamp >= m_stats.GetOldTriggerTimestamp(fecId)
-  + factor * m_config.pOffsetPeriod) {
-    if(m_config.pShowStats) {
-      m_stats.SetDeltaTriggerTimestamp(
-          fecId, srsTimestamp - m_stats.GetOldTriggerTimestamp(fecId));
+  
+  if(m_config.pDataFormat == "SRS") {
+    int factor = 16;
+    if (srsTimestamp >= m_stats.GetOldTriggerTimestamp(fecId)
+    + factor * m_config.pOffsetPeriod) {
+      if(m_config.pShowStats) {
+        m_stats.SetDeltaTriggerTimestamp(
+            fecId, srsTimestamp - m_stats.GetOldTriggerTimestamp(fecId));
+      }
+      newData = true;
     }
-    newData = true;
+  }
+  else if(m_config.pDataFormat == "ESS") {
+    double buffer_interval_ns = 1000000;
+    if (srsTimestamp >= m_stats.GetOldTriggerTimestamp(fecId) + buffer_interval_ns) {
+      newData = true;
+    }   
   }
 
   if (newData) {
@@ -162,7 +172,10 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
       m_rootFile->AddHits(std::move(theHit));
     }
   }
-
+  if(overThresholdFlag) {
+    //keep the overThresholdFlag as bit 15 of the ADC
+    adc = adc + 32768;
+  }
   if (m_config.pADCThreshold < 0) {
   	if(overThresholdFlag) {
   		m_hits_new[std::make_pair(det, plane)].emplace_back(totalTime,
@@ -663,6 +676,8 @@ int Clusterer::MatchClustersDetector(uint8_t det) {
       clusterDetector.time1_algo = (*bestMatchPlane1).time_algo;
       clusterDetector.dt0 = clusterDetector.time0 - last_time0;
       clusterDetector.dt1 = clusterDetector.time1 - last_time1;
+
+      //std::cout << clusterDetector.dt1 << " " << clusterDetector.time1 << " " << last_time1 << std::endl;
       /*
       clusterDetector.dt0_utpc = clusterDetector.time0_utpc - last_time0_utpc;
       clusterDetector.dt1_utpc = clusterDetector.time1_utpc - last_time1_utpc;

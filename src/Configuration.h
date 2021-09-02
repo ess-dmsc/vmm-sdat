@@ -6,7 +6,7 @@
 #include <map>
 #include <sstream>
 
-#define NUMFECS 10
+#define NUMFECS 384
 
 class Configuration
 {
