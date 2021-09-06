@@ -17,19 +17,19 @@ public:
     long GetStatsPlane(std::string stats, std::pair<uint8_t, uint8_t> dp, int n);
     void SetStatsPlane(std::string stats, std::pair<uint8_t, uint8_t> dp, double value);
 
-    void IncrementCounter(std::string error, uint8_t fecId, uint64_t increment=1);
-    long GetCounter(std::string error, uint8_t fecId);
+    void IncrementCounter(std::string error, uint16_t fecId, uint64_t increment=1);
+    long GetCounter(std::string error, uint16_t fecId);
    
-    double GetDeltaTriggerTimestamp(uint8_t fecId);
-    void SetDeltaTriggerTimestamp(uint8_t fecId, double val);
-    double GetOldTriggerTimestamp(uint8_t fecId);
-    void SetOldTriggerTimestamp(uint8_t fecId, double srsTimestamp);
-    double GetFirstTriggerTimestamp(uint8_t fecId);
-    void SetFirstTriggerTimestamp(uint8_t fecId, double srsTimestamp);
-    double GetMaxTriggerTimestamp(uint8_t fecId);
-    void SetMaxTriggerTimestamp(uint8_t fecId, double srsTimestamp);
-    uint64_t GetLastFrameCounter(uint8_t fecId);
-    void SetLastFrameCounter(uint8_t fecId, uint64_t frameCounter);
+    double GetDeltaTriggerTimestamp(uint16_t fecId);
+    void SetDeltaTriggerTimestamp(uint16_t fecId, double val);
+    double GetOldTriggerTimestamp(uint16_t fecId);
+    void SetOldTriggerTimestamp(uint16_t fecId, double srsTimestamp);
+    double GetFirstTriggerTimestamp(uint16_t fecId);
+    void SetFirstTriggerTimestamp(uint16_t fecId, double srsTimestamp);
+    double GetMaxTriggerTimestamp(uint16_t fecId);
+    void SetMaxTriggerTimestamp(uint16_t fecId, double srsTimestamp);
+    uint64_t GetLastFrameCounter(uint16_t fecId);
+    void SetLastFrameCounter(uint16_t fecId, uint64_t frameCounter);
     double GetLowestCommonTriggerTimestampDet(uint8_t det);
     void SetLowestCommonTriggerTimestampDet(uint8_t det, double val);
     double GetLowestCommonTriggerTimestampPlane(std::pair<uint8_t, uint8_t> dp);

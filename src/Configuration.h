@@ -6,7 +6,7 @@
 #include <map>
 #include <sstream>
 
-#define NUMFECS 384
+#define NUMFECS 385
 
 class Configuration
 {
@@ -102,7 +102,7 @@ public:
     std::map<std::pair<uint8_t, uint8_t>, uint32_t> pOffsets;
     std::map<std::pair<uint8_t, uint8_t>, uint32_t> p_DetPlane_idx;
     std::map<uint8_t, uint8_t> pDets;
-    std::vector<uint8_t> pFecs;
+    std::vector<uint16_t> pFecs;
 
     std::vector<uint8_t> pSaveHits;
     std::vector<uint8_t> pSaveClustersPlane;

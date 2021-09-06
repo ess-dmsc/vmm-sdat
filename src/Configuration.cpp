@@ -77,6 +77,12 @@ bool Configuration::PrintUsage(const std::string &errorMessage, char *argv)
               << "        The time can be calculated with the center-of-mass algorithm (center-of-mass), the uTPC method (utpc) or the center-of-mass squared method (charge2).\n"
               << "        Optional argument (default center-of-mass).\n"
               << std::endl;
+    std::cout << "-algo:  Select with algorithm is used in pos_algo and time_algo field in clusters" << std::endl;
+    std::cout << "        0: utpc with COG" << std::endl;
+    std::cout << "        1: utpc with COG2" << std::endl;
+    std::cout << "        2: COG including only over Threshold hits" << std::endl;
+    std::cout << "        3: COG2 including only over Threshold hits" << std::endl;
+    std::cout << "        4: position and time of largest ADC" << std::endl;
     std::cout << "-crl:   Valid clusters normally have the same amount of charge in both detector planes (ratio of charge plane 0/charge plane 1 is 100\% or 1.\n"
               << "        Depending on the readout, the charge sharing can be different, e.g. in a standard GEM strip readout the total charge is divided 60/40 between plane 0/ plane 1\n"
               << "        With -crl one sets the lower threshold for the plane0/plane1 charge ratio. Optional argument (default 0.5).\n" <<  std::endl;
@@ -439,7 +445,6 @@ bool Configuration::ParseCommandLine(int argc, char **argv)
         else if (strncmp(argv[i], "-save", 5) == 0)
         {
             std::string parameterString = argv[i + 1];
-             std::cout<< "parameterString " << parameterString << std::endl;
             char removeChars[] = " ";
             for (unsigned int i = 0; i < strlen(removeChars); ++i)
             {
@@ -919,6 +924,8 @@ bool Configuration::CreateMapping()
 
         }
     }
-
+    if(pDataFormat == "ESS") {
+        pFecs.push_back(12*32);
+    }
     return true;
 }

@@ -34,7 +34,9 @@ int main(int argc, char **argv) {
     uint64_t last_time = 0;
 
     Clusterer *m_Clusterer = new Clusterer(m_config, m_stats);
-    m_stats.CreateFECStats(m_config);
+    if (m_config.pDataFormat == "SRS") {
+      m_stats.CreateFECStats(m_config);
+    }
     if (m_config.pShowStats) {
       m_stats.CreateClusterStats(m_config);
       if (m_config.pIsPcap) {
@@ -210,6 +212,7 @@ int main(int argc, char **argv) {
         uint64_t pcappackets = 0;
         uint64_t goodFrames = 0;
         uint64_t badFrames = 0;
+        
         int rdsize;
         bool doContinue = true;
         while (doContinue &&
@@ -223,11 +226,13 @@ int main(int argc, char **argv) {
               readoutParser.validate((char *)&buffer, rdsize, ReadoutParser::FREIA);
           if (m_config.pShowStats) {
             pcappackets++;
-            if (ret == ReadoutParser::OK) {
-              goodFrames++;
-            } else {
+            if (ret != ReadoutParser::OK) {
               badFrames++;
+              continue;
             }
+            else {
+              goodFrames++;
+            } 
           }
           int hits = parser->parse(readoutParser.Packet.DataPtr, readoutParser.Packet.DataLength);
           total_hits += hits;
@@ -238,7 +243,6 @@ int main(int argc, char **argv) {
               firstTime = hit.TimeHigh * 1.0E+09;
             }
             double complete_timestamp = hit.TimeHigh * 1.0E+09 - firstTime + hit.TimeLow * m_config.pBCTime_ns * 0.5;
-            //double complete_timestamp = hit.TimeHigh * 1.0E+09 + hit.TimeLow * m_config.pBCTime_ns * 0.5;
             uint16_t adc = hit.OTADC & 0x03ff;
             bool overThreshold = hit.OTADC & 0x8000;
             uint16_t assisterId =
@@ -285,6 +289,35 @@ int main(int argc, char **argv) {
             }
           }
         }
+        m_stats.IncrementCounter("ErrorBuffer", 384,readoutParser.Stats.ErrorBuffer);
+        m_stats.IncrementCounter("ErrorSize", 384,readoutParser.Stats.ErrorSize);
+        m_stats.IncrementCounter("ErrorVersion", 384,readoutParser.Stats.ErrorVersion);
+        m_stats.IncrementCounter("ErrorCookie", 384,readoutParser.Stats.ErrorCookie);
+        m_stats.IncrementCounter("ErrorPad", 384,readoutParser.Stats.ErrorPad);
+        m_stats.IncrementCounter("ErrorOutputQueue", 384,readoutParser.Stats.ErrorOutputQueue);
+        m_stats.IncrementCounter("ErrorTypeSubType", 384,readoutParser.Stats.ErrorTypeSubType);
+        m_stats.IncrementCounter("ErrorSeqNum", 384,readoutParser.Stats.ErrorSeqNum);
+        m_stats.IncrementCounter("ErrorTimeHigh", 384,readoutParser.Stats.ErrorTimeHigh);
+        m_stats.IncrementCounter("ErrorTimeFrac", 384,readoutParser.Stats.ErrorTimeFrac);
+        m_stats.IncrementCounter("HeartBeats", 384,readoutParser.Stats.HeartBeats);
+        m_stats.IncrementCounter("GoodFrames", 384,goodFrames);
+        m_stats.IncrementCounter("BadFrames", 384,badFrames);
+        m_stats.IncrementCounter("TotalFrames", 384,pcappackets);
+        
+        m_stats.IncrementCounter("ParserErrorSize", 384,parser->Stats.ErrorSize);
+        m_stats.IncrementCounter("ParserErrorRing", 384,parser->Stats.ErrorRing);        
+        m_stats.IncrementCounter("ParserErrorFEN", 384,parser->Stats.ErrorFEN);
+        m_stats.IncrementCounter("ParserErrorDataLength", 384,parser->Stats.ErrorDataLength);        
+        m_stats.IncrementCounter("ParserErrorTimeFrac", 384,parser->Stats.ErrorTimeFrac);
+        m_stats.IncrementCounter("ParserErrorBC", 384,parser->Stats.ErrorBC);        
+        m_stats.IncrementCounter("ParserErrorADC", 384,parser->Stats.ErrorADC);
+        m_stats.IncrementCounter("ParserErrorVMM", 384,parser->Stats.ErrorVMM);        
+        m_stats.IncrementCounter("ParserErrorChannel", 384,parser->Stats.ErrorChannel);
+        m_stats.IncrementCounter("ParserReadouts", 384,parser->Stats.Readouts);        
+        m_stats.IncrementCounter("ParserCalibReadouts", 384,parser->Stats.CalibReadouts);
+        m_stats.IncrementCounter("ParserDataReadouts", 384,parser->Stats.DataReadouts);        
+        m_stats.IncrementCounter("ParserOverThreshold", 384,parser->Stats.OverThreshold);        
+     
       }
     } else {
       auto DataFile = file::open(m_config.pFileName);

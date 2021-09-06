@@ -6,32 +6,95 @@
 
 
 void Statistics::CreatePCAPStats(Configuration &config) {
-  m_counter_names.push_back("ParserFrameSeqErrors");
-  m_counter_names.push_back("ParserFrameMissingErrors");
-  m_counter_names.push_back("ParserFramecounterOverflows");
-  m_counter_names.push_back("ParserTimestampSeqErrors");
-  m_counter_names.push_back("ParserTimestampOverflows");
-  m_counter_names.push_back("ParserBadFrames");
-  m_counter_names.push_back("ParserGoodFrames");
-  m_counter_names.push_back("ParserReadouts");
-  m_counter_names.push_back("ParserMarkers");
-  m_counter_names.push_back("ParserData");
-  for (auto const &fec : config.pFecs) {
-    m_counters.emplace(
-        std::make_pair(std::make_pair(fec, "ParserFrameSeqErrors"), 0));
-    m_counters.emplace(
-        std::make_pair(std::make_pair(fec, "ParserFrameMissingErrors"), 0));
-    m_counters.emplace(
-        std::make_pair(std::make_pair(fec, "ParserFramecounterOverflows"), 0));
-    m_counters.emplace(
-        std::make_pair(std::make_pair(fec, "ParserTimestampSeqErrors"), 0));
-    m_counters.emplace(
-        std::make_pair(std::make_pair(fec, "ParserTimestampOverflows"), 0));
-    m_counters.emplace(std::make_pair(std::make_pair(fec, "ParserBadFrames"), 0));
-    m_counters.emplace(std::make_pair(std::make_pair(fec, "ParserGoodFrames"), 0));
-    m_counters.emplace(std::make_pair(std::make_pair(fec, "ParserReadouts"), 0));
-    m_counters.emplace(std::make_pair(std::make_pair(fec, "ParserMarkers"), 0));
-    m_counters.emplace(std::make_pair(std::make_pair(fec, "ParserData"), 0));
+  if(config.pDataFormat == "SRS") {
+    m_counter_names.push_back("ParserFrameSeqErrors");
+    m_counter_names.push_back("ParserFrameMissingErrors");
+    m_counter_names.push_back("ParserFramecounterOverflows");
+    m_counter_names.push_back("ParserTimestampSeqErrors");
+    m_counter_names.push_back("ParserTimestampOverflows");
+    m_counter_names.push_back("ParserBadFrames");
+    m_counter_names.push_back("ParserGoodFrames");
+    m_counter_names.push_back("ParserReadouts");
+    m_counter_names.push_back("ParserMarkers");
+    m_counter_names.push_back("ParserData");
+    for (auto const &fec : config.pFecs) {
+      m_counters.emplace(
+          std::make_pair(std::make_pair(fec, "ParserFrameSeqErrors"), 0));
+      m_counters.emplace(
+          std::make_pair(std::make_pair(fec, "ParserFrameMissingErrors"), 0));
+      m_counters.emplace(
+          std::make_pair(std::make_pair(fec, "ParserFramecounterOverflows"), 0));
+      m_counters.emplace(
+          std::make_pair(std::make_pair(fec, "ParserTimestampSeqErrors"), 0));
+      m_counters.emplace(
+          std::make_pair(std::make_pair(fec, "ParserTimestampOverflows"), 0));
+      m_counters.emplace(std::make_pair(std::make_pair(fec, "ParserBadFrames"), 0));
+      m_counters.emplace(std::make_pair(std::make_pair(fec, "ParserGoodFrames"), 0));
+      m_counters.emplace(std::make_pair(std::make_pair(fec, "ParserReadouts"), 0));
+      m_counters.emplace(std::make_pair(std::make_pair(fec, "ParserMarkers"), 0));
+      m_counters.emplace(std::make_pair(std::make_pair(fec, "ParserData"), 0));
+    }
+  }
+  else {
+    m_counter_names.push_back("ErrorBuffer");
+    m_counter_names.push_back("ErrorPad");
+    m_counter_names.push_back("ErrorVersion");
+    m_counter_names.push_back("ErrorCookie");
+    m_counter_names.push_back("ErrorSize");
+    m_counter_names.push_back("ErrorTypeSubType");
+    m_counter_names.push_back("ErrorOutputQueue");
+    m_counter_names.push_back("ErrorSeqNum");
+    m_counter_names.push_back("ErrorTimeFrac");
+    m_counter_names.push_back("HeartBeats");
+    m_counter_names.push_back("TotalFrames");
+    m_counter_names.push_back("BadFrames");
+    m_counter_names.push_back("GoodFrames");
+
+    m_counter_names.push_back("ParserErrorSize");
+    m_counter_names.push_back("ParserErrorRing");
+    m_counter_names.push_back("ParserErrorFEN");
+    m_counter_names.push_back("ParserErrorDataLength");
+    m_counter_names.push_back("ParserErrorTimeFrac");
+    m_counter_names.push_back("ParserErrorBC");
+    m_counter_names.push_back("ParserErrorADC");
+    m_counter_names.push_back("ParserErrorVMM");
+    m_counter_names.push_back("ParserErrorChannel");
+    m_counter_names.push_back("ParserReadouts");
+    m_counter_names.push_back("ParserCalibReadouts");
+    m_counter_names.push_back("ParserDataReadouts");
+    m_counter_names.push_back("ParserOverThreshold");
+
+    for (auto const &fec : config.pFecs) {
+      if(fec == 384) {
+        m_counters.emplace(std::make_pair(std::make_pair(fec, "ErrorBuffer"), 0));
+        m_counters.emplace(std::make_pair(std::make_pair(fec, "ErrorPad"), 0));  
+        m_counters.emplace(std::make_pair(std::make_pair(fec, "ErrorVersion"), 0)); 
+        m_counters.emplace(std::make_pair(std::make_pair(fec, "ErrorCookie"), 0)); 
+        m_counters.emplace(std::make_pair(std::make_pair(fec, "ErrorSize"), 0)); 
+        m_counters.emplace(std::make_pair(std::make_pair(fec, "ErrorTypeSubType"), 0)); 
+        m_counters.emplace(std::make_pair(std::make_pair(fec, "ErrorOutputQueue"), 0));  
+        m_counters.emplace(std::make_pair(std::make_pair(fec, "ErrorSeqNum"), 0));
+        m_counters.emplace(std::make_pair(std::make_pair(fec, "ErrorTimeFrac"), 0));  
+        m_counters.emplace(std::make_pair(std::make_pair(fec, "HeartBeats"), 0)); 
+        m_counters.emplace(std::make_pair(std::make_pair(fec, "TotalFrames"), 0)); 
+        m_counters.emplace(std::make_pair(std::make_pair(fec, "BadFrames"), 0)); 
+        m_counters.emplace(std::make_pair(std::make_pair(fec, "GoodFrames"), 0)); 
+        m_counters.emplace(std::make_pair(std::make_pair(fec, "ParserErrorSize"), 0));
+        m_counters.emplace(std::make_pair(std::make_pair(fec, "ParserErrorRing"), 0));  
+        m_counters.emplace(std::make_pair(std::make_pair(fec, "ParserErrorFEN"), 0)); 
+        m_counters.emplace(std::make_pair(std::make_pair(fec, "ParserErrorDataLength"), 0)); 
+        m_counters.emplace(std::make_pair(std::make_pair(fec, "ParserErrorTimeFrac"), 0)); 
+        m_counters.emplace(std::make_pair(std::make_pair(fec, "ParserErrorBC"), 0)); 
+        m_counters.emplace(std::make_pair(std::make_pair(fec, "ParserErrorADC"), 0));  
+        m_counters.emplace(std::make_pair(std::make_pair(fec, "ParserErrorVMM"), 0));
+        m_counters.emplace(std::make_pair(std::make_pair(fec, "ParserErrorChannel"), 0));  
+        m_counters.emplace(std::make_pair(std::make_pair(fec, "ParserReadouts"), 0)); 
+        m_counters.emplace(std::make_pair(std::make_pair(fec, "ParserCalibReadouts"), 0)); 
+        m_counters.emplace(std::make_pair(std::make_pair(fec, "ParserDataReadouts"), 0)); 
+        m_counters.emplace(std::make_pair(std::make_pair(fec, "ParserOverThreshold"), 0));     
+      }
+     
+    } 
   }
 }
 
@@ -233,51 +296,51 @@ void Statistics::SetStatsPlane(std::string stats,
   }
 }
 
-void Statistics::IncrementCounter(std::string error, uint8_t fecId, uint64_t increment) {
+void Statistics::IncrementCounter(std::string error, uint16_t fecId, uint64_t increment) {
   m_counters[std::make_pair(fecId, error)] += increment;
 }
 
-long Statistics::GetCounter(std::string error, uint8_t fecId) {
+long Statistics::GetCounter(std::string error, uint16_t fecId) {
   return m_counters[std::make_pair(fecId, error)];
 }
 
-double Statistics::GetDeltaTriggerTimestamp(uint8_t fecId) {
+double Statistics::GetDeltaTriggerTimestamp(uint16_t fecId) {
   return m_deltaTriggerTimestamp[fecId];
 }
 
-void Statistics::SetDeltaTriggerTimestamp(uint8_t fecId, double val) {
+void Statistics::SetDeltaTriggerTimestamp(uint16_t fecId, double val) {
   m_deltaTriggerTimestamp[fecId] = val;
 }
 
-double Statistics::GetOldTriggerTimestamp(uint8_t fecId) {
+double Statistics::GetOldTriggerTimestamp(uint16_t fecId) {
   return m_oldTriggerTimestamp[fecId];
 }
 
-void Statistics::SetOldTriggerTimestamp(uint8_t fecId, double srsTimestamp) {
+void Statistics::SetOldTriggerTimestamp(uint16_t fecId, double srsTimestamp) {
   m_oldTriggerTimestamp[fecId] = srsTimestamp;
 }
 
-double Statistics::GetFirstTriggerTimestamp(uint8_t fecId) {
+double Statistics::GetFirstTriggerTimestamp(uint16_t fecId) {
   return m_firstTriggerTimestamp[fecId];
 }
 
-void Statistics::SetFirstTriggerTimestamp(uint8_t fecId, double srsTimestamp) {
+void Statistics::SetFirstTriggerTimestamp(uint16_t fecId, double srsTimestamp) {
   m_firstTriggerTimestamp[fecId] = srsTimestamp;
 }
 
-double Statistics::GetMaxTriggerTimestamp(uint8_t fecId) {
+double Statistics::GetMaxTriggerTimestamp(uint16_t fecId) {
   return m_maxTriggerTimestamp[fecId];
 }
 
-void Statistics::SetMaxTriggerTimestamp(uint8_t fecId, double srsTimestamp) {
+void Statistics::SetMaxTriggerTimestamp(uint16_t fecId, double srsTimestamp) {
   m_maxTriggerTimestamp[fecId] = srsTimestamp;
 }
 
-uint64_t Statistics::GetLastFrameCounter(uint8_t fecId) {
+uint64_t Statistics::GetLastFrameCounter(uint16_t fecId) {
   return m_lastFrameCounter[fecId];
 }
 
-void Statistics::SetLastFrameCounter(uint8_t fecId, uint64_t frameCounter) {
+void Statistics::SetLastFrameCounter(uint16_t fecId, uint64_t frameCounter) {
   m_lastFrameCounter[fecId] = frameCounter;
 }
 
@@ -364,38 +427,67 @@ void Statistics::PrintClusterStats(Configuration &config) {
 
 void Statistics::PrintFECStats(Configuration &config) {
   for (auto const &fec : config.pFecs) {
-    std::cout << "\n****************************************" << std::endl;
-    std::cout << "FEC " << (int)fec << std::endl;
-    std::cout << "****************************************" << std::endl;
-    for (unsigned int n = 0; n < m_counter_names.size(); n++) {
-      std::cout << m_counter_names[n] << ": "
-                << GetCounter(m_counter_names[n], fec) << std::endl;
-    }
-    uint64_t first = GetFirstTriggerTimestamp(fec);
-    uint64_t max = GetMaxTriggerTimestamp(fec);
-    uint64_t last = GetOldTriggerTimestamp(fec);
-    int overflow = GetCounter("TimestampOverflow", fec);
-    m_acq_time = 0;
-
-    if (overflow >= 1) {
-      if (max <= 4294967295) {
-        max = 4294967295;
+    if(config.pDataFormat == "SRS") {
+      std::cout << "\n****************************************" << std::endl;
+      std::cout << "FEC " << (int)fec << std::endl;
+      std::cout << "****************************************" << std::endl;
+      for (unsigned int n = 0; n < m_counter_names.size(); n++) {
+        std::cout << m_counter_names[n] << ": "
+                  << GetCounter(m_counter_names[n], fec) << std::endl;
       }
-      if (max > 4294967295 && max <= 109951162777575) {
-        max = 109951162777575;
-      }
-      m_acq_time = ((max - first) + (overflow - 1) * max + last) / 1000000.0;
-    } else {
-      m_acq_time = (max - first) / 1000000.0;
-    }
-    std::cout << "\n****************************************" << std::endl;
-    std::cout << "Stats (acquisition):" << std::endl;
-    std::cout << "****************************************" << std::endl;
-    std::cout << "Acq time: " << std::setprecision(1) << std::fixed << m_acq_time << " ms" << std::endl;
-    std::cout << "Hit rate FEC: " << std::scientific << 1000*GetCounter("ParserData", fec)/m_acq_time << " hit/s" << std::endl;
-    std::cout << "Data rate FEC: " << std::scientific << 1000*GetCounter("ParserData", fec)*48/m_acq_time << " bit/s" << std::endl;
-    std::cout << "****************************************" << std::endl;
+      uint64_t first = GetFirstTriggerTimestamp(fec);
+      uint64_t max = GetMaxTriggerTimestamp(fec);
+      uint64_t last = GetOldTriggerTimestamp(fec);
+      int overflow = GetCounter("TimestampOverflow", fec);
+      m_acq_time = 0;
 
+      if (overflow >= 1) {
+        if (max <= 4294967295) {
+          max = 4294967295;
+        }
+        if (max > 4294967295 && max <= 109951162777575) {
+          max = 109951162777575;
+        }
+        m_acq_time = ((max - first) + (overflow - 1) * max + last) / 1000000.0;
+      } else {
+        m_acq_time = (max - first) / 1000000.0;
+      }
+      std::cout << "\n****************************************" << std::endl;
+      std::cout << "Stats (acquisition):" << std::endl;
+      std::cout << "****************************************" << std::endl;
+      std::cout << "Acq time: " << std::setprecision(1) << std::fixed << m_acq_time << " ms" << std::endl;
+      std::cout << "Hit rate FEC: " << std::scientific << 1000*GetCounter("ParserData", fec)/m_acq_time << " hit/s" << std::endl;
+      std::cout << "Data rate FEC: " << std::scientific << 1000*GetCounter("ParserData", fec)*48/m_acq_time << " bit/s" << std::endl;
+      std::cout << "****************************************" << std::endl;
+    }
+    else {
+      
+      if(fec < 384) {
+        uint64_t first = GetFirstTriggerTimestamp(fec);
+        uint64_t max = GetMaxTriggerTimestamp(fec);
+     
+        m_acq_time = 0;
+        m_acq_time = (max - first) / 1000000.0;
+        std::cout << "\n****************************************" << std::endl;
+        std::cout << "FEN " << (int)fec << std::endl;
+        std::cout << "Stats (acquisition):" << std::endl;
+        std::cout << "****************************************" << std::endl;
+        std::cout << "Acq time: " << std::setprecision(1) << std::fixed << m_acq_time << " ms" << std::endl;
+        std::cout << "Hit rate FEN: " << std::scientific << 1000*GetCounter("ParserData", fec)/m_acq_time << " hit/s" << std::endl;
+        std::cout << "Data rate FEN: " << std::scientific << 1000*GetCounter("ParserData", fec)*160/m_acq_time << " bit/s" << std::endl;
+        std::cout << "****************************************" << std::endl;
+      }
+      else if (fec == 384){
+        std::cout << "\n****************************************" << std::endl;
+        std::cout << "System wide stats" << std::endl;
+        std::cout << "****************************************" << std::endl;
+        for (unsigned int n = 0; n < m_counter_names.size(); n++) {
+            std::cout << m_counter_names[n] << ": "
+                  << GetCounter(m_counter_names[n], fec) << std::endl;
+        }
+        std::cout << "****************************************" << std::endl;
+      }
+    }
   }
   std::cout << "\n****************************************" << std::endl;
   long cnt = 0;

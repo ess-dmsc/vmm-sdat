@@ -270,17 +270,27 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
 
   double startTime = 0;
   double largestTime = 0;
+  double largestADCTime = 0;
+  double largestADCPos = 0;
   double centerOfGravity = 0;
   double centerOfTime = 0;
   double centerOfGravity2 = 0;
   double centerOfTime2 = 0;
+  double centerOfGravity_ovTh = 0;
+  double centerOfTime_ovTh = 0;
+  double centerOfGravity2_ovTh = 0;
+  double centerOfTime2_ovTh = 0;
   long int totalADC = 0;
   long int totalADC2 = 0;
+  long int totalADC_ovTh = 0;
+  long int totalADC2_ovTh = 0;
 
   double time1 = 0;
   int idx_left = 0;
   int idx_right = 0;
   int adc1 = 0;
+  int adc2 = 0;
+  bool ovTh = false;
   int strip1 = 0;
   int strip2 = 0;
   int stripCount = 0;
@@ -298,11 +308,19 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
                       std::get<1>(t1) > std::get<1>(t2));
             });
   for (auto &itCluster : cluster) {
+    adc2 = adc1;
     strip2 = strip1;
     strip1 = std::get<0>(itCluster);
     time1 = std::get<1>(itCluster);
     adc1 = std::get<2>(itCluster);
-
+    if(adc1 > 1024) {
+      ovTh = true;
+    }
+    else {
+      ovTh = false;
+    }
+    adc1 = adc1 & 0x3FF;
+    
     // At beginning of cluster, set start time of cluster
     if (stripCount == 0) {
       maxMissingStrip = 0;
@@ -323,6 +341,11 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
          largestTime - time1 <= m_config.pSpanClusterTime)) {
       DTRACE(DEB, "\tstrip %d, time %llu, adc %d:\n", strip1, (uint64_t)time1,
              adc1);
+      if(adc1 > adc2) {
+        largestADCTime = time1;
+        largestADCPos = strip1;
+      }
+                
       if(time1 == largestTime) {
         idx_right = stripCount;
       }
@@ -345,6 +368,16 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
       centerOfTime += time1 * adc1;
       centerOfGravity2 += strip1 * adc1 * adc1;
       centerOfTime2 += time1 * adc1 * adc1;
+      
+      if(ovTh) {
+        totalADC_ovTh += adc1;
+        totalADC2_ovTh += adc1 * adc1;
+        centerOfGravity_ovTh += strip1 * adc1;
+        centerOfTime_ovTh += time1 * adc1;
+        centerOfGravity2_ovTh += strip1 * adc1 * adc1;
+        centerOfTime2_ovTh += time1 * adc1 * adc1;
+      }
+
       vStrips.emplace_back(strip1);
       vTimes.emplace_back(time1);
       vADC.emplace_back(adc1);
@@ -364,6 +397,14 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
         centerOfGravity2 = (centerOfGravity2 / totalADC2);
         centerOfTime2 = (centerOfTime2 / totalADC2);
 
+        if(totalADC_ovTh > 0) {
+          centerOfGravity_ovTh = (centerOfGravity_ovTh / totalADC_ovTh);
+          centerOfTime_ovTh = (centerOfTime_ovTh / totalADC_ovTh);
+        }
+        if(totalADC2_ovTh > 0) {
+          centerOfGravity2_ovTh = (centerOfGravity2_ovTh / totalADC2_ovTh);
+          centerOfTime2_ovTh = (centerOfTime2_ovTh / totalADC2_ovTh);
+        }
         if(m_config.pShowStats) {
           m_stats.SetStatsPlane("DeltaTimeHits", dp, maxDeltaTime);
           m_stats.SetStatsPlane("MissingStripsCluster", dp, maxMissingStrip);
@@ -384,7 +425,21 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
         double time_algo = 0;
         double pos_algo = 0;
         AlgorithmUTPC(idx_left, idx_right, vADC, vStrips, vTimes, pos_utpc, time_utpc, pos_algo, time_algo);
-        
+        //COT only over Threshold
+        if (m_config.pAlgo == 2){
+          pos_algo = centerOfGravity_ovTh;
+          time_algo = centerOfTime_ovTh;
+        }
+        //COT2 only over Threshold
+        else if (m_config.pAlgo == 3){
+          pos_algo = centerOfGravity2_ovTh;
+          time_algo = centerOfTime2_ovTh;
+        }
+        //time of highest ADC
+        else if (m_config.pAlgo == 4){
+          pos_algo = largestADCPos;
+          time_algo = largestADCTime;
+        }
         clusterPlane.time_utpc = time_utpc;
     	  clusterPlane.pos_utpc = pos_utpc;
         clusterPlane.time_algo = time_algo;
@@ -412,6 +467,8 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
       // Reset all parameters
       startTime = 0;
       largestTime = 0;
+      largestADCTime = 0;
+      largestADCPos = 0;
       stripCount = 0;
       centerOfGravity = 0;
       centerOfTime = 0;
@@ -419,6 +476,12 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
       centerOfGravity2 = 0;
       centerOfTime2 = 0;
       totalADC2 = 0;
+      centerOfGravity_ovTh = 0;
+      centerOfTime_ovTh = 0;
+      totalADC_ovTh = 0;
+      centerOfGravity2_ovTh = 0;
+      centerOfTime2_ovTh = 0;
+      totalADC2_ovTh = 0;
       strip1 = 0;
       maxMissingStrip = 0;
       vADC.clear();
@@ -536,11 +599,10 @@ void Clusterer::AlgorithmUTPC(int idx_min_largest_time, int idx_max_largest_time
     a3 = vADC[idx_largest_time+1];
     t3 = vTimes[idx_largest_time+1];   
   }
-  if(m_config.pAlgo == 0) {
+  if(m_config.pAlgo == 1) {
     positionAlgo = (p1 * a1 * a1 + p2 * a2*a2 + p3 * a3*a3) / (a1* a1 + a2*a2 + a3*a3);
     timeAlgo = (t1 * a1*a1 + t2 * a2*a2 + t3 * a3*a3) / (a1* a1 + a2*a2 + a3*a3);
-  } else
-  {    
+  } else if(m_config.pAlgo == 0) {
     positionAlgo = (p1 * a1 + p2 * a2 + p3 * a3) / (a1 + a2 + a3);
     timeAlgo = (t1 * a1 + t2 * a2 + t3 * a3) / (a1 + a2 + a3);
   }

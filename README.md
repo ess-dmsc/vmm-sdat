@@ -211,6 +211,13 @@ the two planes (charge plane 0 / charge plane 1) or (charge plane 1 / charge pla
         The time can be calculated with the center-of-mass algorithm (center-of-mass), the uTPC method (utpc) 
         or the center-of-mass squared method (charge2). Optional argument (default center-of-mass)
 
+    -algo:  Select with algorithm is used in pos_algo and time_algo field in clusters
+        0: utpc with COG
+        1: utpc with COG2
+        2: COG including only over Threshold hits
+        3: COG2 including only over Threshold hits
+        4: position and time of largest ADC
+
     -crl: Valid clusters normally have the same amount of charge in both detector planes 
     	(ratio of charge plane 0 / charge plane 1 is 100% or 1). Depending on the readout, 
     	the charge sharing can be different, e.g. in a standard GEM strip readout the total 
