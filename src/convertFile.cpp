@@ -10,10 +10,8 @@
 #include <parser/CalibrationFile.h>
 #include <parser/ParserSRS.h>
 #include <parser/ReaderPcap.h>
-#include <parser/ReadoutSRS.h>
 #include <parser/VMM3Parser.h>
 
-using namespace hdf5;
 
 int main(int argc, char **argv) {
   uint64_t total_hits = 0;
@@ -319,77 +317,7 @@ int main(int argc, char **argv) {
         m_stats.IncrementCounter("ParserOverThreshold", 384,parser->Stats.OverThreshold);        
      
       }
-    } else {
-      auto DataFile = file::open(m_config.pFileName);
-      auto RootGroup = DataFile.root();
-      auto Dataset = RootGroup.get_dataset("srs_hits");
-      dataspace::Simple Dataspace(Dataset.dataspace());
-      std::vector<Gem::ReadoutSRS> AllElements(Dataspace.size());
-
-      Dataset.read(AllElements);
-      /*
-      std::sort(AllElements.begin(), AllElements.end(), [](const Readout& lhs,
-      const Readout& rhs) { return lhs.srs_timestamp < rhs.srs_timestamp;
-      });
-      */
-      Gem::CalibrationFile calfile(m_config.pCalFilename);
-      for (auto RowData : AllElements) {
-        /*
-        if(RowData.chip_id == 4 || RowData.chip_id == 5) {
-                if(RowData.channel%2 == 1) {
-                        RowData.channel = RowData.channel - 1;
-                }
-                else {
-                        RowData.channel = RowData.channel + 1;
-                }
-        }
-        */
-        auto calib = calfile.getCalibration(RowData.fec, RowData.chip_id,
-                                            RowData.channel);
-
-        // User calibration added to analysis
-        // The chiptime has to be recalculated in this case from bcid and tdc
-        if (calib.time_offset != 0 || calib.time_slope != 1.0) {
-          double bcTime = m_config.pBCTime_ns * RowData.bcid;
-          double tdcTime = RowData.tdc * m_config.pTAC / 255;
-          RowData.chiptime =
-              bcTime + (m_config.pBCTime_ns - tdcTime - calib.time_offset) *
-                           calib.time_slope;
-        }
-        if (calib.adc_slope == 0) {
-          std::cout
-              << "Error in calibration file: adc_slope correction for fec "
-              << RowData.fec << ", chip " << RowData.chip_id << ", channel "
-              << RowData.channel << " is 0!\nIs that intentional?" << std::endl;
-        }
-        int corrected_adc = (RowData.adc - calib.adc_offset) * calib.adc_slope;
-
-        if (corrected_adc > 2047) {
-          std::cout << "After correction, ADC value much than 10bit!  "
-                       "Uncorrected ADC value:"
-                    << RowData.adc << ", corrected value " << corrected_adc
-                    << std::endl;
-          corrected_adc = 2047;
-        } else if (corrected_adc < 0) {
-          std::cout << "After correction, ADC value smaller than 0!  "
-                       "Uncorrected ADC value:"
-                    << RowData.adc << ", corrected value " << corrected_adc
-                    << std::endl;
-          corrected_adc = 0;
-        }
-        RowData.adc = static_cast<uint16_t>(corrected_adc);
-        bool result = m_Clusterer->AnalyzeHits(
-            static_cast<double>(RowData.srs_timestamp), RowData.fec,
-            RowData.chip_id, RowData.channel, RowData.bcid, RowData.tdc,
-            RowData.adc, RowData.over_threshold, RowData.chiptime);
-        total_hits++;
-        m_stats.IncrementCounter("ParserData", RowData.fec);
-        if (result == false ||
-            (total_hits >= m_config.nHits && m_config.nHits > 0))
-          break;
-      }
-    }
-
+    } 
     m_Clusterer->FinishAnalysis();
 
     delete m_Clusterer;

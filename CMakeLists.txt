@@ -14,21 +14,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb")
 set(EXTRA_MODULES_DIR ${CMAKE_CURRENT_LIST_DIR}/cmake)
 list(APPEND CMAKE_MODULE_PATH ${EXTRA_MODULES_DIR}/modules)
 
-#=============================================================================
-# Versioning
-#=============================================================================
-include(${EXTRA_MODULES_DIR}/Versioning.cmake)
-
-#set_version()
-set(VERSION_INCLUDE_DIR ${CMAKE_BINARY_DIR}/version)
-create_version_header(
-  ${EXTRA_MODULES_DIR}/templates/version_num.h.in
-  ${VERSION_INCLUDE_DIR}/common/version_num.h
-)
-create_version_header(
-  ${EXTRA_MODULES_DIR}/templates/Version.h.in
-  ${VERSION_INCLUDE_DIR}/common/Version.h
-)
 
 #=============================================================================
 # Conan
@@ -68,9 +53,6 @@ if(ENABLE_DTRACE)
 #   - ROOT built with CMake. Add in CMAKE_PREFIX_PATH the installation prefix for ROOT
 list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
 
-#find_package(Boost REQUIRED COMPONENTS system)
-find_package(HDF5 1.10 REQUIRED)
-find_package(h5cpp REQUIRED)
 
 #---Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
 find_package(ROOT REQUIRED)
@@ -83,8 +65,7 @@ include_directories(${VERSION_INCLUDE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/analysis)
 
 
-ROOT_GENERATE_DICTIONARY(vmm-sdatDict ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ReadoutSRS.h 
-${CMAKE_CURRENT_SOURCE_DIR}/src/parser/Readout.h
+ROOT_GENERATE_DICTIONARY(vmm-sdatDict 
 ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ParserSRS.h 
 ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/VMM3Parser.h
 ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ReadoutParser.h
