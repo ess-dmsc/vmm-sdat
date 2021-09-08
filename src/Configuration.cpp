@@ -12,7 +12,7 @@ bool Configuration::PrintUsage(const std::string &errorMessage, char *argv)
               << "-vmm \"[[1,0,2,0],[1,0,2,1],[1,0,2,2],[1,0,2,3],[1,1,2,6],[1,1,2,7],[1,1,2,8],[1,1,2,9]]\" "
               << "-axis \"[[1,0],0],[[1,1],0]\" -sc \"[[0.4,0.4,1]]\" -tl \"[[-51.2, -51.2, 100]]\" -ro \"[[0,0,45]]\" -tr \"[[S,T,R2]]\" "
               << "-bc 40 -tac 60 -th 0 -cs 1 -ccs 3 -dt 200 -mst 1 -spc 500 "
-              << "-dp 200 -coin center-of-mass -crl 0.75 -cru 3.0 -save 111 -swap 0 -json 0 -n 0 -df SRS" << std::endl;
+              << "-dp 200 -coin center-of-mass -crl 0.75 -cru 3.0 -save [[1],[1],[1]] -swap 0 -json 0 -n 0 -df SRS" << std::endl;
 
     std::cout << "\n\nFlags:\n"
               << std::endl;
@@ -90,15 +90,14 @@ bool Configuration::PrintUsage(const std::string &errorMessage, char *argv)
     
     std::cout << "-swap:  Same connectors on readout boards unintentionally swap odd and even channels. With -swap 1 one can correct this.\n" 
               << "        Optional parameter (default 0).\n" << std::endl;
-    std::cout << "-save:  select which data to store in root file. Input is a 3 bit binary number." << std::endl;
-    std::cout << "        bit 0 (LSB): hits (a hit is a VMM3a channel over threshold)" << std::endl;
-    std::cout << "        bit 1      : clusters plane" << std::endl;
-    std::cout << "        bit 2 (MSB): clusters detector" << std::endl;
+    std::cout << "-save:  select which data to store in root file. Input is a list of lists of detectors, e.g. [[1,2],[1,2],[1,2,3]]." << std::endl;
+    std::cout << "        first list : detectors for which to write the hits (hit is a VMM3a channel over threshold)" << std::endl;
+    std::cout << "        second list : clusters plane" << std::endl;
+    std::cout << "        third list : clusters detector" << std::endl;
     std::cout << "        Examples:" << std::endl; 
-    std::cout << "            001: hits only" << std::endl; 
-    std::cout << "            100: clusters detector only" << std::endl; 
-    std::cout << "            111: everything, hits, clusters plane, clusters detector\n" << std::endl; 
-   
+    std::cout << "            [[1,2],[],[]]: hits for detectors 1 and 2 only" << std::endl; 
+    std::cout << "            [[],[],[1,2]]: clusters detector for detector 1 and 2 only" << std::endl; 
+    std::cout << "            [[2],[1],[1]]: hits for detector 2, clusters plane, clusters detector for detector 1 \n" << std::endl;    
     std::cout << "-json:  create a json file of the detector images. Optional argument (default 1).\n"
               << std::endl;
     std::cout << "-n:     number of hits to analyze. Optional argument (default 0, i.e. all hits).\n"

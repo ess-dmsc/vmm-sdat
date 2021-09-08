@@ -1,15 +1,13 @@
 
 # vmm-sdat
 
-VMM3a/SRS Data Analysis Tool: Analysis software for VMM3a data, recorded with the SRS as PCAPNG or HDF5 files (GdGEM pipeline of the EFU). From the PCAP or HDF5 file, a root tree with the hits and clusters is created.
+VMM3a/SRS Data Analysis Tool: Analysis software for VMM3a data, recorded with the SRS or the ESS readout as PCAPNG file. From the PCAP file, a root tree with the hits and clusters is created.
 For more information about ROOT see [here](https://root.cern.ch/)
 
 ## Getting Started
 
 ### Prerequisites
 - Boost system library [find_package( Boost REQUIRED COMPONENTS system)]
-- HDF5 1.10 or newer [find_package(HDF5 1.10 REQUIRED)]
-- h5cpp from https://github.com/ess-dmsc/h5cpp [find_package(h5cpp REQUIRED)]
 - root6 from https://root.cern.ch/downloading-root [find_package(ROOT REQUIRED)]
 - Installation of ESS DAQ https://github.com/ess-dmsc/essdaq or event formation unit https://github.com/ess-dmsc/event-formation-unit
 
@@ -39,8 +37,8 @@ Example command line:
 ./convertFile -f data.pcapng 
 -vmm "[[1,0,2,2],[1,0,2,3],[1,0,2,0],[1,0,2,1],[1,1,2,8],[1,1,2,9],[1,1,2,6],[1,1,2,7]]" 
 -axis "[[1,0],0],[[1,1],0]" -bc 40 -tac 60 -th 0 -cs 1 -ccs 2 -dt 200 -mst 1 -spc 500 
--dp 200 -coin center-of-mass -crl 0.5 -cru 2 -save 111 -json 0 -n 0 -algo 0 -swap 0 
--cal CalibrationFile.json -df SRS_ESS
+-dp 200 -coin center-of-mass -crl 0.5 -cru 2 -save [[1],[1],[1]] -json 0 -n 0 -algo 0 -swap 0 
+-cal CalibrationFile.json -df SRS
 
 ```
 
@@ -134,9 +132,9 @@ the two planes (charge plane 0 / charge plane 1) or (charge plane 1 / charge pla
 
 ## Explanation of parameters
   
-    -f: h5 data file with the extension .h5 or .pcapng. The data file was created by ESS DAQ tool
+    -f: data file with the extension .pcapng. The data file was created by Wireshark or tcdump
     
-    -df: data format of pcapng file. Default is SRS_ESS format (valid offsets: -1 - 15). Data format SRS (offsets 0-31)
+    -df: data format of pcapng file. Default is SRS format (valid offsets: -1 - 15), other option is data format ESS 
     
     -vmm: mapping of detectors, plane, fecs and chips starting and ending with " and separated by brackets
         and comma [[det, plane, fec,chip], [det, plane, fec, chip], etc.]
@@ -211,7 +209,11 @@ the two planes (charge plane 0 / charge plane 1) or (charge plane 1 / charge pla
         The time can be calculated with the center-of-mass algorithm (center-of-mass), the uTPC method (utpc) 
         or the center-of-mass squared method (charge2). Optional argument (default center-of-mass)
 
-    -algo:  Select with algorithm is used in pos_algo and time_algo field in clusters
+    -algo:  There are three different algorithms implemented that calulate cluster times: 
+        center-of-mass (charge as weight), 
+        center-of-mass2 (charge squared as weight),
+        utpc (latest time)
+        An additional algorithm can be chosen in pos_algo and time_algo field in clusters
         0: utpc with COG
         1: utpc with COG2
         2: COG including only over Threshold hits
@@ -246,32 +248,6 @@ the two planes (charge plane 0 / charge plane 1) or (charge plane 1 / charge pla
 
     -n: number of hits to analyze. Optional argument (default 0, i.e. all hits)
 
-    -algo: There are three different algorithms implemented that calulate cluster times: 
-        center-of-mass (charge as weight), 
-        center-of-mass2 (charge squared as weight),
-        utpc (latest time)
-        The utpc algorithm works as follows:
-            1. The strip with the largest time is chosen as position
-            2. If there are several strips with identical largest times, the indices of the 
-            outermost strips are retained
-                Example: The cluster has 8 strips (strip 10-17, index 0-7), strips 12, 13 and 16
-                have the same largest time, so strip 12 and 15 are retained. The indices of 
-                strips 12 and 16 are 2 and 6 respectively
-            3. The strip with the index that is the closest to the start or end of the track
-            is retained. In the example, index 6 is one index away from the end of the track,
-            and index 2 two indices, thus index 6 is retained.
-            4. If the outermost indices have the same distance from the start/end of the track,
-            the strip with the largest ADC value is retained.
-            5. If the ADC values are the same, the center-of-mass2 is taken.
-
-        The user can define an additional utpc algorithm in the method Clusterer::AlgorithmUTPC(),
-        the algorithm is chosen depending on the -algo parameter. At the moment, two additional 
-        algorithms are defined there, 
-            0 = utpc center-of-mass2 (center of mass squared of the strip 
-            with the latest time and its one or two neighbours)
-            1 = utpc center-of-mass (center of mass of the strip 
-            with the latest time and its one or two neighbours)
-
     -cal: Name of the calibration file. A calibration file is a JSON file containing an 
     	ADC and/or time correction in the form of a slope and an offset correction. 
     	The calibration file can be produced with the VMM slow control tool. Optional parameter. 
@@ -279,10 +255,9 @@ the two planes (charge plane 0 / charge plane 1) or (charge plane 1 / charge pla
   
 
 ## Running the program
-In the run folder there are two scripts and example data that show how to use the convertFile utility. 
-runConversionPcapng.py converts the Wireshark pcapng file example.pcapng into a root tree, whereas 
-runConversionH5.py does the same with the example.h5 hdf5 file. 
-Building on these two scripts you can construct your own scripts for file conversion. The meaning of the 
+In the run folder there is a script and example data that show how to use the convertFile utility. 
+runConversion.py converts the Wireshark pcapng file example.pcapng into a root tree.
+Building on this script you can construct your own scripts for file conversion. The meaning of the 
 command line parameters is explained above. For sure you will have to change the mapping of FECs and VMMs
 to the axes of your detector.
   

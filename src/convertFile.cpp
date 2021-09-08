@@ -10,8 +10,8 @@
 #include <parser/CalibrationFile.h>
 #include <parser/ParserSRS.h>
 #include <parser/ReaderPcap.h>
+#include <parser/Trace.h>
 #include <parser/VMM3Parser.h>
-
 
 int main(int argc, char **argv) {
   uint64_t total_hits = 0;
@@ -102,17 +102,20 @@ int main(int argc, char **argv) {
               }
               int corrected_adc = (d.adc - calib.adc_offset) * calib.adc_slope;
 
-              if (corrected_adc > 2047) {
-                std::cout << "After correction, ADC value much larger than "
-                             "10bit!  Uncorrected ADC value:"
-                          << d.adc << ", corrected value " << corrected_adc
-                          << std::endl;
-                corrected_adc = 2047;
+              if (corrected_adc > 1023) {
+                DTRACE(DEB,
+                       "After correction, ADC value larger than 1023 "
+                       "(10bit)!\nUncorrected ADC value %d, uncorrected ADC "
+                       "value %d\n",
+                       d.adc, corrected_adc);
+
+                corrected_adc = 1023;
               } else if (corrected_adc < 0) {
-                std::cout << "After correction, ADC value smaller than 0!  "
-                             "Uncorrected ADC value:"
-                          << d.adc << ", corrected value " << corrected_adc
-                          << std::endl;
+                DTRACE(DEB,
+                       "After correction, ADC value smaller than 0!"
+                       "\nUncorrected ADC value %d, uncorrected ADC "
+                       "value %d\n",
+                       d.adc, corrected_adc);
                 corrected_adc = 0;
               }
               uint16_t adc = static_cast<uint16_t>(corrected_adc);
@@ -210,9 +213,10 @@ int main(int argc, char **argv) {
         uint64_t pcappackets = 0;
         uint64_t goodFrames = 0;
         uint64_t badFrames = 0;
-        
+
         int rdsize;
         bool doContinue = true;
+        long seqNumError = 0;
         while (doContinue &&
                (rdsize = pcap.read((char *)&buffer, sizeof(buffer))) != -1) {
           if (rdsize == 0) {
@@ -220,27 +224,33 @@ int main(int argc, char **argv) {
           }
           // Freia 0x48
           // NMX 0x44
-          int ret =
-              readoutParser.validate((char *)&buffer, rdsize, ReadoutParser::FREIA);
+          int ret = readoutParser.validate((char *)&buffer, rdsize,
+                                           ReadoutParser::FREIA);
+          if (seqNumError != readoutParser.Stats.ErrorSeqNum) {
+            printf("Sequence number error at packet %" PRIu64 "\n", pcappackets);
+          }
+          seqNumError = readoutParser.Stats.ErrorSeqNum;
+ 
           if (m_config.pShowStats) {
             pcappackets++;
             if (ret != ReadoutParser::OK) {
               badFrames++;
               continue;
-            }
-            else {
+            } else {
               goodFrames++;
-            } 
+            }
           }
-          int hits = parser->parse(readoutParser.Packet.DataPtr, readoutParser.Packet.DataLength);
+          int hits = parser->parse(readoutParser.Packet.DataPtr,
+                                   readoutParser.Packet.DataLength);
           total_hits += hits;
-          
+
           for (int i = 0; i < hits; i++) {
             auto &hit = parser->Result[i];
-            if(firstTime == 0) {
+            if (firstTime == 0) {
               firstTime = hit.TimeHigh * 1.0E+09;
             }
-            double complete_timestamp = hit.TimeHigh * 1.0E+09 - firstTime + hit.TimeLow * m_config.pBCTime_ns * 0.5;
+            double complete_timestamp = hit.TimeHigh * 1.0E+09 - firstTime +
+                                        hit.TimeLow * m_config.pBCTime_ns * 0.5;
             uint16_t adc = hit.OTADC & 0x03ff;
             bool overThreshold = hit.OTADC & 0x8000;
             uint16_t assisterId =
@@ -262,20 +272,22 @@ int main(int argc, char **argv) {
             }
             int corrected_adc = (adc - calib.adc_offset) * calib.adc_slope;
 
-            if (corrected_adc > 2047) {
-              std::cout << "After correction, ADC value much larger than "
-                           "10bit!  Uncorrected ADC value:"
-                        << adc << ", corrected value " << corrected_adc
-                        << std::endl;
-              corrected_adc = 2047;
+            if (corrected_adc > 1023) {
+              DTRACE(DEB,
+                     "After correction, ADC value larger than 1023 "
+                     "(10bit)!\nUncorrected ADC value %d, uncorrected ADC "
+                     "value %d\n",
+                     adc, corrected_adc);
+              corrected_adc = 1023;
             } else if (corrected_adc < 0) {
-              std::cout << "After correction, ADC value smaller than 0!  "
-                           "Uncorrected ADC value:"
-                        << adc << ", corrected value " << corrected_adc
-                        << std::endl;
+              DTRACE(DEB,
+                     "After correction, ADC value smaller than 0!"
+                     "\nUncorrected ADC value %d, uncorrected ADC "
+                     "value %d\n",
+                     adc, corrected_adc);
               corrected_adc = 0;
             }
-  
+
             bool result = m_Clusterer->AnalyzeHits(
                 complete_timestamp, assisterId, hit.VMM, hit.Channel, hit.BC,
                 hit.TDC, static_cast<uint16_t>(corrected_adc),
@@ -287,37 +299,54 @@ int main(int argc, char **argv) {
             }
           }
         }
-        m_stats.IncrementCounter("ErrorBuffer", 384,readoutParser.Stats.ErrorBuffer);
-        m_stats.IncrementCounter("ErrorSize", 384,readoutParser.Stats.ErrorSize);
-        m_stats.IncrementCounter("ErrorVersion", 384,readoutParser.Stats.ErrorVersion);
-        m_stats.IncrementCounter("ErrorCookie", 384,readoutParser.Stats.ErrorCookie);
-        m_stats.IncrementCounter("ErrorPad", 384,readoutParser.Stats.ErrorPad);
-        m_stats.IncrementCounter("ErrorOutputQueue", 384,readoutParser.Stats.ErrorOutputQueue);
-        m_stats.IncrementCounter("ErrorTypeSubType", 384,readoutParser.Stats.ErrorTypeSubType);
-        m_stats.IncrementCounter("ErrorSeqNum", 384,readoutParser.Stats.ErrorSeqNum);
-        m_stats.IncrementCounter("ErrorTimeHigh", 384,readoutParser.Stats.ErrorTimeHigh);
-        m_stats.IncrementCounter("ErrorTimeFrac", 384,readoutParser.Stats.ErrorTimeFrac);
-        m_stats.IncrementCounter("HeartBeats", 384,readoutParser.Stats.HeartBeats);
-        m_stats.IncrementCounter("GoodFrames", 384,goodFrames);
-        m_stats.IncrementCounter("BadFrames", 384,badFrames);
-        m_stats.IncrementCounter("TotalFrames", 384,pcappackets);
-        
-        m_stats.IncrementCounter("ParserErrorSize", 384,parser->Stats.ErrorSize);
-        m_stats.IncrementCounter("ParserErrorRing", 384,parser->Stats.ErrorRing);        
-        m_stats.IncrementCounter("ParserErrorFEN", 384,parser->Stats.ErrorFEN);
-        m_stats.IncrementCounter("ParserErrorDataLength", 384,parser->Stats.ErrorDataLength);        
-        m_stats.IncrementCounter("ParserErrorTimeFrac", 384,parser->Stats.ErrorTimeFrac);
-        m_stats.IncrementCounter("ParserErrorBC", 384,parser->Stats.ErrorBC);        
-        m_stats.IncrementCounter("ParserErrorADC", 384,parser->Stats.ErrorADC);
-        m_stats.IncrementCounter("ParserErrorVMM", 384,parser->Stats.ErrorVMM);        
-        m_stats.IncrementCounter("ParserErrorChannel", 384,parser->Stats.ErrorChannel);
-        m_stats.IncrementCounter("ParserReadouts", 384,parser->Stats.Readouts);        
-        m_stats.IncrementCounter("ParserCalibReadouts", 384,parser->Stats.CalibReadouts);
-        m_stats.IncrementCounter("ParserDataReadouts", 384,parser->Stats.DataReadouts);        
-        m_stats.IncrementCounter("ParserOverThreshold", 384,parser->Stats.OverThreshold);        
-     
+        m_stats.IncrementCounter("ErrorBuffer", 384,
+                                 readoutParser.Stats.ErrorBuffer);
+        m_stats.IncrementCounter("ErrorSize", 384,
+                                 readoutParser.Stats.ErrorSize);
+        m_stats.IncrementCounter("ErrorVersion", 384,
+                                 readoutParser.Stats.ErrorVersion);
+        m_stats.IncrementCounter("ErrorCookie", 384,
+                                 readoutParser.Stats.ErrorCookie);
+        m_stats.IncrementCounter("ErrorPad", 384, readoutParser.Stats.ErrorPad);
+        m_stats.IncrementCounter("ErrorOutputQueue", 384,
+                                 readoutParser.Stats.ErrorOutputQueue);
+        m_stats.IncrementCounter("ErrorTypeSubType", 384,
+                                 readoutParser.Stats.ErrorTypeSubType);
+        m_stats.IncrementCounter("ErrorSeqNum", 384,
+                                 readoutParser.Stats.ErrorSeqNum);
+        m_stats.IncrementCounter("ErrorTimeHigh", 384,
+                                 readoutParser.Stats.ErrorTimeHigh);
+        m_stats.IncrementCounter("ErrorTimeFrac", 384,
+                                 readoutParser.Stats.ErrorTimeFrac);
+        m_stats.IncrementCounter("HeartBeats", 384,
+                                 readoutParser.Stats.HeartBeats);
+        m_stats.IncrementCounter("GoodFrames", 384, goodFrames);
+        m_stats.IncrementCounter("BadFrames", 384, badFrames);
+        m_stats.IncrementCounter("TotalFrames", 384, pcappackets);
+
+        m_stats.IncrementCounter("ParserErrorSize", 384,
+                                 parser->Stats.ErrorSize);
+        m_stats.IncrementCounter("ParserErrorRing", 384,
+                                 parser->Stats.ErrorRing);
+        m_stats.IncrementCounter("ParserErrorFEN", 384, parser->Stats.ErrorFEN);
+        m_stats.IncrementCounter("ParserErrorDataLength", 384,
+                                 parser->Stats.ErrorDataLength);
+        m_stats.IncrementCounter("ParserErrorTimeFrac", 384,
+                                 parser->Stats.ErrorTimeFrac);
+        m_stats.IncrementCounter("ParserErrorBC", 384, parser->Stats.ErrorBC);
+        m_stats.IncrementCounter("ParserErrorADC", 384, parser->Stats.ErrorADC);
+        m_stats.IncrementCounter("ParserErrorVMM", 384, parser->Stats.ErrorVMM);
+        m_stats.IncrementCounter("ParserErrorChannel", 384,
+                                 parser->Stats.ErrorChannel);
+        m_stats.IncrementCounter("ParserReadouts", 384, parser->Stats.Readouts);
+        m_stats.IncrementCounter("ParserCalibReadouts", 384,
+                                 parser->Stats.CalibReadouts);
+        m_stats.IncrementCounter("ParserDataReadouts", 384,
+                                 parser->Stats.DataReadouts);
+        m_stats.IncrementCounter("ParserOverThreshold", 384,
+                                 parser->Stats.OverThreshold);
       }
-    } 
+    }
     m_Clusterer->FinishAnalysis();
 
     delete m_Clusterer;
