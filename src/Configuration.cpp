@@ -105,7 +105,7 @@ bool Configuration::PrintUsage(const std::string &errorMessage, char *argv)
     std::cout << "-stats: Show statistics of the run (default 0, do not show any stats).\n"
               << std::endl;
     std::cout << "-cal:   Name of the calibration file. A calibration file is a JSON file containing an ADC and/or time correction in the form of a slope and an offset value. Optional parameter.\n"<< std::endl;
-    std::cout << "-df:    Data format: The pcap or h5 files can have different data formats, "
+    std::cout << "-df:    Data format: The pcap files can have different data formats, "
     << "depending on the firmware on the FEC or assister card.\n"
     << "        SRS (default): FEC card, and time stamps and offsets are sent in markers, offset is interpreted as signed number and valid offsets goes from -1 to 15\n"
     << "        ESS: used for assister cards, no markers, timestamps are part of the data" << std::endl;
