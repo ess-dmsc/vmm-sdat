@@ -153,7 +153,7 @@ bool Configuration::ParseCommandLine(int argc, char **argv)
             }
             else {
             	pBCTime_ns = 1000.0 / pBC;
-            	pOffsetPeriod = 4096.0 * 25;
+            	pOffsetPeriod = 4096.0 * 25.0;
         	}   
         }
         else if (strncmp(argv[i], "-vmm", 4) == 0)

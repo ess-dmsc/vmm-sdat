@@ -86,11 +86,11 @@ int main(int argc, char **argv) {
                    m_config.pOffsetPeriod * triggerOffset);
               auto calib =
                   calfile.getCalibration(parser->pd.fecId, d.vmmid, d.chno);
-              float chiptime =
+              double chiptime =
                   static_cast<double>(d.bcid) * m_config.pBCTime_ns +
                   (m_config.pBCTime_ns -
                    static_cast<double>(d.tdc) *
-                       static_cast<double>(m_config.pTAC) / 255 -
+                       static_cast<double>(m_config.pTAC) / 255.0 -
                    calib.time_offset) *
                       calib.time_slope;
               if (calib.adc_slope == 0) {
@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
                           << ", channel " << d.chno
                           << " is 0!\nIs that intentional?" << std::endl;
               }
-              int corrected_adc = (d.adc - calib.adc_offset) * calib.adc_slope;
+              uint16_t corrected_adc = static_cast<uint16_t>((static_cast<double>(d.adc) - calib.adc_offset) * calib.adc_slope);
 
               if (corrected_adc > 1023) {
                 DTRACE(DEB,
@@ -243,7 +243,7 @@ int main(int argc, char **argv) {
           int hits = parser->parse(readoutParser.Packet.DataPtr,
                                    readoutParser.Packet.DataLength);
           total_hits += hits;
-
+         
           for (int i = 0; i < hits; i++) {
             auto &hit = parser->Result[i];
             if (firstTime == 0) {
@@ -257,7 +257,7 @@ int main(int argc, char **argv) {
                 static_cast<uint8_t>(hit.RingId / 2) * 32 + hit.FENId;
             auto calib =
                 calfile.getCalibration(assisterId, hit.VMM, hit.Channel);
-            float chiptime_correction =
+            double chiptime_correction =
                 (m_config.pBCTime_ns -
                  static_cast<double>(hit.TDC) *
                      static_cast<double>(m_config.pTAC) / 255 -

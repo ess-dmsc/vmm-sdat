@@ -14,7 +14,7 @@ struct Hit {
     uint16_t tdc;
     uint16_t adc;
     bool over_threshold;
-    float chip_time;
+    double chip_time;
 };
 
 struct ClusterPlane {

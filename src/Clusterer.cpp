@@ -32,7 +32,7 @@ Clusterer::~Clusterer() { RootFile::Dispose(); }
 bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
                             uint16_t chNo, uint16_t bcid, uint16_t tdc,
                             uint16_t adc, bool overThresholdFlag,
-                            float chipTime) {
+                            double chipTime) {
 
   int pos = m_config.pPositions[fecId][vmmId][chNo];
   if (pos == -1) {
@@ -100,7 +100,7 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
   bool newData = false;
   
   if(m_config.pDataFormat == "SRS") {
-    int factor = 16;
+    double factor = 16.0;
     if (srsTimestamp >= m_stats.GetOldTriggerTimestamp(fecId)
     + factor * m_config.pOffsetPeriod) {
       if(m_config.pShowStats) {
@@ -111,7 +111,7 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
     }
   }
   else if(m_config.pDataFormat == "ESS") {
-    double buffer_interval_ns = 1000000;
+    double buffer_interval_ns = 1000000.0;
     if (srsTimestamp >= m_stats.GetOldTriggerTimestamp(fecId) + buffer_interval_ns) {
       newData = true;
     }   

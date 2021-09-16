@@ -65,7 +65,7 @@ public:
    
     double pTAC = 60.0;
     double pBC = 40.0;
-    float pADCThreshold = 0;
+    double pADCThreshold = 0;
     uint16_t pMinClusterSize = 1;
     uint16_t pCoincidentClusterSize = 3;
     //Maximum time difference between strips in time sorted cluster (x or y)
@@ -82,8 +82,8 @@ public:
     bool swapOddEven = false;
     int pSaveWhat = 111;
     std::string pConditionCoincidence = "center-of-mass";
-    float pChargeRatioLower = 0.5;
-    float pChargeRatioUpper = 2;
+    double pChargeRatioLower = 0.5;
+    double pChargeRatioUpper = 2;
     int nHits = 0;
     //**************************************************************
     // END PARAMETERS
@@ -93,8 +93,8 @@ public:
     std::string pCalFilename = "";
     std::string pInfo = "";
 
-    double pBCTime_ns = 1000 / (double)pBC;
-    double pOffsetPeriod = 1000 * 4096 / (double)pBC;
+    double pBCTime_ns = 1000.0 / (double)pBC;
+    double pOffsetPeriod = 1000.0 * 4096.9 / (double)pBC;
 
     std::map<std::tuple<uint8_t, uint8_t>, int> pChannels;
     std::map<std::pair<uint8_t, uint8_t>, std::pair<uint8_t, uint8_t>> pFecChip_DetectorPlane;
