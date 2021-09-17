@@ -73,16 +73,23 @@ int main(int argc, char **argv) {
           for (int i = 0; i < hits; i++) {
             auto &d = parser->data[i];
 
-            int64_t triggerOffset = -1;
+            double triggerOffset = -1.0;
 
-            // triggerOffset goes from -1 to 15, a value of -16 indicates a
+            // triggerOffset goes from -1 to 15
+            // but presented as uint8_t
             // latency violation
-            if (d.triggerOffset <= 15) {
-              triggerOffset = d.triggerOffset;
+            if (d.triggerOffset <= 15.0) {
+              triggerOffset = static_cast<double>(d.triggerOffset);
             }
-            if (d.hasDataMarker && d.fecTimeStamp > 0) {
+            else  if(d.triggerOffset == 31) {
+              triggerOffset = -1.0;
+            }
+            else  if(d.triggerOffset == 16) {
+              triggerOffset = -99.0;
+            }
+            if (d.hasDataMarker && d.fecTimeStamp > 0 && triggerOffset != -99) {
               double srs_timestamp =
-                  (static_cast<uint64_t>(d.fecTimeStamp) * m_config.pBCTime_ns +
+                  (static_cast<double>(d.fecTimeStamp) * m_config.pBCTime_ns +
                    m_config.pOffsetPeriod * triggerOffset);
               auto calib =
                   calfile.getCalibration(parser->pd.fecId, d.vmmid, d.chno);
