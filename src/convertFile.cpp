@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
                   calfile.getCalibration(parser->pd.fecId, d.vmmid, d.chno);
               double chiptime =
                   static_cast<double>(d.bcid) * m_config.pBCTime_ns +
-                  (m_config.pBCTime_ns -
+                  (1.5*m_config.pBCTime_ns -
                    static_cast<double>(d.tdc) *
                        static_cast<double>(m_config.pTAC) / 255.0 -
                    calib.time_offset) *

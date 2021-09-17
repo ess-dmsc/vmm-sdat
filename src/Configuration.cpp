@@ -148,16 +148,16 @@ bool Configuration::ParseCommandLine(int argc, char **argv)
             pBC = atof(argv[i + 1]);
             //ESS SRS firmware has 44.444444 MHz clock
             if(pBC >= 44.4 && pBC <= 44.5) {
-            	pBCTime_ns = 22.5 + 0.5*22.5;
+            	pBCTime_ns = 22.5;
             	pOffsetPeriod = 4096.0 * pBCTime_ns;
             }
             //88.0525 MHz ESS clock, half of that is BC clock
             else if(pBC >= 44.0 && pBC <= 44.1) {
-            	pBCTime_ns = 22.7137219 + 0.5*22.7137219;
+            	pBCTime_ns = 22.7137219;
             	pOffsetPeriod = 4096.0 * pBCTime_ns;
             }
             else {
-            	pBCTime_ns = (1000.0 / pBC) + 0.5*(1000.0 / pBC);
+            	pBCTime_ns = (1000.0 / pBC);
             	pOffsetPeriod = 4096.0 * 25.0;
         	}   
         }
