@@ -32,7 +32,7 @@ public:
         void AnalyzeClustersDetector(uint8_t det);
 
         int ClusterByTime(std::pair<uint8_t, uint8_t> dp);
-        int ClusterByStrip(std::pair<uint8_t, uint8_t> dp,ClusterContainer &cluster, uint16_t maxDeltaTime);
+        int ClusterByStrip(std::pair<uint8_t, uint8_t> dp,ClusterContainer &cluster, double maxDeltaTime);
   
         void AlgorithmUTPC(int idx_min_largest_time, int idx_max_largest_time, std::vector<double> & vADC,
                 std::vector<double> & vStrips, std::vector<double> & vTimes, double &positionUTPC, 

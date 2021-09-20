@@ -69,13 +69,13 @@ public:
     uint16_t pMinClusterSize = 1;
     uint16_t pCoincidentClusterSize = 3;
     //Maximum time difference between strips in time sorted cluster (x or y)
-    uint16_t pDeltaTimeHits = 200;
+    double pDeltaTimeHits = 200.0;
     //Number of missing strips in strip sorted cluster (x or y)
     uint16_t pMissingStripsCluster = 1;
     //Maximum time span for total cluster (x or y)
-    uint16_t pSpanClusterTime = 500;
+    double pSpanClusterTime = 500.0;
     //Maximum cluster time difference between matching clusters in two planes
-    uint16_t pDeltaTimePlanes = 200;
+    double pDeltaTimePlanes = 200.0;
 
     bool createJSON = false;
     bool useCalibration = false;

@@ -229,7 +229,7 @@ int Clusterer::ClusterByTime(std::pair<uint8_t, uint8_t> dp) {
   //std::pair<uint8_t, uint8_t> dp = std::make_pair(det, plane);
 
   ClusterContainer cluster;
-  uint16_t maxDeltaTime = 0;
+  double maxDeltaTime = 0;
   int clusterCount = 0;
   double time1 = 0, time2 = 0;
   uint32_t adc1 = 0;
@@ -242,12 +242,12 @@ int Clusterer::ClusterByTime(std::pair<uint8_t, uint8_t> dp) {
     strip1 = std::get<1>(itHits);
     adc1 = std::get<2>(itHits);
     if (!cluster.empty()) {
-      if (abs(time1 - time2) > m_config.pDeltaTimeHits) {
+      if (std::fabs(time1 - time2) > m_config.pDeltaTimeHits) {
         clusterCount += ClusterByStrip(dp, cluster, maxDeltaTime);
         cluster.clear();
-        maxDeltaTime = 0;
+        maxDeltaTime = 0.0;
       } else {
-        if (maxDeltaTime < abs(time1 - time2)) {
+        if (maxDeltaTime < std::fabs(time1 - time2)) {
           maxDeltaTime = (time1 - time2);
         }
       }
@@ -264,7 +264,7 @@ int Clusterer::ClusterByTime(std::pair<uint8_t, uint8_t> dp) {
 //====================================================================================================================
 int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
                               ClusterContainer &cluster,
-                              uint16_t maxDeltaTime) {
+                              double maxDeltaTime) {
   int maxMissingStrip = 0;
   uint16_t spanCluster = 0;
 
@@ -335,8 +335,8 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
     // Add members of a cluster, if it is either the beginning of a cluster,
     // or if strip gap and time span is correct
     if (stripCount == 0 ||
-        (std::abs(strip1 - strip2) > 0 &&
-         std::abs(strip1 - strip2) - 1 <= m_config.pMissingStripsCluster &&
+        (std::fabs(strip1 - strip2) > 0 &&
+         std::fabs(strip1 - strip2) - 1 <= m_config.pMissingStripsCluster &&
          time1 - startTime <= m_config.pSpanClusterTime &&
          largestTime - time1 <= m_config.pSpanClusterTime)) {
       DTRACE(DEB, "\tstrip %d, time %llu, adc %d:\n", strip1, (uint64_t)time1,
@@ -358,8 +358,8 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
       if (time1 < startTime) {
         startTime = time1;
       }
-      if (stripCount > 0 && maxMissingStrip < std::abs(strip1 - strip2) - 1) {
-        maxMissingStrip = std::abs(strip1 - strip2) - 1;
+      if (stripCount > 0 && maxMissingStrip < std::fabs(strip1 - strip2) - 1) {
+        maxMissingStrip = std::fabs(strip1 - strip2) - 1;
       }
       spanCluster = (largestTime - startTime);
       totalADC += adc1;
@@ -384,7 +384,7 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
       stripCount++;
     }
     // Stop clustering if gap between strips is too large or time span too long
-    else if (std::abs(strip1 - strip2) - 1 > m_config.pMissingStripsCluster ||
+    else if (std::fabs(strip1 - strip2) - 1 > m_config.pMissingStripsCluster ||
              time1 - startTime > m_config.pSpanClusterTime ||
              largestTime - time1 > m_config.pSpanClusterTime) { 
       // Valid cluster
@@ -616,9 +616,9 @@ int Clusterer::MatchClustersDetector(uint8_t det) {
   ClusterVectorPlane::iterator itStartPlane1 =
       begin(m_clusters[dp1]);
   for (auto &c0 : m_clusters[dp0]) {
-    double minDelta = 99999999;
-    double lastDelta_t = 99999999;
-    double delta_t = 99999999;
+    double minDelta = 99999999.0;
+    double lastDelta_t = 99999999.0;
+    double delta_t = 99999999.0;
     bool isFirstMatch = true;
     ClusterVectorPlane::iterator bestMatchPlane1 =
         end(m_clusters[dp1]);
@@ -637,17 +637,17 @@ int Clusterer::MatchClustersDetector(uint8_t det) {
         }
         if (chargeRatio >= m_config.pChargeRatioLower &&
             chargeRatio <= m_config.pChargeRatioUpper &&
-            std::abs(delta_t) < minDelta &&
-            std::abs(delta_t) <= m_config.pDeltaTimePlanes &&
+            std::fabs(delta_t) < minDelta &&
+            std::fabs(delta_t) <= m_config.pDeltaTimePlanes &&
             (c0.size + (*c1).size >= m_config.pCoincidentClusterSize)) {
-          minDelta = std::abs(delta_t);
+          minDelta = std::fabs(delta_t);
           bestMatchPlane1 = c1;
           if (isFirstMatch) {
             itStartPlane1 = c1;
             isFirstMatch = false;
           }
         }
-        if (std::abs(delta_t) > std::abs(lastDelta_t)) {
+        if (std::fabs(delta_t) > std::fabs(lastDelta_t)) {
           break;
         }
       }
@@ -767,7 +767,7 @@ int Clusterer::MatchClustersDetector(uint8_t det) {
       }
 
       if(m_config.pShowStats) {
-        m_stats.SetStatsDetector("DeltaTimePlanes", det, std::abs(clusterDetector.delta_plane));        
+        m_stats.SetStatsDetector("DeltaTimePlanes", det, std::fabs(clusterDetector.delta_plane));        
         double ratio =
             100*(double)clusterDetector.adc0 / (double)clusterDetector.adc1;
         if (ratio > 100.0) {

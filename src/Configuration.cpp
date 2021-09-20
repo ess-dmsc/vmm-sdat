@@ -432,7 +432,7 @@ bool Configuration::ParseCommandLine(int argc, char **argv)
         }
         else if (strncmp(argv[i], "-dt", 3) == 0)
         {
-            pDeltaTimeHits = atoi(argv[i + 1]);
+            pDeltaTimeHits = atof(argv[i + 1]);
         }
         else if (strncmp(argv[i], "-mst", 4) == 0)
         {
@@ -440,11 +440,11 @@ bool Configuration::ParseCommandLine(int argc, char **argv)
         }
         else if (strncmp(argv[i], "-spc", 4) == 0)
         {
-            pSpanClusterTime = atoi(argv[i + 1]);
+            pSpanClusterTime = atof(argv[i + 1]);
         }
         else if (strncmp(argv[i], "-dp", 3) == 0)
         {
-            pDeltaTimePlanes = atoi(argv[i + 1]);
+            pDeltaTimePlanes = atof(argv[i + 1]);
         }
         else if (strncmp(argv[i], "-save", 5) == 0)
         {
