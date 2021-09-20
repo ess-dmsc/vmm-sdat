@@ -132,7 +132,7 @@ std::string CalibrationFile::debug() const {
             fmt::format("{:<5}", fmt::format("[{}]", chipNo)) +
             fmt::format("{:>7}", cal.adc_offset) +
                 ((cal.adc_slope >= 0.0) ? " +" : " -") +
-            fmt::format("{:>5}x    ", std::abs(cal.adc_slope));
+            fmt::format("{:>5}x    ", std::fabs(cal.adc_slope));
       }
     }
   }
