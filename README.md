@@ -6,6 +6,9 @@ For more information about ROOT see [here](https://root.cern.ch/)
 
 ## Getting Started
 
+### Which branch do I need?
+The main branch analyses PCAPNG files in the SRS or ESS data format. PCAPNG files can be generated with Wireshark or tcdump. The SRS branch analyses PCAPNG files, or HDF5 files that have been created with the GdGEM pipeline of the ESS DAQ/event formation unit. The old SRS data format (offsets 0-31) and the new SRS data format (offsets -1 to 15) are supported.
+
 ### Prerequisites
 - Boost system library [find_package( Boost REQUIRED COMPONENTS system)]
 - HDF5 1.10 or newer [find_package(HDF5 1.10 REQUIRED)]
