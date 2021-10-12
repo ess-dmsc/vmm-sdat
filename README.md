@@ -87,7 +87,7 @@ The JSON calibration file can either be produced automatically with the VMM Slow
 https://gitlab.cern.ch/rd51-slow-control/vmmsc
 or by other means. If the calibration file is loaded during the data acquisition with the ESS DAQ, then the 
 chip_time has been calculated using the following formula:
-- new_chiptime = BCID * 25 ns + ( 25 ns - tdc_time - time_offset) * time_slope
+- new_chiptime = BCID * 25 ns + ( 1.5*25 ns - tdc_time - time_offset) * time_slope
 For the ADC, the formula is: 
 - new_adc = (adc - adc_offset) * adc_slope;
 If the data has been saved to file without the use of calibration files in the ESS DAQ, then the calibration
