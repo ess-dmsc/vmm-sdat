@@ -76,10 +76,10 @@ public:
     double pSpanClusterTime = 500.0;
     //Maximum cluster time difference between matching clusters in two planes
     double pDeltaTimePlanes = 200.0;
-
+    std::string pChannelMapping = "gem";
+    std::string pGeometryFile = "";
     bool createJSON = false;
     bool useCalibration = false;
-    bool swapOddEven = false;
     int pSaveWhat = 111;
     std::string pConditionCoincidence = "center-of-mass";
     double pChargeRatioLower = 0.5;

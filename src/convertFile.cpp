@@ -265,7 +265,7 @@ int main(int argc, char **argv) {
             auto calib =
                 calfile.getCalibration(assisterId, hit.VMM, hit.Channel);
             double chiptime_correction =
-                (m_config.pBCTime_ns -
+                (1.5*m_config.pBCTime_ns -
                  static_cast<double>(hit.TDC) *
                      static_cast<double>(m_config.pTAC) / 255 -
                  calib.time_offset) *

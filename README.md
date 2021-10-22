@@ -139,6 +139,8 @@ the two planes (charge plane 0 / charge plane 1) or (charge plane 1 / charge pla
     
     -df: data format of pcapng file. Default is SRS format (valid offsets: -1 - 15), other option is data format ESS 
     
+    Definition of detector geometry: EITHER the flags -vmm, -axis and -mapping can be used, OR a JSON geometry file loaded with -geo.
+
     -vmm: mapping of detectors, plane, fecs and chips starting and ending with " and separated by brackets
         and comma [[det, plane, fec,chip], [det, plane, fec, chip], etc.]
         The tuples for the VMMs are defined as follows:
@@ -171,7 +173,14 @@ the two planes (charge plane 0 / charge plane 1) or (charge plane 1 / charge pla
         If the plane axis is FLIPPED:
             - plane 0 is at the bottom and goes from right (0) to left (255)
             - plane 1 is at the right and goes from top (0) to bottom (255)
+            
+    -map:   Mapping of VMM3a channels to strips of the detector readout. There are some pre-defined options:
+    	- gem: channels are continuously mapped to strips, channel 0 is strip 0, channel 127 strip 127 (default).
+         - gem_swapped: odd and even channels are swapped (to correct error in readout).
+         - mm1: Micromegas mapping from Jona Bortfeld\n"  << std::endl;
     
+    -geo:   Instead of using -vmm, -axis, -map, the detector geometry can be defined in a JSON file. An example of a geometry file is in the run folder.
+
     -sc: Scale coordinates. Per detector a tuple with three values in mm, 
         e.g for two detectors [[s0,s1,s2], [s0,s1,s2]]
     
