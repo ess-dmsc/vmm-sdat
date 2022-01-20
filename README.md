@@ -179,7 +179,7 @@ the two planes (charge plane 0 / charge plane 1) or (charge plane 1 / charge pla
          - gem_swapped: odd and even channels are swapped (to correct error in readout).
          - mm1: Micromegas mapping from Jona Bortfeld\n"  << std::endl;
     
-    -geo:   Instead of using -vmm, -axis, -map, the detector geometry can be defined in a JSON file. An example of a geometry file is in the run folder.
+    -geo:   Instead of using -vmm, -axis, -map, the detector geometry can be defined in a JSON file. Tow example geometry files (for strip and pad detectors) are in the run folder.
 
     -sc: Scale coordinates. Per detector a tuple with three values in mm, 
         e.g for two detectors [[s0,s1,s2], [s0,s1,s2]]
