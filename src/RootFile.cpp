@@ -25,7 +25,7 @@ void RootFile::Dispose() {
 }
 
 void RootFile::WriteRootFile() {
-  if(m_config.pSaveWhat >= 100) {
+  if (m_config.pSaveWhat >= 100) {
     SaveHistograms();
   }
   m_file->Write("", TObject::kOverwrite);
@@ -37,37 +37,104 @@ RootFile::RootFile(Configuration &config) : m_config(config) {
   m_file = TFile::Open(m_fileName, "RECREATE");
   m_eventNr = 0;
 
-  m_tree_hits = new TTree("hits", "hits");
-  m_tree_hits->SetDirectory(m_file);
-  m_tree_clusters_plane = new TTree("clusters_plane", "clusters plane");
-  m_tree_clusters_plane->SetDirectory(m_file);
-  m_tree_clusters_detector = new TTree("clusters_detector", "clusters detector");
-  m_tree_clusters_detector->SetDirectory(m_file);
-
   switch (m_config.pSaveWhat) {
-    case 1: m_tree_hits->Branch("hits", &m_hits);
-            break;
-    case 10: m_tree_clusters_plane->Branch("clusters_plane", &m_clusters_plane);
-            break;
-    case 11: m_tree_hits->Branch("hits", &m_hits);
-            m_tree_clusters_plane->Branch("clusters_plane", &m_clusters_plane);
-            break;
-    case 100: m_tree_clusters_detector->Branch("clusters_detector", &m_clusters_detector);
-            break;
-    case 101: m_tree_hits->Branch("hits", &m_hits);
-              m_tree_clusters_detector->Branch("clusters_detector", &m_clusters_detector);
-            break;
-    case 110: m_tree_clusters_plane->Branch("clusters_plane", &m_clusters_plane);
-              m_tree_clusters_detector->Branch("clusters_detector", &m_clusters_detector);
-            break;
-    case 111: m_tree_hits->Branch("hits", &m_hits);
-              m_tree_clusters_plane->Branch("clusters_plane", &m_clusters_plane);
-              m_tree_clusters_detector->Branch("clusters_detector", &m_clusters_detector);
-            break;
+  case 1:
+    m_tree_hits = new TTree("hits", "hits");
+    m_tree_hits->SetDirectory(m_file);
+    if (!m_config.pIsPads) {
+      m_tree_hits->Branch("hits", &m_hits);
+    } else {
+      m_tree_hits->Branch("hits", &m_hits_pad);
+    }
+    break;
+  case 10:
+    if (!m_config.pIsPads) {
+      m_tree_clusters_plane = new TTree("clusters_plane", "clusters plane");
+      m_tree_clusters_plane->SetDirectory(m_file);
+      m_tree_clusters_plane->Branch("clusters_plane", &m_clusters_plane);
+    }
+    break;
+  case 11:
+    m_tree_hits = new TTree("hits", "hits");
+    m_tree_hits->SetDirectory(m_file);
+    if (!m_config.pIsPads) {
+      m_tree_clusters_plane = new TTree("clusters_plane", "clusters plane");
+      m_tree_clusters_plane->SetDirectory(m_file);
+      m_tree_hits->Branch("hits", &m_hits);
+      m_tree_clusters_plane->Branch("clusters_plane", &m_clusters_plane);
+    } else {
+      m_tree_hits->Branch("hits", &m_hits_pad);
+    }
 
+    break;
+  case 100:
+    m_tree_clusters_detector =
+        new TTree("clusters_detector", "clusters detector");
+    m_tree_clusters_detector->SetDirectory(m_file);
+    if (!m_config.pIsPads) {
+      m_tree_clusters_detector->Branch("clusters_detector",
+                                       &m_clusters_detector);
+    } else {
+      m_tree_clusters_detector->Branch("clusters_pad", &m_clusters_pad);
+    }
+    break;
+  case 101:
+    m_tree_hits = new TTree("hits", "hits");
+    m_tree_hits->SetDirectory(m_file);
+    m_tree_clusters_detector =
+        new TTree("clusters_detector", "clusters detector");
+    m_tree_clusters_detector->SetDirectory(m_file);
+    if (!m_config.pIsPads) {
+      m_tree_hits->Branch("hits", &m_hits);
+      m_tree_clusters_detector->Branch("clusters_detector",
+                                       &m_clusters_detector);
+    } else {
+      m_tree_hits->Branch("hits", &m_hits_pad);
+      m_tree_clusters_detector->Branch("clusters_pad", &m_clusters_pad);
+    }
+    break;
+  case 110:
+    if (!m_config.pIsPads) {
+      m_tree_clusters_plane = new TTree("clusters_plane", "clusters plane");
+      m_tree_clusters_plane->SetDirectory(m_file);
+      m_tree_clusters_detector =
+          new TTree("clusters_detector", "clusters detector");
+      m_tree_clusters_detector->SetDirectory(m_file);
+      m_tree_clusters_plane->Branch("clusters_plane", &m_clusters_plane);
+      m_tree_clusters_detector->Branch("clusters_detector",
+                                       &m_clusters_detector);
+    } else {
+      m_tree_clusters_detector =
+          new TTree("clusters_detector", "clusters detector");
+      m_tree_clusters_detector->SetDirectory(m_file);
+      m_tree_clusters_detector->Branch("clusters_pad", &m_clusters_pad);
+    }
+    break;
+  case 111:
+    m_tree_hits = new TTree("hits", "hits");
+    m_tree_hits->SetDirectory(m_file);
+    if (!m_config.pIsPads) {
+      m_tree_clusters_plane = new TTree("clusters_plane", "clusters plane");
+      m_tree_clusters_plane->SetDirectory(m_file);
+      m_tree_clusters_detector =
+          new TTree("clusters_detector", "clusters detector");
+      m_tree_clusters_detector->SetDirectory(m_file);
+      m_tree_hits->Branch("hits", &m_hits);
+      m_tree_clusters_plane->Branch("clusters_plane", &m_clusters_plane);
+      m_tree_clusters_detector->Branch("clusters_detector",
+                                       &m_clusters_detector);
+    } else {
+      m_tree_clusters_detector =
+          new TTree("clusters_detector", "clusters detector");
+      m_tree_clusters_detector->SetDirectory(m_file);
+      m_tree_hits->Branch("hits", &m_hits_pad);
+      m_tree_clusters_detector->Branch("clusters_pad", &m_clusters_pad);
+    }
+
+    break;
   }
 
-  if(m_config.pSaveWhat >= 100) {
+  if (m_config.pSaveWhat >= 100) {
     TH2D *h2;
     TH1D *h1;
     std::string name = "";
@@ -76,7 +143,7 @@ RootFile::RootFile(Configuration &config) : m_config(config) {
     for (auto const &det : m_config.pDets) {
       auto dp0 = std::make_pair(det.first, 0);
       auto dp1 = std::make_pair(det.first, 1);
-      if (m_config.GetAxes(dp0) && m_config.GetAxes(dp1)) {
+      if (!m_config.pIsPads && m_config.GetAxes(dp0) && m_config.GetAxes(dp1)) {
         name = std::to_string(det.first) + "_delta_time_planes";
         h1 = new TH1D(name.c_str(), name.c_str(), 1000, -500, 500);
         m_TH1D.push_back(h1);
@@ -143,7 +210,8 @@ RootFile::RootFile(Configuration &config) : m_config(config) {
         }
 
         name = std::to_string(det.first) + "_cluster";
-        h2 = new TH2D(name.c_str(), name.c_str(), n0 * 4, r0, n0, n1 * 4, r1, n1);
+        h2 = new TH2D(name.c_str(), name.c_str(), n0 * 4, r0, n0, n1 * 4, r1,
+                      n1);
         h2->GetXaxis()->SetTitle("x");
         m_TH2D.push_back(h2);
         m_map_TH2D.emplace(
@@ -152,67 +220,106 @@ RootFile::RootFile(Configuration &config) : m_config(config) {
         cnt2D++;
 
         name = std::to_string(det.first) + "_cluster_utpc";
-        h2 = new TH2D(name.c_str(), name.c_str(), n0 * 4, r0, n0, n1 * 4, r1, n1);
+        h2 = new TH2D(name.c_str(), name.c_str(), n0 * 4, r0, n0, n1 * 4, r1,
+                      n1);
         m_TH2D.push_back(h2);
         m_map_TH2D.emplace(
             std::make_pair(std::make_pair(det.first, "cluster_utpc"), cnt2D));
         cnt2D++;
 
         name = std::to_string(det.first) + "_cluster_charge2";
-        h2 = new TH2D(name.c_str(), name.c_str(), n0 * 4, r0, n0, n1 * 4, r1, n1);
+        h2 = new TH2D(name.c_str(), name.c_str(), n0 * 4, r0, n0, n1 * 4, r1,
+                      n1);
         m_TH2D.push_back(h2);
-        m_map_TH2D.emplace(
-            std::make_pair(std::make_pair(det.first, "cluster_charge2"), cnt2D));
+        m_map_TH2D.emplace(std::make_pair(
+            std::make_pair(det.first, "cluster_charge2"), cnt2D));
         cnt2D++;
 
         name = std::to_string(det.first) + "_cluster_algo";
-        h2 = new TH2D(name.c_str(), name.c_str(), n0 * 4, r0, n0, n1 * 4, r1, n1);
+        h2 = new TH2D(name.c_str(), name.c_str(), n0 * 4, r0, n0, n1 * 4, r1,
+                      n1);
         m_TH2D.push_back(h2);
         m_map_TH2D.emplace(
             std::make_pair(std::make_pair(det.first, "cluster_algo"), cnt2D));
         cnt2D++;
 
         name = std::to_string(det.first) + "_size_plane0";
-        h2 = new TH2D(name.c_str(), name.c_str(), n0 * 4, r0, n0, n1 * 4, r1, n1);
+        h2 = new TH2D(name.c_str(), name.c_str(), n0 * 4, r0, n0, n1 * 4, r1,
+                      n1);
         m_TH2D.push_back(h2);
         m_map_TH2D.emplace(
             std::make_pair(std::make_pair(det.first, "size_plane0"), cnt2D));
         cnt2D++;
 
         name = std::to_string(det.first) + "_size_plane1";
-        h2 = new TH2D(name.c_str(), name.c_str(), n0 * 4, r0, n0, n1 * 4, r1, n1);
+        h2 = new TH2D(name.c_str(), name.c_str(), n0 * 4, r0, n0, n1 * 4, r1,
+                      n1);
         m_TH2D.push_back(h2);
         m_map_TH2D.emplace(
             std::make_pair(std::make_pair(det.first, "size_plane1"), cnt2D));
         cnt2D++;
 
         name = std::to_string(det.first) + "_size_plane01";
-        h2 = new TH2D(name.c_str(), name.c_str(), n0 * 4, r0, n0, n1 * 4, r1, n1);
+        h2 = new TH2D(name.c_str(), name.c_str(), n0 * 4, r0, n0, n1 * 4, r1,
+                      n1);
         m_TH2D.push_back(h2);
         m_map_TH2D.emplace(
             std::make_pair(std::make_pair(det.first, "size_plane01"), cnt2D));
         cnt2D++;
 
         name = std::to_string(det.first) + "_charge_plane0";
-        h2 = new TH2D(name.c_str(), name.c_str(), n0 * 4, r0, n0, n1 * 4, r1, n1);
+        h2 = new TH2D(name.c_str(), name.c_str(), n0 * 4, r0, n0, n1 * 4, r1,
+                      n1);
         m_TH2D.push_back(h2);
         m_map_TH2D.emplace(
             std::make_pair(std::make_pair(det.first, "charge_plane0"), cnt2D));
         cnt2D++;
 
         name = std::to_string(det.first) + "_charge_plane1";
-        h2 = new TH2D(name.c_str(), name.c_str(), n0 * 4, r0, n0, n1 * 4, r1, n1);
+        h2 = new TH2D(name.c_str(), name.c_str(), n0 * 4, r0, n0, n1 * 4, r1,
+                      n1);
         m_TH2D.push_back(h2);
         m_map_TH2D.emplace(
             std::make_pair(std::make_pair(det.first, "charge_plane1"), cnt2D));
         cnt2D++;
 
         name = std::to_string(det.first) + "_charge_plane01";
-        h2 = new TH2D(name.c_str(), name.c_str(), n0 * 4, r0, n0, n1 * 4, r1, n1);
+        h2 = new TH2D(name.c_str(), name.c_str(), n0 * 4, r0, n0, n1 * 4, r1,
+                      n1);
         m_TH2D.push_back(h2);
         m_map_TH2D.emplace(
             std::make_pair(std::make_pair(det.first, "charge_plane01"), cnt2D));
         cnt2D++;
+      } else {
+        if (m_config.pIsPads) {
+          int n0 = m_config.pChannels0[det.first];
+          int n1 = m_config.pChannels1[det.first];
+          name = std::to_string(det.first) + "_cluster";
+          h2 = new TH2D(name.c_str(), name.c_str(), (n0 + 1) * 10, 0, n0,
+                        (n1 + 1) * 10, 0, n1);
+          h2->GetXaxis()->SetTitle("x");
+          m_TH2D.push_back(h2);
+          m_map_TH2D.emplace(
+              std::make_pair(std::make_pair(det.first, "cluster"), cnt2D));
+
+          cnt2D++;
+
+          name = std::to_string(det.first) + "_size";
+          h2 = new TH2D(name.c_str(), name.c_str(), (n0 + 1) * 10, 0, n0,
+                        (n1 + 1) * 10, 0, n1);
+          m_TH2D.push_back(h2);
+          m_map_TH2D.emplace(
+              std::make_pair(std::make_pair(det.first, "size"), cnt2D));
+          cnt2D++;
+
+          name = std::to_string(det.first) + "_charge";
+          h2 = new TH2D(name.c_str(), name.c_str(), (n0 + 1) * 10, 0, n0,
+                        (n1 + 1) * 10, 0, n1);
+          m_TH2D.push_back(h2);
+          m_map_TH2D.emplace(
+              std::make_pair(std::make_pair(det.first, "charge"), cnt2D));
+          cnt2D++;
+        }
       }
     }
   }
@@ -223,6 +330,10 @@ RootFile::~RootFile() {}
 
 void RootFile::AddHits(Hit &&the_hit) { m_hits.emplace_back(the_hit); }
 
+void RootFile::AddHitsPad(HitPad &&the_hit) {
+  m_hits_pad.emplace_back(the_hit);
+}
+
 void RootFile::SaveHits() {
   if (m_hits.size() > 0) {
     m_tree_hits->Fill();
@@ -230,10 +341,19 @@ void RootFile::SaveHits() {
   }
 }
 
+void RootFile::SaveHitsPad() {
+  if (m_hits_pad.size() > 0) {
+    m_tree_hits->Fill();
+    m_hits_pad.clear();
+  }
+}
+
 void RootFile::SaveClustersPlane(ClusterVectorPlane &&clusters_plane) {
   if (clusters_plane.size() > 0) {
     for (auto &it : clusters_plane) {
-      if(std::find (m_config.pSaveClustersPlane.begin(), m_config.pSaveClustersPlane.end(), it.det) != m_config.pSaveClustersPlane.end()) {
+      if (std::find(m_config.pSaveClustersPlane.begin(),
+                    m_config.pSaveClustersPlane.end(),
+                    it.det) != m_config.pSaveClustersPlane.end()) {
         m_clusters_plane.push_back(it);
       }
     }
@@ -242,12 +362,36 @@ void RootFile::SaveClustersPlane(ClusterVectorPlane &&clusters_plane) {
   }
 }
 
+void RootFile::SaveClustersPad(ClusterVectorPad &&clusters_pad) {
+  for (auto &it : clusters_pad) {
+    if (std::find(m_config.pSaveClustersDetector.begin(),
+                  m_config.pSaveClustersDetector.end(),
+                  it.det) != m_config.pSaveClustersDetector.end()) {
+      m_clusters_pad.push_back(it);
+      int idx = m_map_TH2D[std::make_pair(it.det, "cluster")];
+      m_TH2D[idx]->Fill(it.pos0, it.pos1);
+
+      idx = m_map_TH2D[std::make_pair(it.det, "size")];
+      m_TH2D[idx]->Fill(it.pos0, it.pos1, it.size);
+
+      idx = m_map_TH2D[std::make_pair(it.det, "charge")];
+      m_TH2D[idx]->Fill(it.pos0, it.pos1, it.adc);
+    }
+  }
+  if (m_clusters_pad.size() > 0) {
+    m_tree_clusters_detector->Fill();
+    m_clusters_pad.clear();
+  }
+}
+
 void RootFile::SaveClustersDetector(ClusterVectorDetector &&clusters_detector) {
-  
+
   for (auto &it : clusters_detector) {
-    if(std::find (m_config.pSaveClustersDetector.begin(), m_config.pSaveClustersDetector.end(), it.det) != m_config.pSaveClustersDetector.end()) {
+    if (std::find(m_config.pSaveClustersDetector.begin(),
+                  m_config.pSaveClustersDetector.end(),
+                  it.det) != m_config.pSaveClustersDetector.end()) {
       m_clusters_detector.push_back(it);
-      
+
       int idx = m_map_TH1D[std::make_pair(it.det, "delta_time_planes")];
       m_TH1D[idx]->Fill(it.time0 - it.time1);
 

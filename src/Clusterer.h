@@ -32,8 +32,9 @@ public:
         void AnalyzeClustersDetector(uint8_t det);
 
         int ClusterByTime(std::pair<uint8_t, uint8_t> dp);
-        int ClusterByStrip(std::pair<uint8_t, uint8_t> dp,ClusterContainer &cluster, double maxDeltaTime);
-  
+        int ClusterByStrip(std::pair<uint8_t, uint8_t> dp, ClusterContainer &cluster, double maxDeltaTime);
+        int ClusterByPad(std::pair<uint8_t, uint8_t> dp, ClusterContainer &cluster, double maxDeltaTime);
+
         void AlgorithmUTPC(int idx_min_largest_time, int idx_max_largest_time, std::vector<double> & vADC,
                 std::vector<double> & vStrips, std::vector<double> & vTimes, double &positionUTPC, 
                 double &timeUTPC, double &positionAlgo, double &timeAlgo);
@@ -66,6 +67,7 @@ private:
         std::map<std::pair<uint8_t,uint8_t>,ClusterVectorPlane> m_clusters;
         std::map<std::pair<uint8_t,uint8_t>,ClusterVectorPlane> m_clusters_new;
         std::map<uint8_t,ClusterVectorDetector> m_clusters_detector;
+        std::map<uint8_t,ClusterVectorPad> m_clusters_pad;
 
 	int m_cluster_id = 0;
 	int m_cluster_detector_id = 0;

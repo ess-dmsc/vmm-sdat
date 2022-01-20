@@ -71,7 +71,8 @@ public:
     //Maximum time difference between strips in time sorted cluster (x or y)
     double pDeltaTimeHits = 200.0;
     //Number of missing strips in strip sorted cluster (x or y)
-    uint16_t pMissingStripsCluster = 1;
+    uint16_t pMissingStripsClusterX = 1;
+    uint16_t pMissingStripsClusterY = 1;
     //Maximum time span for total cluster (x or y)
     double pSpanClusterTime = 500.0;
     //Maximum cluster time difference between matching clusters in two planes
@@ -97,6 +98,8 @@ public:
     double pOffsetPeriod = 1000.0 * 4096.9 / (double)pBC;
 
     std::map<std::tuple<uint8_t, uint8_t>, int> pChannels;
+    std::map<uint8_t, int> pChannels0;
+    std::map<uint8_t, int> pChannels1;
     std::map<std::pair<uint8_t, uint8_t>, std::pair<uint8_t, uint8_t>> pFecChip_DetectorPlane;
     std::multimap<std::pair<uint8_t, uint8_t>, uint8_t> pDetectorPlane_Fec;
     std::map<std::pair<uint8_t, uint8_t>, uint32_t> pOffsets;
@@ -113,8 +116,10 @@ public:
     int pAlgo = 0;
     bool pIsPcap = false;
     bool pShowStats = true;
+    bool pIsPads = false;
     std::string pDataFormat = "SRS_ESS";
-    int pPositions[NUMFECS][16][64];
+    int pPositions0[NUMFECS][16][64];
+    int pPositions1[NUMFECS][16][64];
     int pDetectors[NUMFECS][16];
     int pPlanes[NUMFECS][16];
 };
