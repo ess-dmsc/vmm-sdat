@@ -1041,7 +1041,8 @@ void Clusterer::AnalyzeClustersDetector(uint8_t det) {
     */
   }
   // if(cnt > 0) {
-  if (static_cast<int>(m_config.pSaveWhat / 10) >= 1) {
+  if (m_config.pSaveWhat == 10 || m_config.pSaveWhat == 11 ||
+      m_config.pSaveWhat == 110 || m_config.pSaveWhat == 111) {
     m_rootFile->SaveClustersPlane(std::move(m_clusters[dp0]));
     m_rootFile->SaveClustersPlane(std::move(m_clusters[dp1]));
   }
