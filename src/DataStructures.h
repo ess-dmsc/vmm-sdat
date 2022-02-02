@@ -17,24 +17,6 @@ struct Hit {
   double chip_time;
 };
 
-struct HitPad {
-  uint32_t id;
-  uint8_t det;
-  uint8_t plane;
-  uint8_t fec;
-  uint8_t vmm;
-  double readout_time;
-  double time;
-  uint8_t ch;
-  uint16_t pos0;
-  uint16_t pos1;
-  uint16_t bcid;
-  uint16_t tdc;
-  uint16_t adc;
-  bool over_threshold;
-  double chip_time;
-};
-
 struct ClusterPlane {
   uint32_t id;
   uint8_t det;
@@ -54,20 +36,6 @@ struct ClusterPlane {
   uint16_t max_missing_strip;
   uint16_t span_cluster;
   std::vector<double> strips;
-  std::vector<double> times;
-  std::vector<double> adcs;
-};
-
-struct ClusterPad {
-  uint32_t id;
-  uint8_t det;
-  uint16_t size;
-  uint16_t adc;
-  double time;
-  double pos0;
-  double pos1;
-  std::vector<double> pads0;
-  std::vector<double> pads1;
   std::vector<double> times;
   std::vector<double> adcs;
 };
@@ -127,6 +95,4 @@ using ClusterContainer = std::vector<ClusterTuple>;
 
 using ClusterVectorPlane = std::vector<ClusterPlane>;
 using ClusterVectorDetector = std::vector<ClusterDetector>;
-using ClusterVectorPad = std::vector<ClusterPad>;
 using HitVector = std::vector<Hit>;
-using HitVectorPad = std::vector<HitPad>;

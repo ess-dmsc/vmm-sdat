@@ -5,15 +5,11 @@
 #pragma link C++ nestedclasses;
 #pragma link C++ nestedtypedefs;
 #pragma link C++ class Hit + ;
-#pragma link C++ class HitPad + ;
 #pragma link C++ class ClusterPlane + ;
-#pragma link C++ class ClusterPad + ;
 #pragma link C++ class ClusterDetector + ;
 #pragma link C++ class std::vector < ULong64_t> + ;
 #pragma link C++ class std::vector < Hit> + ;
-#pragma link C++ class std::vector < HitPad> + ;
 #pragma link C++ class std::vector < ClusterPlane> + ;
-#pragma link C++ class std::vector < ClusterPad> + ;
 #pragma link C++ class std::vector < ClusterDetector> + ;
 #pragma link C++ class RootFile + ;
 #endif

@@ -870,6 +870,9 @@ bool Configuration::CreateMapping() {
     for (int v = 0; v < 16; v++) {
       pDetectors[f][v] = -1;
       pPlanes[f][v] = -1;
+      if (f == 0) {
+        pIsPads[v] = false;
+      }
       for (int ch = 0; ch < 64; ch++) {
         pPositions0[f][v][ch] = -1;
         pPositions1[f][v][ch] = -1;
@@ -1048,14 +1051,14 @@ bool Configuration::CreateMapping() {
           throw std::runtime_error(
               "Invalid id1 array lengths in geometry file.");
         } else if (strips1.size() == 64) {
-          pIsPads = true;
+          pIsPads[detector] = true;
           auto searchMap = pAxes.find(std::make_pair(detector, 0));
           if (searchMap == pAxes.end()) {
             pAxes.emplace(std::make_pair(std::make_pair(detector, 0), 0));
           }
         } else {
           plane = geo["plane"].get<uint8_t>();
-          pIsPads = false;
+          pIsPads[detector] = false;
           auto searchMap = pAxes.find(std::make_pair(detector, plane));
           if (searchMap == pAxes.end()) {
             pAxes.emplace(std::make_pair(std::make_pair(detector, plane), 0));
@@ -1108,7 +1111,7 @@ bool Configuration::CreateMapping() {
           for (size_t ch = 0; ch < 64; ch++) {
             int s0 = strips0[ch].get<int>();
             pPositions0[fec][vmm][ch] = s0;
-            if (pIsPads) {
+            if (pIsPads[detector]) {
               int s1 = strips1[ch].get<int>();
               pPositions1[fec][vmm][ch] = s1;
               if (s0 > pChannels0[detector]) {

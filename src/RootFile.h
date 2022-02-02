@@ -25,12 +25,9 @@ public:
   void WriteRootFile();
   void SaveHistograms();
   void AddHits(Hit &&the_hit);
-  void AddHitsPad(HitPad &&the_hit);
   void SaveHits();
-  void SaveHitsPad();
   void SaveClustersPlane(ClusterVectorPlane &&clusters_plane);
   void SaveClustersDetector(ClusterVectorDetector &&clusters_detector);
-  void SaveClustersPad(ClusterVectorPad &&clusters_pad);
 
 private:
   Configuration &m_config;
@@ -43,15 +40,14 @@ private:
   TTree *m_tree_hits;
   TTree *m_tree_clusters_plane;
   TTree *m_tree_clusters_detector;
-  TTree *m_tree_plots;
+
   int m_eventNr;
 
-  HitVector m_hits;
-  HitVectorPad m_hits_pad;
+  Hit m_hit;
+  ClusterPlane m_cluster_plane;
+  ClusterDetector m_cluster_detector;
 
-  ClusterVectorPad m_clusters_pad;
-  ClusterVectorPlane m_clusters_plane;
-  ClusterVectorDetector m_clusters_detector;
+  HitVector m_hits;
 
   std::map<std::pair<uint8_t, std::string>, int> m_map_TH2D;
   std::map<std::pair<uint8_t, std::string>, int> m_map_TH1D;

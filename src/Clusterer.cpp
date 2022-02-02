@@ -141,10 +141,8 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
           m_stats.SetLowestCommonTriggerTimestampPlane(dp1, ts);
           m_stats.SetLowestCommonTriggerTimestampDet(det.first, ts);
           AnalyzeClustersPlane(dp0);
-          if (!m_config.pIsPads) {
-            AnalyzeClustersPlane(dp1);
-            AnalyzeClustersDetector(det.first);
-          }
+          AnalyzeClustersPlane(dp1);
+          AnalyzeClustersDetector(det.first);
         }
       }
     }
@@ -159,24 +157,40 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
     if (std::find(m_config.pSaveHits.begin(), m_config.pSaveHits.end(), det) !=
         m_config.pSaveHits.end()) {
 
-      if (m_config.pIsPads) {
-        HitPad theHit;
-        theHit.id = m_hitNr;
-        theHit.det = det;
-        theHit.plane = plane;
-        theHit.fec = fecId;
-        theHit.vmm = vmmId;
-        theHit.readout_time = srsTimestamp;
-        theHit.ch = chNo;
-        theHit.bcid = bcid;
-        theHit.tdc = tdc;
-        theHit.adc = adc;
-        theHit.over_threshold = overThresholdFlag;
-        theHit.chip_time = chipTime;
-        theHit.time = totalTime;
-        theHit.pos0 = (uint16_t)pos0;
-        theHit.pos1 = (uint16_t)pos1;
-        m_rootFile->AddHitsPad(std::move(theHit));
+      if (m_config.pIsPads[det]) {
+        Hit theHit0;
+        theHit0.id = m_hitNr;
+        theHit0.det = det;
+        theHit0.plane = 0;
+        theHit0.fec = fecId;
+        theHit0.vmm = vmmId;
+        theHit0.readout_time = srsTimestamp;
+        theHit0.ch = chNo;
+        theHit0.pos = (uint16_t)pos0;
+        theHit0.bcid = bcid;
+        theHit0.tdc = tdc;
+        theHit0.adc = adc;
+        theHit0.over_threshold = overThresholdFlag;
+        theHit0.chip_time = chipTime;
+        theHit0.time = totalTime;
+        m_rootFile->AddHits(std::move(theHit0));
+
+        Hit theHit1;
+        theHit1.id = m_hitNr;
+        theHit1.det = det;
+        theHit1.plane = 1;
+        theHit1.fec = fecId;
+        theHit1.vmm = vmmId;
+        theHit1.readout_time = srsTimestamp;
+        theHit1.ch = chNo;
+        theHit1.pos = (uint16_t)pos1;
+        theHit1.bcid = bcid;
+        theHit1.tdc = tdc;
+        theHit1.adc = adc;
+        theHit1.over_threshold = overThresholdFlag;
+        theHit1.chip_time = chipTime;
+        theHit1.time = totalTime;
+        m_rootFile->AddHits(std::move(theHit1));
       } else {
         Hit theHit;
         theHit.id = m_hitNr;
@@ -203,13 +217,27 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
   }
   if (m_config.pADCThreshold < 0) {
     if (overThresholdFlag) {
-      m_hits_new[std::make_pair(det, plane)].emplace_back(
-          totalTime, (uint16_t)pos0, adc, (uint16_t)pos1);
+      if (m_config.pIsPads[det]) {
+        m_hits_new[std::make_pair(det, 0)].emplace_back(
+            totalTime, (uint16_t)pos0, adc, (uint16_t)pos1);
+        m_hits_new[std::make_pair(det, 1)].emplace_back(
+            totalTime, (uint16_t)pos0, adc, (uint16_t)pos1);
+      } else {
+        m_hits_new[std::make_pair(det, plane)].emplace_back(
+            totalTime, (uint16_t)pos0, adc, (uint16_t)pos1);
+      }
     }
   } else {
     if ((adc >= m_config.pADCThreshold)) {
-      m_hits_new[std::make_pair(det, plane)].emplace_back(
-          totalTime, (uint16_t)pos0, adc, (uint16_t)pos1);
+      if (m_config.pIsPads[det]) {
+        m_hits_new[std::make_pair(det, 0)].emplace_back(
+            totalTime, (uint16_t)pos0, adc, (uint16_t)pos1);
+        m_hits_new[std::make_pair(det, 1)].emplace_back(
+            totalTime, (uint16_t)pos0, adc, (uint16_t)pos1);
+      } else {
+        m_hits_new[std::make_pair(det, plane)].emplace_back(
+            totalTime, (uint16_t)pos0, adc, (uint16_t)pos1);
+      }
     }
   }
 
@@ -268,7 +296,7 @@ int Clusterer::ClusterByTime(std::pair<uint8_t, uint8_t> dp) {
     strip2 = std::get<3>(itHits);
     if (!cluster.empty()) {
       if (std::fabs(time1 - time2) > m_config.pDeltaTimeHits) {
-        if (m_config.pIsPads) {
+        if (m_config.pIsPads[dp.first]) {
           clusterCount += ClusterByPad(dp, cluster, maxDeltaTime);
         } else {
           clusterCount += ClusterByStrip(dp, cluster, maxDeltaTime);
@@ -285,7 +313,7 @@ int Clusterer::ClusterByTime(std::pair<uint8_t, uint8_t> dp) {
   }
 
   if (!cluster.empty()) {
-    if (m_config.pIsPads) {
+    if (m_config.pIsPads[dp.first]) {
       clusterCount += ClusterByPad(dp, cluster, maxDeltaTime);
     } else {
       clusterCount += ClusterByStrip(dp, cluster, maxDeltaTime);
@@ -304,6 +332,8 @@ int Clusterer::ClusterByPad(std::pair<uint8_t, uint8_t> dp,
   int clusterCount = 0;
   double largestTime = 0;
   double smallestTime = 0;
+  int delta_x = -1;
+  int delta_y = -1;
   double time1 = 0;
   double time2 = 0;
   double x_adc = 0;
@@ -323,7 +353,6 @@ int Clusterer::ClusterByPad(std::pair<uint8_t, uint8_t> dp,
   std::vector<double> vTimes;
   auto det = std::get<0>(dp);
   auto plane = std::get<1>(dp);
-
   /*std::sort(begin(cluster), end(cluster),
             [](const ClusterTuple &t1, const ClusterTuple &t2) {
               return std::get<0>(t1) < std::get<0>(t2) ||
@@ -392,6 +421,12 @@ int Clusterer::ClusterByPad(std::pair<uint8_t, uint8_t> dp,
           if (time1 > largestTime) {
             largestTime = time1;
           }
+          if (std::fabs(idX1 - idX2) > delta_x) {
+            delta_x = std::fabs(idX1 - idX2) - 1;
+          }
+          if (std::fabs(idY1 - idY2) > delta_y) {
+            delta_y = std::fabs(idY1 - idY2) - 1;
+          }
           vIdx.emplace_back(idX2);
           vIdy.emplace_back(idY2);
           vTimes.emplace_back(time2);
@@ -417,26 +452,44 @@ int Clusterer::ClusterByPad(std::pair<uint8_t, uint8_t> dp,
         m_stats.SetStatsPlane("ClusterSize", dp, stripCount);
       }
 
-      ClusterPad clusterPad;
-      clusterPad.id = m_cluster_detector_id;
-      clusterPad.det = det;
-      clusterPad.size = stripCount;
-      clusterPad.adc = adcTotal;
+      ClusterPlane clusterPlane;
+      clusterPlane.id = m_cluster_detector_id;
+      clusterPlane.det = det;
+      clusterPlane.plane = plane;
+      clusterPlane.size = stripCount;
+      clusterPlane.adc = adcTotal;
+      if (plane == 0) {
+        clusterPlane.pos = x_adc / adcTotal;
+      } else {
+        clusterPlane.pos = y_adc / adcTotal;
+      }
+      clusterPlane.time = xy_time / adcTotal;
+      clusterPlane.time_utpc = xy_time / adcTotal;
+      clusterPlane.pos_utpc = clusterPlane.pos;
+      clusterPlane.time_algo = xy_time / adcTotal;
+      clusterPlane.pos_algo = clusterPlane.pos;
+      clusterPlane.strips = std::move(vIdx);
+      clusterPlane.times = std::move(vTimes);
+      clusterPlane.adcs = std::move(vADC);
+      clusterPlane.max_delta_time = maxDeltaTime;
+      if (delta_x > delta_y) {
+        if (delta_x == -1)
+          delta_x = 0;
+        clusterPlane.max_missing_strip = delta_x;
+      } else {
+        if (delta_y == -1)
+          delta_y = 0;
+        clusterPlane.max_missing_strip = delta_y;
+      }
+      clusterPlane.span_cluster = spanCluster;
+      clusterPlane.plane_coincidence = false;
+      m_clusters_new[dp].emplace_back(std::move(clusterPlane));
 
-      clusterPad.pos0 = x_adc / adcTotal;
-      clusterPad.pos1 = y_adc / adcTotal;
-      clusterPad.time = xy_time / adcTotal;
-
-      clusterPad.pads0 = vIdx;
-      clusterPad.pads1 = vIdy;
-      clusterPad.times = vTimes;
-      clusterPad.adcs = vADC;
-      DTRACE(DEB, "\ncluster det %d, id %d", (int)det, clusterPad.id);
-      DTRACE(DEB, "\tpos x/pos y: %f/%f", clusterPad.pos0, clusterPad.pos1);
-      DTRACE(DEB, "\ttime: %f", clusterPad.time);
-      DTRACE(DEB, "\tadc: %u", clusterPad.adc);
-      DTRACE(DEB, "\tsize: %u\n", clusterPad.size);
-      m_clusters_pad[det].emplace_back(std::move(clusterPad));
+      DTRACE(DEB, "\ncluster det %d, id %d", (int)det, clusterPlane.id);
+      DTRACE(DEB, "\tpos x/pos y: %f/%f", x_adc / adcTotal, y_adc / adcTotal);
+      DTRACE(DEB, "\ttime: %f", clusterPlane.time);
+      DTRACE(DEB, "\tadc: %u", clusterPlane.adc);
+      DTRACE(DEB, "\tsize: %u\n", clusterPlane.size);
       if (m_config.pShowStats) {
         m_stats.SetStatsPlane("ClusterCntPlane", dp, 0);
       }
@@ -990,7 +1043,8 @@ int Clusterer::MatchClustersDetector(uint8_t det) {
              clusterDetector.adc1);
       DTRACE(DEB, "\tsize x/size y: %u/%u", clusterDetector.size0,
              clusterDetector.size1);
-      DTRACE(DEB, "\tdelta time planes: %d", (int)clusterDetector.delta_plane);
+      DTRACE(DEB, "\tdelta time planes: %d\n",
+             (int)clusterDetector.delta_plane);
       m_clusters_detector[det].emplace_back(std::move(clusterDetector));
     }
   }
@@ -1006,7 +1060,6 @@ void Clusterer::AnalyzeClustersPlane(std::pair<uint8_t, uint8_t> dp) {
   if (ChooseHitsToBeClustered(dp) == false && m_hits[dp].empty()) {
     return;
   }
-
   int cnt = ClusterByTime(dp);
 
   DTRACE(DEB, "%d cluster in detector %d plane %d\n", cnt, (int)std::get<0>(dp),
@@ -1022,23 +1075,25 @@ void Clusterer::AnalyzeClustersDetector(uint8_t det) {
   if (ChooseClustersToBeMatched(dp0) == false && m_clusters[dp0].empty()) {
     return;
   }
-  if (m_config.GetAxes(dp0) && m_config.GetAxes(dp1)) {
+  if (m_config.pIsPads[det] ||
+      (m_config.GetAxes(dp0) && m_config.GetAxes(dp1))) {
     if (ChooseClustersToBeMatched(dp1) == false && m_clusters[dp1].empty()) {
       return;
     }
 
     cnt = MatchClustersDetector(det);
-    /*
-    std::cout << "MatchClustersDetector " << cnt << "   -   " <<
-    m_clusters[dp0].size() << " (" << 100*cnt/m_clusters[dp0].size()
-    << " %) " <<
-    (double)100*m_clusters[dp0].size()/(m_clusters[dp0].size()+m_clusters[dp1].size())
-    << "   -   " << m_clusters[dp1].size() << " (" <<
-    100*cnt/m_clusters[dp1].size() << " %) "
-    <<
-    (double)100*m_clusters[dp1].size()/(m_clusters[dp0].size()+m_clusters[dp1].size())
-    << std::endl;
-    */
+
+    /*std::cout << "MatchClustersDetector " << cnt << "   -   "
+              << m_clusters[dp0].size() << " ("
+              << 100 * cnt / m_clusters[dp0].size() << " %) "
+              << (double)100 * m_clusters[dp0].size() /
+                     (m_clusters[dp0].size() + m_clusters[dp1].size())
+              << "   -   " << m_clusters[dp1].size() << " ("
+              << 100 * cnt / m_clusters[dp1].size() << " %) "
+              << (double)100 * m_clusters[dp1].size() /
+                     (m_clusters[dp0].size() + m_clusters[dp1].size())
+              << std::endl;
+              */
   }
   // if(cnt > 0) {
   if (m_config.pSaveWhat == 10 || m_config.pSaveWhat == 11 ||
@@ -1046,6 +1101,7 @@ void Clusterer::AnalyzeClustersDetector(uint8_t det) {
     m_rootFile->SaveClustersPlane(std::move(m_clusters[dp0]));
     m_rootFile->SaveClustersPlane(std::move(m_clusters[dp1]));
   }
+
   if (m_config.pSaveWhat >= 100) {
     m_rootFile->SaveClustersDetector(std::move(m_clusters_detector[det]));
   }
@@ -1220,7 +1276,6 @@ bool Clusterer::ChooseClustersToBeMatched(std::pair<uint8_t, uint8_t> dp) {
 
     // Nothing to cluster, clusters in newClusters vector too recent
     if ((*theMin).time > timeReadyToMatch) {
-
       //(smallest time larger than timeReadyToMatch)
       // Will be matched later
       return false;
@@ -1253,7 +1308,6 @@ bool Clusterer::ChooseClustersToBeMatched(std::pair<uint8_t, uint8_t> dp) {
     }
     index = std::distance(m_clusters_new[dp].begin(), it);
   }
-
   // Insert the clusters that are ready to be matched from newClusters into
   // clusters
   m_clusters[dp].insert(
@@ -1280,26 +1334,14 @@ void Clusterer::FinishAnalysis() {
     // Set the largest timestamp of plane to detector
     // cluster all remaining data in plane
     m_stats.SetLowestCommonTriggerTimestampPlane(dp0, ts);
-    if (!m_config.pIsPads) {
-      m_stats.SetLowestCommonTriggerTimestampPlane(dp1, ts);
-      m_stats.SetLowestCommonTriggerTimestampDet(det.first, ts);
-    }
+    m_stats.SetLowestCommonTriggerTimestampPlane(dp1, ts);
+    m_stats.SetLowestCommonTriggerTimestampDet(det.first, ts);
 
-    if (m_config.pIsPads) {
-      AnalyzeClustersPlane(dp0);
-      if (m_config.pSaveWhat % 2 == 1) {
-        m_rootFile->SaveHitsPad();
-      }
-      if (m_config.pSaveWhat >= 100) {
-        m_rootFile->SaveClustersPad(std::move(m_clusters_pad[det.first]));
-      }
-    } else {
-      AnalyzeClustersPlane(dp0);
-      AnalyzeClustersPlane(dp1);
-      AnalyzeClustersDetector(det.first);
-      if (m_config.pSaveWhat % 2 == 1) {
-        m_rootFile->SaveHits();
-      }
+    AnalyzeClustersPlane(dp0);
+    AnalyzeClustersPlane(dp1);
+    AnalyzeClustersDetector(det.first);
+    if (m_config.pSaveWhat % 2 == 1) {
+      m_rootFile->SaveHits();
     }
   }
   if (m_config.pShowStats) {

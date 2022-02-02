@@ -400,9 +400,6 @@ void Statistics::PrintClusterStats(Configuration &config) {
     if (m_stats_plane[std::make_pair(dp1, "ClusterCntPlane")][0] > 0) {
       cnt1 = m_stats_plane[std::make_pair(dp1, "ClusterCntPlane")][0];
     }
-    if (config.GetAxes(dp0) && config.GetAxes(dp1)) {
-      bothPlanes = true;
-    }
 
     std::cout << "\n\n****************************************" << std::endl;
     std::cout << "Stats detector " << (int)det.first << std::endl;
@@ -418,30 +415,27 @@ void Statistics::PrintClusterStats(Configuration &config) {
         StatsOutput(n, v[n], stat, cnt0);
       }
       std::cout << "****************************************" << std::endl;
-      if (bothPlanes) {
-        std::cout << "\n****************************************" << std::endl;
-        std::cout << "Plane 1: " << stat << std::endl;
-        std::cout << "****************************************" << std::endl;
-        std::vector<long> v = m_stats_plane[std::make_pair(dp1, stat)];
-        for (unsigned int n = 0; n < static_cast<unsigned int>(m_limits[stat]);
-             n++) {
-          StatsOutput(n, v[n], stat, cnt1);
-        }
-        std::cout << "****************************************" << std::endl;
+      std::cout << "\n****************************************" << std::endl;
+      std::cout << "Plane 1: " << stat << std::endl;
+      std::cout << "****************************************" << std::endl;
+      v = m_stats_plane[std::make_pair(dp1, stat)];
+      for (unsigned int n = 0; n < static_cast<unsigned int>(m_limits[stat]);
+           n++) {
+        StatsOutput(n, v[n], stat, cnt1);
       }
+      std::cout << "****************************************" << std::endl;
     }
-    if (!config.pIsPads) {
-      for (auto const &stat : m_stats_detector_names) {
-        std::cout << "\n****************************************" << std::endl;
-        std::cout << stat << std::endl;
-        std::cout << "****************************************" << std::endl;
-        std::vector<long> v = m_stats_detector[std::make_pair(det.first, stat)];
-        for (unsigned int n = 0; n < static_cast<unsigned int>(m_limits[stat]);
-             n++) {
-          StatsOutput(n, v[n], stat, cnt, cnt0, cnt1);
-        }
-        std::cout << "****************************************" << std::endl;
+
+    for (auto const &stat : m_stats_detector_names) {
+      std::cout << "\n****************************************" << std::endl;
+      std::cout << stat << std::endl;
+      std::cout << "****************************************" << std::endl;
+      std::vector<long> v = m_stats_detector[std::make_pair(det.first, stat)];
+      for (unsigned int n = 0; n < static_cast<unsigned int>(m_limits[stat]);
+           n++) {
+        StatsOutput(n, v[n], stat, cnt, cnt0, cnt1);
       }
+      std::cout << "****************************************" << std::endl;
     }
   }
 }
@@ -521,12 +515,7 @@ void Statistics::PrintFECStats(Configuration &config) {
   std::cout << "\n****************************************" << std::endl;
   long cnt = 0;
   for (auto const &det : config.pDets) {
-    if (config.pIsPads) {
-      auto dp0 = std::make_pair(det.first, 0);
-      cnt += GetStatsPlane("ClusterCntPlane", dp0, 0);
-    } else {
-      cnt += GetStatsDetector("ClusterCntDetector", det.first, 0);
-    }
+    cnt += GetStatsDetector("ClusterCntDetector", det.first, 0);
   }
   std::cout << "Total Cluster rate: " << std::scientific
             << 1000 * cnt / m_acq_time << " particles/s" << std::endl;
