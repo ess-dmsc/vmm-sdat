@@ -362,11 +362,11 @@ void RootFile::SaveClustersDetector(ClusterVectorDetector &&clusters_detector) {
       m_TH2D[idx]->Fill(it.pos0, it.pos1, it.adc1);
 
       idx = m_map_TH2D[std::make_pair(it.det, "charge_plane01")];
-      std::cout << "6 XXXXXXXXXXXXXXX" << std::endl;
+
       m_TH2D[idx]->Fill(it.pos0, it.pos1, it.adc0 + it.adc1);
-      std::cout << "7 XXXXXXXXXXXXXXX" << std::endl;
+
       m_cluster_detector = it;
-      std::cout << "8 XXXXXXXXXXXXXXX" << std::endl;
+
       m_tree_clusters_detector->Fill();
     }
   }
