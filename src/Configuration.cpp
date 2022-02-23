@@ -860,6 +860,14 @@ bool Configuration::GetAxes(std::pair<uint8_t, uint8_t> dp) {
   return true;
 }
 
+bool Configuration::GetDetectorPlane(std::pair<uint8_t, uint8_t> dp) {
+  auto searchDetPlane = p_DetPlane_idx.find(dp);
+  if (searchDetPlane == p_DetPlane_idx.end()) {
+    return false;
+  }
+  return true;
+}
+
 bool Configuration::CreateMapping() {
   if (pGeometryFile.find(".json") == std::string::npos && !vmmsFound) {
     return PrintUsage("Geometry definiton missing! Define geometry either via "
@@ -1059,6 +1067,13 @@ bool Configuration::CreateMapping() {
         } else {
           plane = geo["plane"].get<uint8_t>();
           pIsPads[detector] = false;
+          auto searchDetPlane =
+              p_DetPlane_idx.find(std::make_pair(detector, plane));
+          if (searchDetPlane == p_DetPlane_idx.end()) {
+            // Add det/plane pair to the list and set index
+            p_DetPlane_idx.emplace(
+                std::make_pair(std::make_pair(detector, plane), 0));
+          }
           auto searchMap = pAxes.find(std::make_pair(detector, plane));
           if (searchMap == pAxes.end()) {
             pAxes.emplace(std::make_pair(std::make_pair(detector, plane), 0));

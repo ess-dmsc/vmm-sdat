@@ -104,8 +104,9 @@ RootFile::RootFile(Configuration &config) : m_config(config) {
     for (auto const &det : m_config.pDets) {
       auto dp0 = std::make_pair(det.first, 0);
       auto dp1 = std::make_pair(det.first, 1);
-      if (m_config.pIsPads[det.first] ||
-          (m_config.GetAxes(dp0) && m_config.GetAxes(dp1))) {
+      if (!m_config.pIsPads[det.first] &&
+          m_config.GetDetectorPlane(dp0) == true &&
+          m_config.GetDetectorPlane(dp1) == true) {
         name = std::to_string(det.first) + "_delta_time_planes";
         h1 = new TH1D(name.c_str(), name.c_str(), 1000, -500, 500);
         m_TH1D.push_back(h1);
@@ -251,35 +252,32 @@ RootFile::RootFile(Configuration &config) : m_config(config) {
             std::make_pair(std::make_pair(det.first, "charge_plane01"), cnt2D));
         cnt2D++;
       } else {
-        if (m_config.pIsPads[det.first]) {
-          int n0 = m_config.pChannels0[det.first];
-          int n1 = m_config.pChannels1[det.first];
-          name = std::to_string(det.first) + "_cluster";
-          h2 = new TH2D(name.c_str(), name.c_str(), (n0 + 1) * 10, 0, n0,
-                        (n1 + 1) * 10, 0, n1);
-          h2->GetXaxis()->SetTitle("x");
-          m_TH2D.push_back(h2);
-          m_map_TH2D.emplace(
-              std::make_pair(std::make_pair(det.first, "cluster"), cnt2D));
+        int n0 = m_config.pChannels0[det.first];
+        int n1 = m_config.pChannels1[det.first];
+        name = std::to_string(det.first) + "_cluster";
+        h2 = new TH2D(name.c_str(), name.c_str(), (n0 + 1) * 10, 0, n0,
+                      (n1 + 1) * 10, 0, n1);
+        m_TH2D.push_back(h2);
+        m_map_TH2D.emplace(
+            std::make_pair(std::make_pair(det.first, "cluster"), cnt2D));
 
-          cnt2D++;
+        cnt2D++;
 
-          name = std::to_string(det.first) + "_size";
-          h2 = new TH2D(name.c_str(), name.c_str(), (n0 + 1) * 10, 0, n0,
-                        (n1 + 1) * 10, 0, n1);
-          m_TH2D.push_back(h2);
-          m_map_TH2D.emplace(
-              std::make_pair(std::make_pair(det.first, "size"), cnt2D));
-          cnt2D++;
+        name = std::to_string(det.first) + "_size";
+        h2 = new TH2D(name.c_str(), name.c_str(), (n0 + 1) * 10, 0, n0,
+                      (n1 + 1) * 10, 0, n1);
+        m_TH2D.push_back(h2);
+        m_map_TH2D.emplace(
+            std::make_pair(std::make_pair(det.first, "size"), cnt2D));
+        cnt2D++;
 
-          name = std::to_string(det.first) + "_charge";
-          h2 = new TH2D(name.c_str(), name.c_str(), (n0 + 1) * 10, 0, n0,
-                        (n1 + 1) * 10, 0, n1);
-          m_TH2D.push_back(h2);
-          m_map_TH2D.emplace(
-              std::make_pair(std::make_pair(det.first, "charge"), cnt2D));
-          cnt2D++;
-        }
+        name = std::to_string(det.first) + "_charge";
+        h2 = new TH2D(name.c_str(), name.c_str(), (n0 + 1) * 10, 0, n0,
+                      (n1 + 1) * 10, 0, n1);
+        m_TH2D.push_back(h2);
+        m_map_TH2D.emplace(
+            std::make_pair(std::make_pair(det.first, "charge"), cnt2D));
+        cnt2D++;
       }
     }
   }
@@ -319,52 +317,63 @@ void RootFile::SaveClustersDetector(ClusterVectorDetector &&clusters_detector) {
     if (std::find(m_config.pSaveClustersDetector.begin(),
                   m_config.pSaveClustersDetector.end(),
                   it.det) != m_config.pSaveClustersDetector.end()) {
+      auto dp0 = std::make_pair(it.det, 0);
+      auto dp1 = std::make_pair(it.det, 1);
+      if (!m_config.pIsPads[it.det] && m_config.GetDetectorPlane(dp0) == true &&
+          m_config.GetDetectorPlane(dp1) == true) {
+        int idx = m_map_TH1D[std::make_pair(it.det, "delta_time_planes")];
+        m_TH1D[idx]->Fill(it.time0 - it.time1);
+        idx = m_map_TH1D[std::make_pair(it.det, "delta_time_utpc_planes")];
+        m_TH1D[idx]->Fill(it.time0_utpc - it.time1_utpc);
 
-      int idx = m_map_TH1D[std::make_pair(it.det, "delta_time_planes")];
-      m_TH1D[idx]->Fill(it.time0 - it.time1);
-      idx = m_map_TH1D[std::make_pair(it.det, "delta_time_utpc_planes")];
-      m_TH1D[idx]->Fill(it.time0_utpc - it.time1_utpc);
+        idx = m_map_TH1D[std::make_pair(it.det, "delta_time_charge2_planes")];
+        m_TH1D[idx]->Fill(it.time0_charge2 - it.time1_charge2);
 
-      idx = m_map_TH1D[std::make_pair(it.det, "delta_time_charge2_planes")];
-      m_TH1D[idx]->Fill(it.time0_charge2 - it.time1_charge2);
+        idx = m_map_TH1D[std::make_pair(it.det, "dt0")];
+        m_TH1D[idx]->Fill(it.dt0);
 
-      idx = m_map_TH1D[std::make_pair(it.det, "dt0")];
-      m_TH1D[idx]->Fill(it.dt0);
+        idx = m_map_TH1D[std::make_pair(it.det, "dt1")];
+        m_TH1D[idx]->Fill(it.dt1);
 
-      idx = m_map_TH1D[std::make_pair(it.det, "dt1")];
-      m_TH1D[idx]->Fill(it.dt1);
+        idx = m_map_TH2D[std::make_pair(it.det, "cluster")];
+        m_TH2D[idx]->Fill(it.pos0, it.pos1);
 
-      idx = m_map_TH2D[std::make_pair(it.det, "cluster")];
-      m_TH2D[idx]->Fill(it.pos0, it.pos1);
+        idx = m_map_TH2D[std::make_pair(it.det, "cluster_utpc")];
+        m_TH2D[idx]->Fill(it.pos0_utpc, it.pos1_utpc);
 
-      idx = m_map_TH2D[std::make_pair(it.det, "cluster_utpc")];
-      m_TH2D[idx]->Fill(it.pos0_utpc, it.pos1_utpc);
+        idx = m_map_TH2D[std::make_pair(it.det, "cluster_charge2")];
+        m_TH2D[idx]->Fill(it.pos0_charge2, it.pos1_charge2);
 
-      idx = m_map_TH2D[std::make_pair(it.det, "cluster_charge2")];
-      m_TH2D[idx]->Fill(it.pos0_charge2, it.pos1_charge2);
+        idx = m_map_TH2D[std::make_pair(it.det, "cluster_algo")];
+        m_TH2D[idx]->Fill(it.pos0_algo, it.pos1_algo);
 
-      idx = m_map_TH2D[std::make_pair(it.det, "cluster_algo")];
-      m_TH2D[idx]->Fill(it.pos0_algo, it.pos1_algo);
+        idx = m_map_TH2D[std::make_pair(it.det, "size_plane0")];
+        m_TH2D[idx]->Fill(it.pos0, it.pos1, it.size0);
 
-      idx = m_map_TH2D[std::make_pair(it.det, "size_plane0")];
-      m_TH2D[idx]->Fill(it.pos0, it.pos1, it.size0);
+        idx = m_map_TH2D[std::make_pair(it.det, "size_plane1")];
+        m_TH2D[idx]->Fill(it.pos0, it.pos1, it.size1);
 
-      idx = m_map_TH2D[std::make_pair(it.det, "size_plane1")];
-      m_TH2D[idx]->Fill(it.pos0, it.pos1, it.size1);
+        idx = m_map_TH2D[std::make_pair(it.det, "size_plane01")];
+        m_TH2D[idx]->Fill(it.pos0, it.pos1, it.size0 + it.size1);
 
-      idx = m_map_TH2D[std::make_pair(it.det, "size_plane01")];
-      m_TH2D[idx]->Fill(it.pos0, it.pos1, it.size0 + it.size1);
+        idx = m_map_TH2D[std::make_pair(it.det, "charge_plane0")];
+        m_TH2D[idx]->Fill(it.pos0, it.pos1, it.adc0);
 
-      idx = m_map_TH2D[std::make_pair(it.det, "charge_plane0")];
-      m_TH2D[idx]->Fill(it.pos0, it.pos1, it.adc0);
+        idx = m_map_TH2D[std::make_pair(it.det, "charge_plane1")];
+        m_TH2D[idx]->Fill(it.pos0, it.pos1, it.adc1);
 
-      idx = m_map_TH2D[std::make_pair(it.det, "charge_plane1")];
-      m_TH2D[idx]->Fill(it.pos0, it.pos1, it.adc1);
+        idx = m_map_TH2D[std::make_pair(it.det, "charge_plane01")];
+        m_TH2D[idx]->Fill(it.pos0, it.pos1, it.adc0 + it.adc1);
+      } else {
+        int idx = m_map_TH2D[std::make_pair(it.det, "cluster")];
+        m_TH2D[idx]->Fill(it.pos0, it.pos1);
 
-      idx = m_map_TH2D[std::make_pair(it.det, "charge_plane01")];
+        idx = m_map_TH2D[std::make_pair(it.det, "size")];
+        m_TH2D[idx]->Fill(it.pos0, it.pos1, it.size0);
 
-      m_TH2D[idx]->Fill(it.pos0, it.pos1, it.adc0 + it.adc1);
-
+        idx = m_map_TH2D[std::make_pair(it.det, "charge")];
+        m_TH2D[idx]->Fill(it.pos0, it.pos1, it.adc0);
+      }
       m_cluster_detector = it;
 
       m_tree_clusters_detector->Fill();
@@ -379,7 +388,7 @@ void RootFile::SaveHistograms() {
   for (auto const &det : m_config.pDets) {
     auto dp0 = std::make_pair(det.first, 0);
     auto dp1 = std::make_pair(det.first, 1);
-    if (m_config.GetAxes(dp0) && m_config.GetAxes(dp1)) {
+    if (m_config.GetDetectorPlane(dp0) && m_config.GetAxes(dp1)) {
       if (m_config.createJSON) {
         int id = m_map_TH2D[std::make_pair(det.first, "cluster")];
 

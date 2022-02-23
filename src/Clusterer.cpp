@@ -695,6 +695,25 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
         clusterPlane.id = static_cast<uint32_t>(m_cluster_id);
         clusterPlane.det = det;
         clusterPlane.plane = plane;
+        if (plane == 0) {
+          auto det_plane = std::make_pair(det, 1);
+          if (m_config.GetDetectorPlane(det_plane) == false) {
+            ClusterPlane clusterOtherPlane;
+            clusterOtherPlane = clusterPlane;
+            clusterOtherPlane.plane = 1;
+            m_clusters_new[det_plane].emplace_back(
+                std::move(clusterOtherPlane));
+          }
+        } else {
+          auto det_plane = std::make_pair(det, 0);
+          if (m_config.GetDetectorPlane(det_plane) == false) {
+            ClusterPlane clusterOtherPlane;
+            clusterOtherPlane = clusterPlane;
+            clusterOtherPlane.plane = 0;
+            m_clusters_new[det_plane].emplace_back(
+                std::move(clusterOtherPlane));
+          }
+        }
         m_clusters_new[dp].emplace_back(std::move(clusterPlane));
         if (m_config.pShowStats) {
           m_stats.SetStatsPlane("ClusterCntPlane", dp, 0);
@@ -775,6 +794,24 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
     clusterPlane.id = static_cast<uint32_t>(m_cluster_id);
     clusterPlane.det = det;
     clusterPlane.plane = plane;
+
+    if (plane == 0) {
+      auto det_plane = std::make_pair(det, 1);
+      if (m_config.GetDetectorPlane(det_plane) == false) {
+        ClusterPlane clusterOtherPlane;
+        clusterOtherPlane = clusterPlane;
+        clusterOtherPlane.plane = 1;
+        m_clusters_new[det_plane].emplace_back(std::move(clusterOtherPlane));
+      }
+    } else {
+      auto det_plane = std::make_pair(det, 0);
+      if (m_config.GetDetectorPlane(det_plane) == false) {
+        ClusterPlane clusterOtherPlane;
+        clusterOtherPlane = clusterPlane;
+        clusterOtherPlane.plane = 0;
+        m_clusters_new[det_plane].emplace_back(std::move(clusterOtherPlane));
+      }
+    }
     m_clusters_new[dp].emplace_back(std::move(clusterPlane));
     if (m_config.pShowStats) {
       m_stats.SetStatsPlane("ClusterCntPlane", dp, 0);
@@ -1032,7 +1069,6 @@ int Clusterer::MatchClustersDetector(uint8_t det) {
       clusterDetector.strips1 = (*bestMatchPlane1).strips;
       clusterDetector.times1 = (*bestMatchPlane1).times;
       clusterDetector.adcs1 = (*bestMatchPlane1).adcs;
-
       DTRACE(DEB, "\ncommon cluster det %d x/y: %d/%d", (int)det,
              clusterDetector.id0, clusterDetector.id1);
       DTRACE(DEB, "\tpos x/pos y: %f/%f", clusterDetector.pos0,
@@ -1075,27 +1111,11 @@ void Clusterer::AnalyzeClustersDetector(uint8_t det) {
   if (ChooseClustersToBeMatched(dp0) == false && m_clusters[dp0].empty()) {
     return;
   }
-  if (m_config.pIsPads[det] ||
-      (m_config.GetAxes(dp0) && m_config.GetAxes(dp1))) {
-    if (ChooseClustersToBeMatched(dp1) == false && m_clusters[dp1].empty()) {
-      return;
-    }
-
-    cnt = MatchClustersDetector(det);
-
-    /*std::cout << "MatchClustersDetector " << cnt << "   -   "
-              << m_clusters[dp0].size() << " ("
-              << 100 * cnt / m_clusters[dp0].size() << " %) "
-              << (double)100 * m_clusters[dp0].size() /
-                     (m_clusters[dp0].size() + m_clusters[dp1].size())
-              << "   -   " << m_clusters[dp1].size() << " ("
-              << 100 * cnt / m_clusters[dp1].size() << " %) "
-              << (double)100 * m_clusters[dp1].size() /
-                     (m_clusters[dp0].size() + m_clusters[dp1].size())
-              << std::endl;
-              */
+  if (ChooseClustersToBeMatched(dp1) == false && m_clusters[dp1].empty()) {
+    return;
   }
-  // if(cnt > 0) {
+  cnt = MatchClustersDetector(det);
+
   if (m_config.pSaveWhat == 10 || m_config.pSaveWhat == 11 ||
       m_config.pSaveWhat == 110 || m_config.pSaveWhat == 111) {
     m_rootFile->SaveClustersPlane(std::move(m_clusters[dp0]));
@@ -1105,11 +1125,9 @@ void Clusterer::AnalyzeClustersDetector(uint8_t det) {
   if (m_config.pSaveWhat >= 100) {
     m_rootFile->SaveClustersDetector(std::move(m_clusters_detector[det]));
   }
-
   m_clusters[std::make_pair(det, 0)].clear();
   m_clusters[std::make_pair(det, 1)].clear();
   m_clusters_detector[det].clear();
-  //}
 }
 
 //====================================================================================================================
@@ -1131,7 +1149,8 @@ bool Clusterer::ChooseHitsToBeClustered(std::pair<uint8_t, uint8_t> dp) {
   if (std::get<0>(*theMin) > timeReadyToCluster) {
 
     //(smallest timestamp larger than
-    // m_stats.GetLowestCommonTriggerTimestampPlane(dp)) Will be clustered later
+    // m_stats.GetLowestCommonTriggerTimestampPlane(dp)) Will be clustered
+    // later
     return false;
   }
 
@@ -1216,8 +1235,8 @@ bool Clusterer::ChooseClustersToBeMatched(std::pair<uint8_t, uint8_t> dp) {
           return t1.time_utpc < t2.time_utpc;
         });
 
-    // Find elements in vector that could still be matched with another cluster
-    // since they are close in time to timeReadyToMatch
+    // Find elements in vector that could still be matched with another
+    // cluster since they are close in time to timeReadyToMatch
     while (it != m_clusters_new[dp].end()) {
       if ((*it).time_utpc - timeReadyToMatch > m_config.pDeltaTimeHits) {
         break;
@@ -1257,8 +1276,8 @@ bool Clusterer::ChooseClustersToBeMatched(std::pair<uint8_t, uint8_t> dp) {
           return t1.time_charge2 < t2.time_charge2;
         });
 
-    // Find elements in vector that could still be matched with another cluster
-    // since they are close in time to timeReadyToMatch
+    // Find elements in vector that could still be matched with another
+    // cluster since they are close in time to timeReadyToMatch
     while (it != m_clusters_new[dp].end()) {
       if ((*it).time_charge2 - timeReadyToMatch > m_config.pDeltaTimeHits) {
         break;
@@ -1297,8 +1316,8 @@ bool Clusterer::ChooseClustersToBeMatched(std::pair<uint8_t, uint8_t> dp) {
           return t1.time < t2.time;
         });
 
-    // Find elements in vector that could still be matched with another cluster
-    // since they are close in time to timeReadyToMatch
+    // Find elements in vector that could still be matched with another
+    // cluster since they are close in time to timeReadyToMatch
     while (it != m_clusters_new[dp].end()) {
       if ((*it).time - timeReadyToMatch > m_config.pDeltaTimeHits) {
         break;

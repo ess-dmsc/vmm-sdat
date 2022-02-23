@@ -18,6 +18,7 @@ public:
   bool CreateMapping();
   bool CalculateTransform();
   bool GetAxes(std::pair<uint8_t, uint8_t> dp);
+  bool GetDetectorPlane(std::pair<uint8_t, uint8_t> dp);
   //**************************************************************
   // BEGIN INPUT PARAMETERS
   //**************************************************************

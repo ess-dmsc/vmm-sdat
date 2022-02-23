@@ -406,36 +406,42 @@ void Statistics::PrintClusterStats(Configuration &config) {
     std::cout << "****************************************" << std::endl;
 
     for (auto const &stat : m_stats_plane_names) {
-      std::cout << "\n****************************************" << std::endl;
-      std::cout << "Plane 0: " << stat << std::endl;
-      std::cout << "****************************************" << std::endl;
-      std::vector<long> v = m_stats_plane[std::make_pair(dp0, stat)];
-      for (unsigned int n = 0; n < static_cast<unsigned int>(m_limits[stat]);
-           n++) {
-        StatsOutput(n, v[n], stat, cnt0);
+      if (config.pIsPads[det.first] || config.GetDetectorPlane(dp0) == true) {
+        std::cout << "\n****************************************" << std::endl;
+        std::cout << "Plane 0: " << stat << std::endl;
+        std::cout << "****************************************" << std::endl;
+        std::vector<long> v = m_stats_plane[std::make_pair(dp0, stat)];
+        for (unsigned int n = 0; n < static_cast<unsigned int>(m_limits[stat]);
+             n++) {
+          StatsOutput(n, v[n], stat, cnt0);
+        }
       }
-      std::cout << "****************************************" << std::endl;
-      std::cout << "\n****************************************" << std::endl;
-      std::cout << "Plane 1: " << stat << std::endl;
-      std::cout << "****************************************" << std::endl;
-      v = m_stats_plane[std::make_pair(dp1, stat)];
-      for (unsigned int n = 0; n < static_cast<unsigned int>(m_limits[stat]);
-           n++) {
-        StatsOutput(n, v[n], stat, cnt1);
+      if (config.GetDetectorPlane(dp1) == true) {
+        std::cout << "****************************************" << std::endl;
+        std::cout << "\n****************************************" << std::endl;
+        std::cout << "Plane 1: " << stat << std::endl;
+        std::cout << "****************************************" << std::endl;
+        std::vector<long> v = m_stats_plane[std::make_pair(dp1, stat)];
+        for (unsigned int n = 0; n < static_cast<unsigned int>(m_limits[stat]);
+             n++) {
+          StatsOutput(n, v[n], stat, cnt1);
+        }
       }
       std::cout << "****************************************" << std::endl;
     }
-
-    for (auto const &stat : m_stats_detector_names) {
-      std::cout << "\n****************************************" << std::endl;
-      std::cout << stat << std::endl;
-      std::cout << "****************************************" << std::endl;
-      std::vector<long> v = m_stats_detector[std::make_pair(det.first, stat)];
-      for (unsigned int n = 0; n < static_cast<unsigned int>(m_limits[stat]);
-           n++) {
-        StatsOutput(n, v[n], stat, cnt, cnt0, cnt1);
+    if (config.GetDetectorPlane(dp0) == true &&
+        config.GetDetectorPlane(dp1) == true) {
+      for (auto const &stat : m_stats_detector_names) {
+        std::cout << "\n****************************************" << std::endl;
+        std::cout << stat << std::endl;
+        std::cout << "****************************************" << std::endl;
+        std::vector<long> v = m_stats_detector[std::make_pair(det.first, stat)];
+        for (unsigned int n = 0; n < static_cast<unsigned int>(m_limits[stat]);
+             n++) {
+          StatsOutput(n, v[n], stat, cnt, cnt0, cnt1);
+        }
+        std::cout << "****************************************" << std::endl;
       }
-      std::cout << "****************************************" << std::endl;
     }
   }
 }
