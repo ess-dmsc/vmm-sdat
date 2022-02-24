@@ -41,6 +41,7 @@ int main(int argc, char **argv) {
         m_stats.CreatePCAPStats(m_config);
       }
     }
+
     if (m_config.pIsPcap) {
       if (m_config.pDataFormat == "SRS") {
         char buffer[10000];

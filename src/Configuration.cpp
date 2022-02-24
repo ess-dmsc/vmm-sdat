@@ -852,13 +852,14 @@ bool Configuration::CalculateTransform() {
   return true;
 }
 
+/*
 bool Configuration::GetAxes(std::pair<uint8_t, uint8_t> dp) {
   auto searchMap = pAxes.find(dp);
   if (searchMap == pAxes.end()) {
     return false;
   }
   return true;
-}
+}*/
 
 bool Configuration::GetDetectorPlane(std::pair<uint8_t, uint8_t> dp) {
   auto searchDetPlane = p_DetPlane_idx.find(dp);
