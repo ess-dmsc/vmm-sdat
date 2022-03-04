@@ -120,7 +120,8 @@ defined there
 If the number of strips in a plane cluster is equal or larger than the value specified in the -cs (cluster size) 
 parameter, the cluster is valid. For X-ray data the cluster size parameter is usually 1 or 2, whereas for electron or
 alpha tracks it can be 3 or larger. 
-Valid plane clusters are stored in vectors (optionally also in a branch of the root tree). 
+Valid plane clusters are optionally stored in a branch of the root tree. For pad detectors the clusters appear with the 
+x-indices of the pads in plane 0 of the detector, and with the y-indices in plane 1 of the detector.  
 
 ### Detector clusters
 To determine now the detector clusters, the plane clusters in the two detector planes are matched depending on their
@@ -130,8 +131,9 @@ the four cluster times calculated with the different algorithms has to be used f
 in the two planes of the detector cluster has to be larger or equal to the -ccs (coincident cluster size) parameter.
 In a detector with equal charge sharing between the two planes, the charge of a detector cluster should be almost 
 identical in the two detector planes. The -ratio (charge ratio) parameter defines the allowed charge ratio between
-the two planes (charge plane 0 / charge plane 1) or (charge plane 1 / charge plane 0).
-
+the two planes (charge plane 0 / charge plane 1) or (charge plane 1 / charge plane 0). For pad detectors, the detector
+clusters contain the x-index in the pos0 entry, and the y-index in the pos1 entry. Detector that are only 1D, contain the 
+plane clusters also in the detector cluster tree. The entries of the missing plane (either plane 0 or plane 1) are set to zero.
 
 ## Explanation of parameters
   

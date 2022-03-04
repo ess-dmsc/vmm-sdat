@@ -1,24 +1,23 @@
 #!/usr/bin/python3
 
-# VMM HDF5-to-ROOT Analysis
+# VMM Analysis
 # --------------------------------------------------------------------
 # This script is a simple example, showing how to read the data from a
-# ROOT tree, generated with vmm-hdf5-to-root from Dorothea Pfeiffer.
-# In addition, some cuts are applied to the data using pandas.
-# In this specific example, this means that only the position of the
-# clusters is plotted, if the ADC value of the cluster is larger than
-# a specific value.
+# ROOT tree, generated with vmm-sdat. In addition, some cuts are
+# applied to the data using pandas. In this specific example, this
+# means that only the position of the clusters is plotted, if the
+# ADC value of the cluster is larger than a specific value.
 # --------------------------------------------------------------------
 # Lucian Scharenberg
 # lucian.scharenberg@cern.ch
-# 18 November 2019
+# 18 November 2019 and 03 March 2022
 
 
 # --------------------------------------------------------------------
 # PACKAGE HANDLING
 # --------------------------------------------------------------------
 
-import uproot
+import uproot3 as uproot
 import pandas as pd
 import matplotlib.pyplot as plt
 import sys
@@ -32,9 +31,9 @@ import sys
 tree = uproot.open(sys.argv[1])['clusters_detector']
 
 # Now get the branches of interest
-adc0 = tree.array('clusters_detector.adc0').flatten()
-pos0 = tree.array('clusters_detector.pos0').flatten()
-pos1 = tree.array('clusters_detector.pos1').flatten()
+adc0 = tree.array('adc0')
+pos0 = tree.array('pos0')
+pos1 = tree.array('pos1')
 
 # Create a pandas data frame, which is used to apply the cuts
 data = {'adc0': adc0,

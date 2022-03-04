@@ -245,38 +245,38 @@ Bool_t VMM3a_analysis::Process(Long64_t entry)
    fReader.SetLocalEntry(entry);
    if (entry%100==0) cout << "entry: " << entry << "\r" << flush;
    
-	   for (unsigned long n=0;  n< clusters_detector_pos0.GetSize(); n++)   	{
-			x_bin = TMath::FloorNint(clusters_detector_pos0.At(n));
-			y_bin = TMath::FloorNint(clusters_detector_pos1.At(n));
 
-			hXCharge->Fill(clusters_detector_adc0.At(n));
-			hYCharge->Fill(clusters_detector_adc1.At(n));
+		x_bin = TMath::FloorNint((Double_t)*pos0);
+		y_bin = TMath::FloorNint((Double_t)*pos1);
 
-			hXChargeVsTime->Fill(clusters_detector_time0.At(n),clusters_detector_adc0.At(n));
-			hYChargeVsTime->Fill(clusters_detector_time1.At(n),clusters_detector_adc1.At(n));
+		hXCharge->Fill(*adc0);
+		hYCharge->Fill(*adc1);
 
-			hXChargeVsPosition->Fill(clusters_detector_pos0.At(n),clusters_detector_adc0.At(n));
-			hYChargeVsPosition->Fill(clusters_detector_pos1.At(n),clusters_detector_adc1.At(n));
-			hXHits->Fill(x_bin);
-			hYHits->Fill(y_bin);
-			hXYHits->Fill(x_bin,y_bin);
+		hXChargeVsTime->Fill(*time0,*adc0);
+		hYChargeVsTime->Fill(*time1,*adc1);
 
-			bin_content = hXQ->GetBinContent(x_bin);
-			hXQ->SetBinContent(x_bin,bin_content+clusters_detector_adc0.At(n));
+		hXChargeVsPosition->Fill(*pos0,*adc0);
+		hYChargeVsPosition->Fill(*pos1,*adc1);
+		hXHits->Fill(x_bin);
+		hYHits->Fill(y_bin);
+		hXYHits->Fill(x_bin,y_bin);
 
-			bin_content = hYQ->GetBinContent(y_bin);
-			hYQ->SetBinContent(y_bin,bin_content+clusters_detector_adc1.At(n));
+		bin_content = hXQ->GetBinContent(x_bin);
+		hXQ->SetBinContent(x_bin,bin_content+*adc0);
 
-			bin_content = hXYCharge->GetBinContent(x_bin,y_bin);
-			hXYCharge->SetBinContent(x_bin,y_bin,bin_content+clusters_detector_adc0.At(n)+clusters_detector_adc1.At(n));
+		bin_content = hYQ->GetBinContent(y_bin);
+		hYQ->SetBinContent(y_bin,bin_content+*adc1);
 
-			hXQCLS->Fill(clusters_detector_size0.At(n),clusters_detector_adc0.At(n));
-			hYQCLS->Fill(clusters_detector_size1.At(n),clusters_detector_adc1.At(n));
+		bin_content = hXYCharge->GetBinContent(x_bin,y_bin);
+		hXYCharge->SetBinContent(x_bin,y_bin,bin_content+*adc0+*adc1);
+
+		hXQCLS->Fill(*size0,*adc0);
+		hYQCLS->Fill(*size1,*adc1);
 
 
-			hClusterTimeDifference->Fill(clusters_detector_time0.At(n) - clusters_detector_time1.At(n));
+		hClusterTimeDifference->Fill(*time0 - *time1);
 
-    	}
+    
   
    
 

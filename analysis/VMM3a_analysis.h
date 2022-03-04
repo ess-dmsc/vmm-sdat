@@ -1,15 +1,13 @@
 //////////////////////////////////////////////////////////
 // This class has been automatically generated on
-// Tue Jun 16 15:35:00 2020 by ROOT version 6.18/04
-// from TTree events/vmm3 events
-// found on file: Xray_4975V_DAQ_225_VMM_Mixed_Gain_4_5mV_fC_X_6mv_fC_Y_Gas_Flow_2_5_L_h_Neighbouring_Logic_OFF_Long_Run_20200611-153731_bc_40_tac_60_ccs_3_cs_1_dt_200_mst_1_spc_500_dp_100_cr_0p30-3p00_calibration_NMX_4VMM_extPulse_dummyreadout.root
+// Fri Mar  4 14:01:56 2022 by ROOT version 6.24/06
+// from TTree clusters_detector/clusters detector
+// found on file: example.root
 //////////////////////////////////////////////////////////
 
 #ifndef VMM3a_analysis_h
 #define VMM3a_analysis_h
 
-#include <iostream>
-#include <TROOT.h>
 #include <TROOT.h>
 #include <TChain.h>
 #include <TFile.h>
@@ -17,24 +15,8 @@
 #include <TTreeReader.h>
 #include <TTreeReaderValue.h>
 #include <TTreeReaderArray.h>
-#include <TH1D.h>
-#include <TCanvas.h>
-#include <TGraph.h>
-#include "TDatime.h"
-#include "TH1F.h"
-#include "TH2F.h"
-#include "TMath.h"
-#include "TColor.h"
-#include "TText.h"
-#include "TPaveText.h"
-#include "TView3D.h"
-#include <stdio.h>
-
-
 
 // Headers needed by this particular selector
-#include <vector>
-
 
 
 class VMM3a_analysis : public TSelector {
@@ -88,52 +70,51 @@ public :
 
    TH1D *hClusterTimeDifference;
    TCanvas *cClusterTimeDifference;
-
-
+   
    // Readers to access the data (delete the ones you do not need).
-   TTreeReaderArray<unsigned int> clusters_detector_id = {fReader, "clusters_detector.id"};
-   TTreeReaderArray<unsigned int> clusters_detector_id0 = {fReader, "clusters_detector.id0"};
-   TTreeReaderArray<unsigned int> clusters_detector_id1 = {fReader, "clusters_detector.id1"};
-   TTreeReaderArray<UChar_t> clusters_detector_det = {fReader, "clusters_detector.det"};
-   TTreeReaderArray<unsigned short> clusters_detector_size0 = {fReader, "clusters_detector.size0"};
-   TTreeReaderArray<unsigned short> clusters_detector_size1 = {fReader, "clusters_detector.size1"};
-   TTreeReaderArray<unsigned short> clusters_detector_adc0 = {fReader, "clusters_detector.adc0"};
-   TTreeReaderArray<unsigned short> clusters_detector_adc1 = {fReader, "clusters_detector.adc1"};
-   TTreeReaderArray<Double_t> clusters_detector_pos0 = {fReader, "clusters_detector.pos0"};
-   TTreeReaderArray<Double_t> clusters_detector_pos1 = {fReader, "clusters_detector.pos1"};
-   TTreeReaderArray<Double_t> clusters_detector_pos2 = {fReader, "clusters_detector.pos2"};
-   TTreeReaderArray<Double_t> clusters_detector_time0 = {fReader, "clusters_detector.time0"};
-   TTreeReaderArray<Double_t> clusters_detector_time1 = {fReader, "clusters_detector.time1"};
-   TTreeReaderArray<Double_t> clusters_detector_pos0_utpc = {fReader, "clusters_detector.pos0_utpc"};
-   TTreeReaderArray<Double_t> clusters_detector_pos1_utpc = {fReader, "clusters_detector.pos1_utpc"};
-   TTreeReaderArray<Double_t> clusters_detector_pos2_utpc = {fReader, "clusters_detector.pos2_utpc"};
-   TTreeReaderArray<Double_t> clusters_detector_time0_utpc = {fReader, "clusters_detector.time0_utpc"};
-   TTreeReaderArray<Double_t> clusters_detector_time1_utpc = {fReader, "clusters_detector.time1_utpc"};
-   TTreeReaderArray<Double_t> clusters_detector_pos0_charge2 = {fReader, "clusters_detector.pos0_charge2"};
-   TTreeReaderArray<Double_t> clusters_detector_pos1_charge2 = {fReader, "clusters_detector.pos1_charge2"};
-   TTreeReaderArray<Double_t> clusters_detector_pos2_charge2 = {fReader, "clusters_detector.pos2_charge2"};
-   TTreeReaderArray<Double_t> clusters_detector_time0_charge2 = {fReader, "clusters_detector.time0_charge2"};
-   TTreeReaderArray<Double_t> clusters_detector_time1_charge2 = {fReader, "clusters_detector.time1_charge2"};
-   TTreeReaderArray<Double_t> clusters_detector_pos0_algo = {fReader, "clusters_detector.pos0_algo"};
-   TTreeReaderArray<Double_t> clusters_detector_pos1_algo = {fReader, "clusters_detector.pos1_algo"};
-   TTreeReaderArray<Double_t> clusters_detector_pos2_algo = {fReader, "clusters_detector.pos2_algo"};
-   TTreeReaderArray<Double_t> clusters_detector_time0_algo = {fReader, "clusters_detector.time0_algo"};
-   TTreeReaderArray<Double_t> clusters_detector_time1_algo = {fReader, "clusters_detector.time1_algo"};
-   TTreeReaderArray<Double_t> clusters_detector_dt0 = {fReader, "clusters_detector.dt0"};
-   TTreeReaderArray<Double_t> clusters_detector_dt1 = {fReader, "clusters_detector.dt1"};
-   TTreeReaderArray<Double_t> clusters_detector_delta_plane = {fReader, "clusters_detector.delta_plane"};
-   TTreeReaderArray<unsigned short> clusters_detector_span_cluster0 = {fReader, "clusters_detector.span_cluster0"};
-   TTreeReaderArray<unsigned short> clusters_detector_span_cluster1 = {fReader, "clusters_detector.span_cluster1"};
-   TTreeReaderArray<unsigned short> clusters_detector_max_delta_time0 = {fReader, "clusters_detector.max_delta_time0"};
-   TTreeReaderArray<unsigned short> clusters_detector_max_delta_time1 = {fReader, "clusters_detector.max_delta_time1"};
-   TTreeReaderArray<unsigned short> clusters_detector_max_missing_strip0 = {fReader, "clusters_detector.max_missing_strip0"};
-   TTreeReaderArray<unsigned short> clusters_detector_max_missing_strip1 = {fReader, "clusters_detector.max_missing_strip1"};
-   TTreeReaderArray<vector<double>> clusters_detector_strips0 = {fReader, "clusters_detector.strips0"};
-   TTreeReaderArray<vector<double>> clusters_detector_times0 = {fReader, "clusters_detector.times0"};
-   TTreeReaderArray<vector<double>> clusters_detector_strips1 = {fReader, "clusters_detector.strips1"};
-   TTreeReaderArray<vector<double>> clusters_detector_times1 = {fReader, "clusters_detector.times1"};
-   TTreeReaderArray<vector<double>> clusters_detector_adcs0 = {fReader, "clusters_detector.adcs0"};
-   TTreeReaderArray<vector<double>> clusters_detector_adcs1 = {fReader, "clusters_detector.adcs1"};
+   TTreeReaderValue<unsigned int> id = {fReader, "id"};
+   TTreeReaderValue<unsigned int> id0 = {fReader, "id0"};
+   TTreeReaderValue<unsigned int> id1 = {fReader, "id1"};
+   TTreeReaderValue<UChar_t> det = {fReader, "det"};
+   TTreeReaderValue<unsigned short> size0 = {fReader, "size0"};
+   TTreeReaderValue<unsigned short> size1 = {fReader, "size1"};
+   TTreeReaderValue<unsigned short> adc0 = {fReader, "adc0"};
+   TTreeReaderValue<unsigned short> adc1 = {fReader, "adc1"};
+   TTreeReaderValue<Double_t> pos0 = {fReader, "pos0"};
+   TTreeReaderValue<Double_t> pos1 = {fReader, "pos1"};
+   TTreeReaderValue<Double_t> pos2 = {fReader, "pos2"};
+   TTreeReaderValue<Double_t> time0 = {fReader, "time0"};
+   TTreeReaderValue<Double_t> time1 = {fReader, "time1"};
+   TTreeReaderValue<Double_t> pos0_utpc = {fReader, "pos0_utpc"};
+   TTreeReaderValue<Double_t> pos1_utpc = {fReader, "pos1_utpc"};
+   TTreeReaderValue<Double_t> pos2_utpc = {fReader, "pos2_utpc"};
+   TTreeReaderValue<Double_t> time0_utpc = {fReader, "time0_utpc"};
+   TTreeReaderValue<Double_t> time1_utpc = {fReader, "time1_utpc"};
+   TTreeReaderValue<Double_t> pos0_charge2 = {fReader, "pos0_charge2"};
+   TTreeReaderValue<Double_t> pos1_charge2 = {fReader, "pos1_charge2"};
+   TTreeReaderValue<Double_t> pos2_charge2 = {fReader, "pos2_charge2"};
+   TTreeReaderValue<Double_t> time0_charge2 = {fReader, "time0_charge2"};
+   TTreeReaderValue<Double_t> time1_charge2 = {fReader, "time1_charge2"};
+   TTreeReaderValue<Double_t> pos0_algo = {fReader, "pos0_algo"};
+   TTreeReaderValue<Double_t> pos1_algo = {fReader, "pos1_algo"};
+   TTreeReaderValue<Double_t> pos2_algo = {fReader, "pos2_algo"};
+   TTreeReaderValue<Double_t> time0_algo = {fReader, "time0_algo"};
+   TTreeReaderValue<Double_t> time1_algo = {fReader, "time1_algo"};
+   TTreeReaderValue<Double_t> dt0 = {fReader, "dt0"};
+   TTreeReaderValue<Double_t> dt1 = {fReader, "dt1"};
+   TTreeReaderValue<Double_t> delta_plane = {fReader, "delta_plane"};
+   TTreeReaderValue<unsigned short> span_cluster0 = {fReader, "span_cluster0"};
+   TTreeReaderValue<unsigned short> span_cluster1 = {fReader, "span_cluster1"};
+   TTreeReaderValue<unsigned short> max_delta_time0 = {fReader, "max_delta_time0"};
+   TTreeReaderValue<unsigned short> max_delta_time1 = {fReader, "max_delta_time1"};
+   TTreeReaderValue<unsigned short> max_missing_strip0 = {fReader, "max_missing_strip0"};
+   TTreeReaderValue<unsigned short> max_missing_strip1 = {fReader, "max_missing_strip1"};
+   TTreeReaderArray<double> strips0 = {fReader, "strips0"};
+   TTreeReaderArray<double> times0 = {fReader, "times0"};
+   TTreeReaderArray<double> strips1 = {fReader, "strips1"};
+   TTreeReaderArray<double> times1 = {fReader, "times1"};
+   TTreeReaderArray<double> adcs0 = {fReader, "adcs0"};
+   TTreeReaderArray<double> adcs1 = {fReader, "adcs1"};
 
 
    VMM3a_analysis(TTree * /*tree*/ =0) { }

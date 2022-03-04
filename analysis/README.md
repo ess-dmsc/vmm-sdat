@@ -17,9 +17,9 @@ The root framework provides the TSelector mechanism. Details can be found here:
 https://root.cern.ch/developing-tselector
 In short, the following steps are needed.
 1. Open root from the command line
-2. Open the root tree from the root prompt: TFile f("test.root")
-3. Get the event tree from the file: TTree *t = f.Get<TTree>("events")
-4. Create the selector script: events->MakeSelector("VMM3a_analysis")
+2. Open the root tree from the root prompt: TFile f("example.root")
+3. Get the event tree from the file: TTree *t = f.Get<TTree>("clusters_detector")
+4. Create the selector script: t->MakeSelector("VMM3a_analysis")
 5. The last command creates two files, VMM3a_analysis.C, VMM3a_analysis.h
 6. Add the plot that you want to create to the script. ATTENTION: In the example provided in the analysis folder, this has already been done!! So you need just to call the analysis script from your tree:
 7. Execute the script from the root prompt: events->Process("VMM3a_analysis.C++")

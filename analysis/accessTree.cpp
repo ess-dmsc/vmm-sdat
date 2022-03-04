@@ -36,10 +36,9 @@ int main(int argc, char**argv)
 	
 	TTree * t = (TTree*)f->Get("clusters_detector");
 	 
-	std::vector<ClusterDetector> *  m_clusters_detector = nullptr;
+	ClusterDetector *  m_cluster_detector = nullptr;
 		
-	ClusterDetector theClusterDetector;
-	t->SetBranchAddress("clusters_detector", &m_clusters_detector);
+	t->SetBranchAddress("clusters_detector", &m_cluster_detector);
 	
 	int numEvents = t->GetEntries();   
 	int cnt = 0;
@@ -49,17 +48,12 @@ int main(int argc, char**argv)
 	for (int i = 0; i < numEvents; i++)
 	{
 		t->GetEntry(i);	
-		for( int s = 0; s < m_clusters_detector->size(); s++)
-		{   
-			theClusterDetector = m_clusters_detector->at(s);
-			
-			oldTime0 = time0;
-			time0 = (double)m_clusters_detector->at(s).time0;
-			if(time0 < oldTime0)
-				std::cout << "Time error in event: " << i << ": Time cluster n " << time0 << " - time cluster n-1 " << oldTime0 << std::endl;
-			vTime.push_back(time0);
-		}
-		if(i%100000 == 0)
+		oldTime0 = time0;
+		time0 = (double)m_cluster_detector->time0;
+		if(time0 < oldTime0)
+			std::cout << "Time error in event: " << i << ": Time cluster n " << time0 << " - time cluster n-1 " << oldTime0 << std::endl;
+		vTime.push_back(time0);
+		if(i%1000 == 0)
 		{	
 			std::cout << "Event " << i << std::endl;
 		}
