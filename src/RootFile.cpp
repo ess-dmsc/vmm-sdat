@@ -103,6 +103,47 @@ RootFile::RootFile(Configuration &config) : m_config(config) {
     std::string name = "";
     int cnt1D = 0;
     int cnt2D = 0;
+    int max_0 = 0;
+    int max_1 = 0;
+    int min_0 = 999999999;
+    int min_1 = 999999999;
+    for (auto const &det : m_config.pDets) {
+    	int n0 = m_config.pChannels[std::make_pair(det.first, 0)];
+        int n1 = m_config.pChannels[std::make_pair(det.first, 1)];
+        int r0 = 0;
+        int r1 = 0;
+
+        if (m_config.pTransform.size() == m_config.pDets.size()) {
+          auto tx = m_config.pTransformX[m_config.pDets[det.first]];
+          auto ty = m_config.pTransformY[m_config.pDets[det.first]];
+          auto tz = m_config.pTransformZ[m_config.pDets[det.first]];
+
+          double t0 =
+              n0 * std::get<0>(tx) + 0 * std::get<1>(tx) + std::get<3>(tx);
+          double t1 =
+              n0 * std::get<0>(ty) + 0 * std::get<1>(ty) + std::get<3>(ty);
+          double t2 =
+              0 * std::get<0>(tx) + n1 * std::get<1>(tx) + std::get<3>(tx);
+          double t3 =
+              0 * std::get<0>(ty) + n1 * std::get<1>(ty) + std::get<3>(ty);
+    	  if(std::max(t0, t1) > max_0) {
+          	max_0 = std::max(t0, t1);
+          }
+          if(std::max(t2, t3) > max_1) {
+          	max_1 = std::max(t2, t3);
+          }
+          if(std::min(t0, t1) < min_0) {
+          	min_0 = std::min(t0, t1);
+          }
+          if(std::min(t2, t3) < min_1) {
+          	min_1 = std::min(t2, t3);
+          }
+        }
+    }
+    int r0 = min_0;
+    int r1 = min_1;
+    int n0 = max_0;
+    int n1 = max_1;
     for (auto const &det : m_config.pDets) {
       auto dp0 = std::make_pair(det.first, 0);
       auto dp1 = std::make_pair(det.first, 1);
@@ -144,7 +185,7 @@ RootFile::RootFile(Configuration &config) : m_config(config) {
         m_map_TH1D.emplace(
             std::make_pair(std::make_pair(det.first, "dt1"), cnt1D));
         cnt1D++;
-
+/*
         int n0 = m_config.pChannels[std::make_pair(det.first, 0)];
         int n1 = m_config.pChannels[std::make_pair(det.first, 1)];
         int r0 = 0;
@@ -165,13 +206,14 @@ RootFile::RootFile(Configuration &config) : m_config(config) {
               0 * std::get<0>(ty) + n1 * std::get<1>(ty) + std::get<3>(ty);
           double max1 = std::max(t0, t1);
           double max2 = std::max(t2, t3);
-          n0 = std::max(max1, max2) + 1;
+          n0 = std::max(max1, max2);
           n1 = n0;
           double min1 = std::min(t0, t1);
           double min2 = std::min(t2, t3);
-          r0 = std::min(min1, min2) - 1;
+          r0 = std::min(min1, min2);
           r1 = r0;
         }
+        */
 
         name = std::to_string(det.first) + "_cluster";
         h2 = new TH2D(name.c_str(), name.c_str(), n0 * BINNING_FACTOR, r0, n0,
