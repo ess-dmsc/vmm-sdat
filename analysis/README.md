@@ -22,7 +22,7 @@ In short, the following steps are needed.
 4. Create the selector script: t->MakeSelector("VMM3a_analysis")
 5. The last command creates two files, VMM3a_analysis.C, VMM3a_analysis.h
 6. Add the plot that you want to create to the script. ATTENTION: In the example provided in the analysis folder, this has already been done!! So you need just to call the analysis script from your tree:
-7. Execute the script from the root prompt: events->Process("VMM3a_analysis.C++")
+7. Execute the script from the root prompt: t->Process("VMM3a_analysis.C++")
 
 ### Analysis with compiled root script
 In the CMakeList.txt in the main directory, the example executable accessTree is created.

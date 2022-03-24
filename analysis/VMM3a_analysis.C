@@ -243,7 +243,7 @@ Bool_t VMM3a_analysis::Process(Long64_t entry)
    // The return value is currently not used.
 
    fReader.SetLocalEntry(entry);
-   if (entry%100==0) cout << "entry: " << entry << "\r" << flush;
+   if (entry%10000==0) cout << "entry: " << entry << endl;
    
 
 		x_bin = TMath::FloorNint((Double_t)*pos0);

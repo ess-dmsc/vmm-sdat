@@ -102,12 +102,11 @@ int main(int argc, char **argv) {
                    calib.time_offset) *
                       calib.time_slope;
               if (calib.adc_slope == 0) {
-                std::cout << "Error in calibration file: adc_slope correction "
-                             "for fec "
-                          << parser->pd.fecId << ", chip " << d.vmmid
-                          << ", channel " << d.chno
-                          << " is 0!\nIs that intentional?" << std::endl;
+              	//no correction
+              	calib.adc_slope = 1.0;
               }
+              
+              
               uint16_t corrected_adc = static_cast<uint16_t>((static_cast<double>(d.adc) - calib.adc_offset) * calib.adc_slope);
 
               if (corrected_adc > 1023) {
@@ -274,8 +273,8 @@ int main(int argc, char **argv) {
             if (calib.adc_slope == 0) {
               std::cout << "Error in calibration file: adc_slope correction "
                            "for assister "
-                        << assisterId << ", chip " << hit.VMM << ", channel "
-                        << hit.Channel << " is 0!\nIs that intentional?"
+                        << (int)assisterId << ", chip " << (int)hit.VMM << ", channel "
+                        << (int)hit.Channel << " is 0!\nIs that intentional?"
                         << std::endl;
             }
             int corrected_adc = (adc - calib.adc_offset) * calib.adc_slope;

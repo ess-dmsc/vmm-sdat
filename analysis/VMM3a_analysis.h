@@ -11,6 +11,12 @@
 #include <TROOT.h>
 #include <TChain.h>
 #include <TFile.h>
+#include <TCanvas.h>
+#include <TH1F.h>
+#include <TH2F.h>
+#include <TView.h>
+#include <TMath.h>
+#include <TPaveText.h>
 #include <TSelector.h>
 #include <TTreeReader.h>
 #include <TTreeReaderValue.h>
