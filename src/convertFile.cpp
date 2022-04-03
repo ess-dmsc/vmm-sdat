@@ -229,15 +229,18 @@ int main(int argc, char **argv) {
           if (rdsize == 0) {
             continue; // non udp data
           }
+          
           // Freia 0x48
           // NMX 0x44
+          // Loki4Amp 0x30
           int ret = readoutParser.validate((char *)&buffer, rdsize,
-                                           ReadoutParser::FREIA);
+                                           ReadoutParser::Loki4Amp);
+          
           if (seqNumError != readoutParser.Stats.ErrorSeqNum) {
             printf("Sequence number error at packet %" PRIu64 "\n", pcappackets);
           }
           seqNumError = readoutParser.Stats.ErrorSeqNum;
- 
+ 		  
           if (m_config.pShowStats) {
             pcappackets++;
             if (ret != ReadoutParser::OK) {
@@ -247,10 +250,10 @@ int main(int argc, char **argv) {
               goodFrames++;
             }
           }
+          
           int hits = parser->parse(readoutParser.Packet.DataPtr,
                                    readoutParser.Packet.DataLength);
           total_hits += hits;
-         
           for (int i = 0; i < hits; i++) {
             auto &hit = parser->Result[i];
             if (firstTime == 0) {
@@ -262,6 +265,7 @@ int main(int argc, char **argv) {
             bool overThreshold = hit.OTADC & 0x8000;
             uint16_t assisterId =
                 static_cast<uint8_t>(hit.RingId / 2) * 32 + hit.FENId;
+
             auto calib =
                 calfile.getCalibration(assisterId, hit.VMM, hit.Channel);
             double chiptime_correction =

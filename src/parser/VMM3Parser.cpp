@@ -11,8 +11,8 @@
 #include <parser/Trace.h>
 #include <parser/VMM3Parser.h>
 
-// #undef TRC_LEVEL
-// #define TRC_LEVEL TRC_L_DEB
+#undef TRC_LEVEL
+#define TRC_LEVEL TRC_L_DEB
 
 // Assume we start after the Common PacketHeader
 int VMM3Parser::parse(const char *Buffer, unsigned int Size) {
@@ -36,26 +36,26 @@ int VMM3Parser::parse(const char *Buffer, unsigned int Size) {
   VMM3Parser::VMM3Data * DataPtr = (struct VMM3Data *)Buffer;
   for (unsigned int i = 0; i < Size/DataLength; i++) {
     Stats.Readouts++;
+   
     VMM3Parser::VMM3Data Readout = DataPtr[i];
     if (Readout.RingId > MaxRingId) {
       XTRACE(DATA, WAR, "Invalid RingId %d (Max is %d)", Readout.RingId, MaxRingId);
       Stats.ErrorRing++;
       continue;
     }
-
-    if ((Readout.FENId > MaxFENId) or (Readout.FENId == 0))  {
-      XTRACE(DATA, WAR, "Invalid FENId %d (valid: 1 - %d)", Readout.FENId, MaxFENId);
+    if ((Readout.FENId > MaxFENId))  {
+      XTRACE(DATA, WAR, "Invalid FENId %d (valid: 0 - %d)", Readout.FENId, MaxFENId);
       Stats.ErrorFEN++;
       continue;
     }
-
+  
     if (Readout.DataLength != DataLength)  {
       XTRACE(DATA, WAR, "Invalid header length %d - must be %d bytes",
              Readout.DataLength, DataLength);
       Stats.ErrorDataLength++;
       continue;
     }
-
+ 
     if (Readout.TimeLow > MaxFracTimeCount)  {
       XTRACE(DATA, WAR, "Invalid TimeLO %u (max is %u)", Readout.TimeLow, MaxFracTimeCount);
       Stats.ErrorTimeFrac++;

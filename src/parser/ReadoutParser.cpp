@@ -12,8 +12,8 @@
 #include <parser/ReadoutParser.h>
 #include <arpa/inet.h>
 
-// #undef TRC_LEVEL
-// #define TRC_LEVEL TRC_L_WAR
+//#undef TRC_LEVEL
+//#define TRC_LEVEL TRC_L_WAR
 
 ReadoutParser::ReadoutParser() {
   std::memset(NextSeqNum, 0, sizeof(NextSeqNum));
@@ -77,6 +77,7 @@ int ReadoutParser::validate(const char *Buffer, uint32_t Size, uint8_t ExpectedT
   #endif
 
   uint8_t Type = Packet.HeaderPtr->CookieAndType >> 24;
+  /*
   if ( Type!= ExpectedType) {
     #ifndef OMITTYPECHECK
       XTRACE(PROCESS, WAR, "Unsupported data type (%u) for v0 (expected %u)",
@@ -85,7 +86,7 @@ int ReadoutParser::validate(const char *Buffer, uint32_t Size, uint8_t ExpectedT
       return -ReadoutParser::EHEADER;
     #endif
   }
-
+  */
 
   if (Packet.HeaderPtr->OutputQueue >= MaxOutputQueues) {
     XTRACE(PROCESS, WAR, "Output queue %u exceeds max size %u",
