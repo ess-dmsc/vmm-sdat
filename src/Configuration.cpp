@@ -1025,7 +1025,7 @@ bool Configuration::CreateMapping() {
     std::string jsonstring((std::istreambuf_iterator<char>(t)),
                            std::istreambuf_iterator<char>());
     if (!t.good()) {
-      return PrintUsage("Invalid JSON file!", nullptr);
+      return PrintUsage("Invalid JSON file format!", nullptr);
     }
     nlohmann::json Root;
     try {
@@ -1043,14 +1043,16 @@ bool Configuration::CreateMapping() {
         auto strips0 = geo["id0"];
         auto strips1 = geo["id1"];
         uint8_t plane = 0;
-        if ((strips0.size() != 64)) {
+           
+        if ((strips0.size() == 0 && strips1.size() == 0)) {
           throw std::runtime_error(
-              "Invalid id0 array lengths in geometry file.");
+              "Zero length id0 and id1 arrays in geometry file.");
         }
-        if ((strips1.size() != 64 and strips1.size() != 0)) {
+        else if (strips1.size() > 0 && strips0.size() != strips1.size()) {
           throw std::runtime_error(
-              "Invalid id1 array lengths in geometry file.");
-        } else if (strips1.size() == 64) {
+              "Unequal id0 and id1 array lengths in geometry file.");
+        }
+        else if (strips1.size() > 0) {
           pIsPads[detector] = true;
           auto searchMap = pAxes.find(std::make_pair(detector, 0));
           if (searchMap == pAxes.end()) {
@@ -1077,9 +1079,9 @@ bool Configuration::CreateMapping() {
             pVMMs.emplace_back(std::make_tuple(detector, plane, fec, vmm));
             auto searchTuple = pChannels.find(std::make_pair(detector, plane));
             if (searchTuple == pChannels.end()) {
-              pChannels[std::make_tuple(detector, plane)] = 64;
+              pChannels[std::make_tuple(detector, plane)] = strips0.size();
             } else {
-              pChannels[std::make_tuple(detector, plane)] += 64;
+              pChannels[std::make_tuple(detector, plane)] += strips0.size();
             }
           }
         }
@@ -1115,7 +1117,7 @@ bool Configuration::CreateMapping() {
         if (searchFecChip == pFecChip_DetectorPlane.end()) {
           pDetectors[fec][vmm] = (int)detector;
           pPlanes[fec][vmm] = (int)plane;
-          for (size_t ch = 0; ch < 64; ch++) {
+          for (size_t ch = 0; ch < strips0.size(); ch++) {
             int s0 = strips0[ch].get<int>();
             pPositions0[fec][vmm][ch] = s0;
             if (pIsPads[detector]) {
