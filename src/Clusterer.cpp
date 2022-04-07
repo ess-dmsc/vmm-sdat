@@ -113,7 +113,7 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
       newData = true;
     }
   } else if (m_config.pDataFormat == "ESS") {
-    double buffer_interval_ns = 1000000.0;
+    double buffer_interval_ns = 10000000.0;
     if (srsTimestamp >=
         m_stats.GetOldTriggerTimestamp(fecId) + buffer_interval_ns) {
       newData = true;
@@ -625,7 +625,7 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
              largestTime - time1 > m_config.pSpanClusterTime) {
       // Valid cluster
       if (stripCount < m_config.pMinClusterSize || totalADC == 0) {
-        DTRACE(DEB, "******** INVALID ********\n\n");
+        DTRACE(DEB, "******** INVALID CLUSTER SIZE ********%d\n\n", stripCount);
       } else {
         spanCluster = (largestTime - startTime);
         centerOfGravity = (centerOfGravity / totalADC);
@@ -747,9 +747,7 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
   }
 
   // At the end of the clustering, check again if there is a last valid cluster
-  if (stripCount < m_config.pMinClusterSize || totalADC == 0) {
-    DTRACE(DEB, "******** INVALID ********\n\n");
-  } else {
+  if (stripCount >= m_config.pMinClusterSize && totalADC > 0) {
     spanCluster = (largestTime - startTime);
     centerOfGravity = (centerOfGravity / totalADC);
     centerOfTime = (centerOfTime / totalADC);
@@ -892,9 +890,9 @@ int Clusterer::MatchClustersDetector(uint8_t det) {
   auto dp1 = std::make_pair(det, 1);
   ClusterVectorPlane::iterator itStartPlane1 = begin(m_clusters[dp1]);
   for (auto &c0 : m_clusters[dp0]) {
-    double minDelta = 99999999.0;
-    double lastDelta_t = 99999999.0;
-    double delta_t = 99999999.0;
+    double minDelta = 1e+19;
+    double lastDelta_t = 1e+19;
+    double delta_t = 1e+19;
     bool isFirstMatch = true;
     ClusterVectorPlane::iterator bestMatchPlane1 = end(m_clusters[dp1]);
 
