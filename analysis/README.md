@@ -30,3 +30,8 @@ In the CMakeList.txt in the main directory, the example executable accessTree is
 add_executable(accessTree ${CMAKE_CURRENT_SOURCE_DIR}/analysis/accessTree.cpp)
 
 This example can be edited to analyze and plot different data from the tree. In principle the same things can be done with the compiled root script and the TSelector root script. The compiled executable will just be faster.
+
+### Analysis with CINT root script
+This example creates a multitude of plots for the LET Multigrid detector that consists of grids and wires. It can be easily adapted to detector with an x/y readout by replacing wires with x and strips with y. To execute the script, the following strips are necessary:
+1. start root by typing in a terminal: root
+2. in root, type ".x plots_LET.C++("example_LET",".",0)"

@@ -66,6 +66,8 @@ void Statistics::CreatePCAPStats(Configuration &config) {
     m_counter_names.push_back("ParserOverThreshold");
 
     for (auto const &fec : config.pFecs) {
+      m_counters.emplace(
+          std::make_pair(std::make_pair(fec, "ParserDataReadouts"), 0));
       if (fec == 384) {
         m_counters.emplace(
             std::make_pair(std::make_pair(fec, "ErrorBuffer"), 0));
@@ -500,10 +502,11 @@ void Statistics::PrintFECStats(Configuration &config) {
         std::cout << "Acq time: " << std::setprecision(1) << std::fixed
                   << m_acq_time << " ms" << std::endl;
         std::cout << "Hit rate FEN: " << std::scientific
-                  << 1000 * GetCounter("ParserData", fec) / m_acq_time
+                  << 1000 * GetCounter("ParserDataReadouts", fec) / m_acq_time
                   << " hit/s" << std::endl;
         std::cout << "Data rate FEN: " << std::scientific
-                  << 1000 * GetCounter("ParserData", fec) * 160 / m_acq_time
+                  << 1000 * GetCounter("ParserDataReadouts", fec) * 160 /
+                         m_acq_time
                   << " bit/s" << std::endl;
         std::cout << "****************************************" << std::endl;
       } else if (fec == 384) {

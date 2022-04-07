@@ -81,11 +81,9 @@ int main(int argc, char **argv) {
             // latency violation
             if (d.triggerOffset <= 15.0) {
               triggerOffset = static_cast<double>(d.triggerOffset);
-            }
-            else  if(d.triggerOffset == 31) {
+            } else if (d.triggerOffset == 31) {
               triggerOffset = -1.0;
-            }
-            else  if(d.triggerOffset == 16) {
+            } else if (d.triggerOffset == 16) {
               triggerOffset = -99.0;
             }
             if (d.hasDataMarker && d.fecTimeStamp > 0 && triggerOffset != -99) {
@@ -96,18 +94,19 @@ int main(int argc, char **argv) {
                   calfile.getCalibration(parser->pd.fecId, d.vmmid, d.chno);
               double chiptime =
                   static_cast<double>(d.bcid) * m_config.pBCTime_ns +
-                  (1.5*m_config.pBCTime_ns -
+                  (1.5 * m_config.pBCTime_ns -
                    static_cast<double>(d.tdc) *
                        static_cast<double>(m_config.pTAC) / 255.0 -
                    calib.time_offset) *
                       calib.time_slope;
               if (calib.adc_slope == 0) {
-              	//no correction
-              	calib.adc_slope = 1.0;
+                // no correction
+                calib.adc_slope = 1.0;
               }
-              
-              
-              uint16_t corrected_adc = static_cast<uint16_t>((static_cast<double>(d.adc) - calib.adc_offset) * calib.adc_slope);
+
+              uint16_t corrected_adc = static_cast<uint16_t>(
+                  (static_cast<double>(d.adc) - calib.adc_offset) *
+                  calib.adc_slope);
 
               if (corrected_adc > 1023) {
                 DTRACE(DEB,
@@ -229,18 +228,19 @@ int main(int argc, char **argv) {
           if (rdsize == 0) {
             continue; // non udp data
           }
-          
+
           // Freia 0x48
           // NMX 0x44
           // Loki4Amp 0x30
           int ret = readoutParser.validate((char *)&buffer, rdsize,
                                            ReadoutParser::Loki4Amp);
-          
+
           if (seqNumError != readoutParser.Stats.ErrorSeqNum) {
-            printf("Sequence number error at packet %" PRIu64 "\n", pcappackets);
+            printf("Sequence number error at packet %" PRIu64 "\n",
+                   pcappackets);
           }
           seqNumError = readoutParser.Stats.ErrorSeqNum;
- 		  
+
           if (m_config.pShowStats) {
             pcappackets++;
             if (ret != ReadoutParser::OK) {
@@ -250,7 +250,7 @@ int main(int argc, char **argv) {
               goodFrames++;
             }
           }
-          
+
           int hits = parser->parse(readoutParser.Packet.DataPtr,
                                    readoutParser.Packet.DataLength);
           total_hits += hits;
@@ -265,11 +265,11 @@ int main(int argc, char **argv) {
             bool overThreshold = hit.OTADC & 0x8000;
             uint16_t assisterId =
                 static_cast<uint8_t>(hit.RingId / 2) * 32 + hit.FENId;
-
+            m_stats.IncrementCounter("ParserDataReadouts", assisterId, 1);
             auto calib =
                 calfile.getCalibration(assisterId, hit.VMM, hit.Channel);
             double chiptime_correction =
-                (1.5*m_config.pBCTime_ns -
+                (1.5 * m_config.pBCTime_ns -
                  static_cast<double>(hit.TDC) *
                      static_cast<double>(m_config.pTAC) / 255 -
                  calib.time_offset) *
@@ -277,9 +277,9 @@ int main(int argc, char **argv) {
             if (calib.adc_slope == 0) {
               std::cout << "Error in calibration file: adc_slope correction "
                            "for assister "
-                        << (int)assisterId << ", chip " << (int)hit.VMM << ", channel "
-                        << (int)hit.Channel << " is 0!\nIs that intentional?"
-                        << std::endl;
+                        << (int)assisterId << ", chip " << (int)hit.VMM
+                        << ", channel " << (int)hit.Channel
+                        << " is 0!\nIs that intentional?" << std::endl;
             }
             int corrected_adc = (adc - calib.adc_offset) * calib.adc_slope;
 

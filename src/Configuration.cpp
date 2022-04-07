@@ -1043,16 +1043,12 @@ bool Configuration::CreateMapping() {
         auto strips0 = geo["id0"];
         auto strips1 = geo["id1"];
         uint8_t plane = 0;
-           
-        if ((strips0.size() == 0 && strips1.size() == 0)) {
+
+        if (strips0.size() != 64 ||
+            (strips1.size() > 0 && strips1.size() < 64)) {
           throw std::runtime_error(
-              "Zero length id0 and id1 arrays in geometry file.");
-        }
-        else if (strips1.size() > 0 && strips0.size() != strips1.size()) {
-          throw std::runtime_error(
-              "Unequal id0 and id1 array lengths in geometry file.");
-        }
-        else if (strips1.size() > 0) {
+              "Wrong lengths of id0 or id1 arrays in geometry file.");
+        } else if (strips1.size() == 64) {
           pIsPads[detector] = true;
           auto searchMap = pAxes.find(std::make_pair(detector, 0));
           if (searchMap == pAxes.end()) {
@@ -1078,10 +1074,17 @@ bool Configuration::CreateMapping() {
           if (searchTuple == pVMMs.end()) {
             pVMMs.emplace_back(std::make_tuple(detector, plane, fec, vmm));
             auto searchTuple = pChannels.find(std::make_pair(detector, plane));
+            int strips = 0;
+            for (size_t ch = 0; ch < strips0.size(); ch++) {
+              int s0 = strips0[ch].get<int>();
+              if (s0 > -1) {
+                strips++;
+              }
+            }
             if (searchTuple == pChannels.end()) {
-              pChannels[std::make_tuple(detector, plane)] = strips0.size();
+              pChannels[std::make_tuple(detector, plane)] = strips;
             } else {
-              pChannels[std::make_tuple(detector, plane)] += strips0.size();
+              pChannels[std::make_tuple(detector, plane)] += strips;
             }
           }
         }
