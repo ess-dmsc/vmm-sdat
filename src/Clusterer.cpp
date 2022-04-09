@@ -890,9 +890,9 @@ int Clusterer::MatchClustersDetector(uint8_t det) {
   auto dp1 = std::make_pair(det, 1);
   ClusterVectorPlane::iterator itStartPlane1 = begin(m_clusters[dp1]);
   for (auto &c0 : m_clusters[dp0]) {
-    double minDelta = 1e+19;
-    double lastDelta_t = 1e+19;
-    double delta_t = 1e+19;
+    double minDelta = std::numeric_limits<double>::max();
+    double lastDelta_t = std::numeric_limits<double>::max();
+    double delta_t = std::numeric_limits<double>::max();
     bool isFirstMatch = true;
     ClusterVectorPlane::iterator bestMatchPlane1 = end(m_clusters[dp1]);
 

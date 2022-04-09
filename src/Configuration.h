@@ -115,6 +115,7 @@ public:
   std::map<std::pair<uint8_t, uint8_t>, uint32_t> p_DetPlane_idx;
   std::map<uint8_t, uint8_t> pDets;
   std::vector<uint16_t> pFecs;
+  std::map<std::pair<uint8_t, uint8_t>, std::string> pFecVMM_time0;
 
   std::vector<uint8_t> pSaveHits;
   std::vector<uint8_t> pSaveClustersPlane;
@@ -125,8 +126,9 @@ public:
   int pAlgo = 0;
   bool pIsPcap = false;
   bool pShowStats = true;
+  bool pTimeZero = false;
   bool pIsPads[16];
-  std::string pDataFormat = "SRS_ESS";
+  std::string pDataFormat = "ESS";
   int pPositions0[NUMFECS][16][64];
   int pPositions1[NUMFECS][16][64];
   int pDetectors[NUMFECS][16];

@@ -141,6 +141,14 @@ bool Configuration::PrintUsage(const std::string &errorMessage, char *argv) {
   std::cout << "-tac:   tac slope. Optional argument (default 60 ns).\n"
             << std::endl;
   std::cout
+      << "-t0:    Time correction in ns for each vmm in the format "
+         "[[fec0, vmm0, correction0],[fec1, vmm1, correction1]]. "
+         "The correction value is subtracted from all timestamps.\n"
+         "        If instead of a number the word 'run' is put as correction,"
+         " the first timestamp of the run is used as correction. "
+         "Optional argument(default 0)\n "
+      << std::endl;
+  std::cout
       << "-th:    threshold value in ADC counts. Optional argument (default 0, "
          "if -1, only hits with over threshold flag 1 are expected).\n"
       << std::endl;
@@ -269,6 +277,43 @@ bool Configuration::ParseCommandLine(int argc, char **argv) {
       pFileName = argv[i + 1];
     } else if (strncmp(argv[i], "-info", 5) == 0) {
       pInfo = argv[i + 1];
+    } else if (strncmp(argv[i], "-t0", 3) == 0) {
+      std::string t0String = argv[i + 1];
+      char removeChars[] = "[]";
+      for (unsigned int i = 0; i < strlen(removeChars); ++i) {
+        t0String.erase(
+            std::remove(t0String.begin(), t0String.end(), removeChars[i]),
+            t0String.end());
+      }
+      std::string delims = ",";
+      size_t lastOffset = 0;
+      pFecVMM_time0.clear();
+
+      int n = 0;
+      std::string correction = "";
+      int fec = 0;
+      int vmm = 0;
+      while (true) {
+        size_t offset = t0String.find_first_of(delims, lastOffset);
+        if (n % 3 == 0) {
+          fec = atoi(t0String.substr(lastOffset, offset - lastOffset).c_str());
+        } else if (n % 3 == 1) {
+          vmm = atoi(t0String.substr(lastOffset, offset - lastOffset).c_str());
+        } else {
+          correction = t0String.substr(lastOffset, offset - lastOffset);
+          pFecVMM_time0[std::make_pair(fec, vmm)] = correction;
+        }
+        n++;
+        if (offset == std::string::npos) {
+          break;
+        } else {
+          lastOffset = offset + 1; // add one to skip the delimiter
+        }
+      }
+      if (pFecVMM_time0.size() != (int)(n / 3)) {
+        return PrintUsage("Wrong number of FECs, VMMs and correction!",
+                          argv[i]);
+      }
     } else if (strncmp(argv[i], "-bc", 3) == 0) {
       pBC = atof(argv[i + 1]);
       // ESS SRS firmware has 44.444444 MHz clock
