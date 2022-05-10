@@ -1,5 +1,6 @@
 import json
 import argparse
+import os
 text_description =  "JSON calibration file manipulator. The tool create_calib_file.py creates a calibration file for a whole system of multiple hybrids. The user has to specify the JSON mapping file that describes the system (mapping between hybrid, FEC and VMM), the name for the new combined system calibration file, the directory with the calibration files of the individual hybrids, and the  choice of calibrations (ADC, time, time walk)."
 parser = argparse.ArgumentParser(description=text_description,
 								 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -8,7 +9,7 @@ parser.add_argument("-d", "--directory", default=".", help="directory with hybri
 parser.add_argument("-c", "--calib", default="calib.json", help="new calibration file")
 parser.add_argument("-a", "--adc", action="store_true", help="add ADC calib")
 parser.add_argument("-t", "--time", action="store_true", help="add time calib")
-parser.add_argument("-w", "--timewalk", action="store_true", help="add time-walk calib")
+parser.add_argument("-w", "--timewalk", action="store_true", help="add timewalk calib")
 
 args = parser.parse_args()
 config = vars(args)
@@ -17,7 +18,7 @@ calib = config["calib"]
 directory = config["directory"]
 is_adc = config["adc"]
 is_time = config["time"]
-is_time_walk = config["timewalk"]
+is_timewalk = config["timewalk"]
 lastId=0
 
 with open(calib, 'w') as json_file:
@@ -41,41 +42,47 @@ with open(calib, 'w') as json_file:
 				d.update(y)
 				y = {"adc_offsets":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]}
 				d.update(y)
-			if is_time_walk:
-				y = {"twalk_offsets":0}
+			if is_timewalk:
+				y = {"timewalk_a":0}
 				d.update(y)
-				y = {"twalk_scales":0}
+				y = {"timewalk_b":0}
 				d.update(y)
-				y = {"twalk_means":0}
+				y = {"timewalk_c":0}
 				d.update(y)	
-				y = {"twalk_sigmas":0}
+				y = {"timewalk_d":0}
 				d.update(y)				
 			if is_adc:
-				adc_file_name = "vmm_adc_calibration_" + d["hybridID"] +".json"
-				with open(adc_file_name, "r") as adc_file:
-					adc  = json.load(adc_file)
-					for a in adc["vmm_calibration"]:
-						if a["vmmID"] == vmm:
-							d["adc_slopes"] = a["adc_slopes"]
-							d["adc_offsets"] = a["adc_offsets"]
+				for filename in os.listdir(directory):
+					search_name = "vmm_adc_calibration_" + d["hybridID"]
+					if filename.startswith(search_name) and filename.endswith(".json"): 
+						with open(filename, "r") as file:
+							the_calib  = json.load(file)
+							for c in the_calib["vmm_calibration"]:
+								if c["vmmID"] == vmm:
+									d["adc_slopes"] = c["adc_slopes"]
+									d["adc_offsets"] = c["adc_offsets"]
 			if is_time:
-				time_file_name = "vmm_time_calibration_" + d["hybridID"] +".json"
-				with open(time_file_name, "r") as time_file:
-					time  = json.load(time_file)
-					for a in time["vmm_calibration"]:
-						if a["vmmID"] == vmm:
-							d["time_slopes"] = a["time_slopes"]
-							d["time_offsets"] = a["time_offsets"]
-			if is_time_walk:
-				time_file_name = "vmm_twalk_calibration_" + d["hybridID"] +".json"
-				with open(time_file_name, "r") as time_file:
-					time  = json.load(time_file)
-					for a in time["vmm_calibration"]:
-						if a["vmmID"] == vmm:
-							d["twalk_offsets"] = a["twalk_offsets"]
-							d["twalk_scales"] = a["twalk_scales"]
-							d["twalk_means"] = a["twalk_means"]
-							d["twalk_sigmas"] = a["twalk_sigmas"]					
+				for filename in os.listdir(directory):
+					search_name = "vmm_time_calibration_" + d["hybridID"]
+					if filename.startswith(search_name) and filename.endswith(".json"): 
+						with open(filename, "r") as file:
+							the_calib  = json.load(file)
+							for c in the_calib["vmm_calibration"]:
+								if c["vmmID"] == vmm:
+									d["time_slopes"] = c["time_slopes"]
+									d["time_offsets"] = c["time_offsets"]
+			if is_timewalk:
+				for filename in os.listdir(directory):
+					search_name = "vmm_timewalk_calibration_" + d["hybridID"] +".json"
+					if filename.startswith(search_name) and filename.endswith(".json"): 
+						with open(filename, "r") as file:						
+							the_calib  = json.load(file)
+							for c in the_calib["vmm_calibration"]:
+								if c["vmmID"] == vmm:
+									d["timewalk_a"] = c["timewalk_a"]
+									d["timewalk_b"] = c["timewalk_b"]
+									d["timewalk_c"] = c["timewalk_c"]
+									d["timewalk_d"] = c["timewalk_d"]					
 			lastId = d["hybridID"]
 			#print(d["hybridID"])
 		data["vmm_calibration"] = data.pop("hybrid_mapping")	

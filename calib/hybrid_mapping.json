@@ -2,42 +2,42 @@
 	"hybrid_mapping": [
 		{
 			"hybridID":"0250401074100031ac2ca000a00000af",
-			"fec": 0,
+			"fecID": 0,
 			"vmmID": 0
 		},
 		{
 			"hybridID":"0250401074100031ac2ca000a00000af",
-			"fec": 0,
+			"fecID": 0,
 			"vmmID": 1
 		},
 		{
 			"hybridID":"0250401074100030e872a000a0000056",
-			"fec": 0,
+			"fecID": 0,
 			"vmmID": 2
 		},
 		{
 			"hybridID":"0250401074100030e872a000a0000056",
-			"fec": 0,
+			"fecID": 0,
 			"vmmID": 3
 		},
 		{
 			"hybridID":"0250401074100030c4cea000a0000039",
-			"fec": 1,
+			"fecID": 1,
 			"vmmID": 0
 		},
 		{
 			"hybridID":"0250401074100030c4cea000a0000039",
-			"fec": 1,
+			"fecID": 1,
 			"vmmID": 1
 		},
 		{
 			"hybridID":"1e800718641000618893a000a0000043",
-			"fec": 1,
+			"fecID": 1,
 			"vmmID": 2
 		},
 		{
 			"hybridID":"1e800718641000618893a000a0000043",
-			"fec": 1,
+			"fecID": 1,
 			"vmmID": 3
 		}
 	]

@@ -298,12 +298,13 @@ int main(int argc, char **argv) {
             m_stats.IncrementCounter("ParserDataReadouts", assisterId, 1);
             auto calib =
                 calfile.getCalibration(assisterId, hit.VMM, hit.Channel);
-            double chiptime_correction =
+            double chiptime_corrected =
                 (1.5 * m_config.pBCTime_ns -
                  static_cast<double>(hit.TDC) *
                      static_cast<double>(m_config.pTAC) / 255 -
                  calib.time_offset) *
                 calib.time_slope;
+
             if (calib.adc_slope == 0) {
               std::cout << "Error in calibration file: adc_slope correction "
                            "for assister "
@@ -328,11 +329,18 @@ int main(int argc, char **argv) {
                      adc, corrected_adc);
               corrected_adc = 0;
             }
+            double timewalk_correction =
+                calib.timewalk_d +
+                (calib.timewalk_a - calib.timewalk_d) /
+                    (1 +
+                     pow(corrected_adc / calib.timewalk_c, calib.timewalk_b));
+
+            double corrected_time = chiptime_corrected - timewalk_correction;
 
             bool result = m_Clusterer->AnalyzeHits(
                 complete_timestamp, assisterId, hit.VMM, hit.Channel, hit.BC,
                 hit.TDC, static_cast<uint16_t>(corrected_adc),
-                overThreshold != 0, chiptime_correction);
+                overThreshold != 0, corrected_time);
             if (result == false ||
                 (total_hits >= m_config.nHits && m_config.nHits > 0)) {
               doContinue = false;

@@ -15,27 +15,34 @@
 namespace Gem {
 /// \todo check whether packing is necessary, static assert assert?
 struct Calibration {
-  //Apple clang demands constructors for the struct
-  Calibration()= default;
-  Calibration(float adcOffset,float adcSlope,float timeOffset,float timeSlope):
-  	adc_offset(adcOffset), adc_slope(adcSlope), time_offset(timeOffset), time_slope(timeSlope) 
-  {}
+  // Apple clang demands constructors for the struct
+  Calibration() = default;
+  Calibration(float adcOffset, float adcSlope, float timeOffset,
+              float timeSlope, float timeWalkA, float timeWalkB,
+              float timeWalkC, float timeWalkD)
+      : adc_offset(adcOffset), adc_slope(adcSlope), time_offset(timeOffset),
+        time_slope(timeSlope), timewalk_a(timeWalkA), timewalk_b(timeWalkB),
+        timewalk_c(timeWalkC), timewalk_d(timeWalkD) {}
 
-  float adc_offset {0.0};
-  float adc_slope {1.0};
-  float time_offset {0.0};
-  float time_slope {1.0};
+  float adc_offset{0.0};
+  float adc_slope{1.0};
+  float time_offset{0.0};
+  float time_slope{1.0};
+  float timewalk_a{0.0};
+  float timewalk_b{1.0};
+  float timewalk_c{1.0};
+  float timewalk_d{0.0};
 };
 
 class CalibrationFile {
 public:
-    static constexpr size_t MAX_FEC {40};
-    static constexpr size_t MAX_VMM {16};
-    static constexpr size_t MAX_CH  {64};
+  static constexpr size_t MAX_FEC{40};
+  static constexpr size_t MAX_VMM{16};
+  static constexpr size_t MAX_CH{64};
 
   /// \brief create default calibration (0.0 offset 1.0 slope)
   CalibrationFile() = default;
-  
+
   /// \brief load calibration from json file
   explicit CalibrationFile(std::string filename);
 
@@ -43,14 +50,16 @@ public:
   void loadCalibration(std::string calibration);
 
   /// \brief Generate fast mappings from IDs to indexes
-  void addCalibration(size_t fecId, size_t vmmId, size_t chNo,
-                      float adc_offset, float adc_slope, 
-                      float time_offset, float time_slope);
+  void addCalibration(size_t fecId, size_t vmmId, size_t chNo, float adc_offset,
+                      float adc_slope, float time_offset, float time_slope,
+                      float timewalk_a, float timewalk_b, float timewalk_c,
+                      float timewalk_d);
 
   /// \brief get calibration data for (fec, vmm, channel)
   /// \todo check how vmm3 data is supplied, maybe getting an array for a given
   /// (fec, vmm) is better?
-  const Calibration& getCalibration(size_t fecId, size_t vmmId, size_t chNo) const;
+  const Calibration &getCalibration(size_t fecId, size_t vmmId,
+                                    size_t chNo) const;
 
   std::string debug() const;
 
@@ -58,7 +67,6 @@ private:
   std::vector<std::vector<std::vector<Calibration>>> Calibrations;
 
   /// Default correction
-  Calibration NoCorr {0.0, 1.0, 0.0, 1.0};
-  
+  Calibration NoCorr{0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0};
 };
-}
+} // namespace Gem
