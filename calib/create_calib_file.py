@@ -73,7 +73,7 @@ with open(calib, 'w') as json_file:
 									d["time_offsets"] = c["time_offsets"]
 			if is_timewalk:
 				for filename in os.listdir(directory):
-					search_name = "vmm_timewalk_calibration_" + d["hybridID"] +".json"
+					search_name = "vmm_timewalk_calibration_" + d["hybridID"]
 					if filename.startswith(search_name) and filename.endswith(".json"): 
 						with open(filename, "r") as file:						
 							the_calib  = json.load(file)
