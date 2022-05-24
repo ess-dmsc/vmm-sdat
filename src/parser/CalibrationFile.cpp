@@ -76,10 +76,14 @@ void CalibrationFile::loadCalibration(std::string jsonstring) {
              time_offsets.size(), time_slopes.size(), timewalk_as.size(),
              timewalk_bs.size(), timewalk_cs.size(), timewalk_ds.size());
 
-      if ((adc_offsets.size() != MAX_CH) or (adc_slopes.size() != MAX_CH) or
-          (time_offsets.size() != MAX_CH) or (time_slopes.size() != MAX_CH) or
-          (timewalk_as.size() != MAX_CH) or (timewalk_bs.size() != MAX_CH) or
-          (timewalk_cs.size() != MAX_CH) or (timewalk_ds.size() != MAX_CH)) {
+      if ((adc_offsets.size() > 0 && adc_offsets.size() != MAX_CH) or
+          (adc_slopes.size() > 0 && adc_slopes.size() != MAX_CH) or
+          (time_offsets.size() > 0 && time_offsets.size() != MAX_CH) or
+          (time_slopes.size() > 0 && time_slopes.size() != MAX_CH) or
+          (timewalk_as.size() > 0 && timewalk_as.size() != MAX_CH) or
+          (timewalk_bs.size() > 0 && timewalk_bs.size() != MAX_CH) or
+          (timewalk_cs.size() > 0 && timewalk_cs.size() != MAX_CH) or
+          (timewalk_ds.size() > 0 && timewalk_ds.size() != MAX_CH)) {
         XTRACE(INIT, DEB,
                "Invalid channel configuration, skipping for fec {%lu} and vmm "
                "{%lu}",
@@ -88,11 +92,42 @@ void CalibrationFile::loadCalibration(std::string jsonstring) {
       }
 
       for (size_t j = 0; j < MAX_CH; j++) {
-        addCalibration(fecid, vmmid, j, adc_offsets[j].get<float>(),
-                       adc_slopes[j].get<float>(), time_offsets[j].get<float>(),
-                       time_slopes[j].get<float>(), timewalk_as[j].get<float>(),
-                       timewalk_bs[j].get<float>(), timewalk_cs[j].get<float>(),
-                       timewalk_ds[j].get<float>());
+        float adc_slope = 1;
+        float adc_offset = 0;
+        float time_slope = 1;
+        float time_offset = 0;
+        float timewalk_a = 0;
+        float timewalk_b = 1;
+        float timewalk_c = 1;
+        float timewalk_d = 0;
+
+        if (adc_offsets.size() == MAX_CH) {
+          adc_offset = adc_offsets[j].get<float>();
+        }
+        if (adc_slopes.size() == MAX_CH) {
+          adc_slope = adc_slopes[j].get<float>();
+        }
+        if (time_offsets.size() == MAX_CH) {
+          time_offset = time_offsets[j].get<float>();
+        }
+        if (time_slopes.size() == MAX_CH) {
+          time_slope = time_slopes[j].get<float>();
+        }
+        if (timewalk_as.size() == MAX_CH) {
+          timewalk_a = timewalk_as[j].get<float>();
+        }
+        if (timewalk_bs.size() == MAX_CH) {
+          timewalk_b = timewalk_bs[j].get<float>();
+        }
+        if (timewalk_cs.size() == MAX_CH) {
+          timewalk_c = timewalk_cs[j].get<float>();
+        }
+        if (timewalk_ds.size() == MAX_CH) {
+          timewalk_d = timewalk_ds[j].get<float>();
+        }
+        addCalibration(fecid, vmmid, j, adc_offset, adc_slope, time_offset,
+                       time_slope, timewalk_a, timewalk_b, timewalk_c,
+                       timewalk_d);
       }
     }
   } catch (const std::exception &exc) {
