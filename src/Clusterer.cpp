@@ -564,6 +564,8 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
       idx_right = 0;
       startTime = time1;
       largestTime = time1;
+      largestADCTime = time1;
+      largestADCPos = strip1;
       // position_utpc = (double)strip1;
       DTRACE(DEB, "\nDetector %d, plane %d cluster:\n", (int)det, (int)plane);
     }
@@ -677,6 +679,7 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
           pos_algo = largestADCPos;
           time_algo = largestADCTime;
         }
+
         clusterPlane.time_utpc = time_utpc;
         clusterPlane.pos_utpc = pos_utpc;
         clusterPlane.time_algo = time_algo;
@@ -774,6 +777,21 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
     AlgorithmUTPC(idx_left, idx_right, vADC, vStrips, vTimes, pos_utpc,
                   time_utpc, pos_algo, time_algo);
 
+    // COT only over Threshold
+    if (m_config.pAlgo == 2) {
+      pos_algo = centerOfGravity_ovTh;
+      time_algo = centerOfTime_ovTh;
+    }
+    // COT2 only over Threshold
+    else if (m_config.pAlgo == 3) {
+      pos_algo = centerOfGravity2_ovTh;
+      time_algo = centerOfTime2_ovTh;
+    }
+    // time of highest ADC
+    else if (m_config.pAlgo == 4) {
+      pos_algo = largestADCPos;
+      time_algo = largestADCTime;
+    }
     clusterPlane.time_utpc = time_utpc;
     clusterPlane.pos_utpc = pos_utpc;
     clusterPlane.time_algo = time_algo;
