@@ -28,6 +28,7 @@ public:
   void SaveHits();
   void SaveClustersPlane(ClusterVectorPlane &&clusters_plane);
   void SaveClustersDetector(ClusterVectorDetector &&clusters_detector);
+  void SaveDate(double the_seconds, std::string the_date);
 
 private:
   Configuration &m_config;

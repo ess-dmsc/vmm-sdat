@@ -51,8 +51,11 @@ public:
     uint64_t IpProtoUDP;
   } Stats;
 
+  double firstPacketSeconds;
+  std::string firstPacketDate;
+
 private:
-  const char * FilterUdp = "ip and udp";
+  const char *FilterUdp = "ip and udp";
   struct bpf_program PcapFilter;
 
   /// \brief checking consistency and updating stats
@@ -61,5 +64,6 @@ private:
 
   std::string FileName;
   pcap_t *PcapHandle{nullptr};
+  bool firstPacket;
 };
 // GCOVR_EXCL_STOP

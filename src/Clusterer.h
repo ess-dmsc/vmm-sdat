@@ -45,6 +45,8 @@ public:
 
   void FinishAnalysis();
 
+  void SaveDate(double the_seconds, std::string the_date);
+
 #ifdef USE_ROOT
   void createRootFile(string fileName);
 #endif

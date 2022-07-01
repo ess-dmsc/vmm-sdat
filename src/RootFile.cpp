@@ -1,6 +1,7 @@
 #include "RootFile.h"
 #include "TBufferJSON.h"
 #include "TMath.h"
+#include <RooDouble.h>
 #include <TStyle.h>
 #include <time.h>
 
@@ -32,6 +33,20 @@ void RootFile::WriteRootFile() {
   }
   m_file->Write("", TObject::kOverwrite);
   m_file->Close();
+}
+
+void RootFile::SaveDate(double the_seconds, std::string the_date) {
+  TString str_date = the_date;
+  TString str_time = Form("%f", the_seconds);
+  TNamed unixtime;
+  unixtime.SetName("unixtime");
+  unixtime.SetTitle(str_time);
+  unixtime.Write();
+
+  TNamed datetime;
+  datetime.SetName("date");
+  datetime.SetTitle(str_date);
+  datetime.Write();
 }
 
 RootFile::RootFile(Configuration &config) : m_config(config) {
@@ -108,76 +123,74 @@ RootFile::RootFile(Configuration &config) : m_config(config) {
     int min_0 = 999999999;
     int min_1 = 999999999;
     for (auto const &det : m_config.pDets) {
-    	int n0 = m_config.pChannels[std::make_pair(det.first, 0)];
-        int n1 = m_config.pChannels[std::make_pair(det.first, 1)];
-        int r0 = 0;
-        int r1 = 0;
+      int n0 = m_config.pChannels[std::make_pair(det.first, 0)];
+      int n1 = m_config.pChannels[std::make_pair(det.first, 1)];
+      int r0 = 0;
+      int r1 = 0;
 
-        if (m_config.pTransform.size() == m_config.pDets.size()) {
-          auto tx = m_config.pTransformX[m_config.pDets[det.first]];
-          auto ty = m_config.pTransformY[m_config.pDets[det.first]];
-          auto tz = m_config.pTransformZ[m_config.pDets[det.first]];
+      if (m_config.pTransform.size() == m_config.pDets.size()) {
+        auto tx = m_config.pTransformX[m_config.pDets[det.first]];
+        auto ty = m_config.pTransformY[m_config.pDets[det.first]];
+        auto tz = m_config.pTransformZ[m_config.pDets[det.first]];
 
-          double t0 =
-              n0 * std::get<0>(tx) + 0 * std::get<1>(tx) + std::get<3>(tx);
-          double t1 =
-              n0 * std::get<0>(ty) + 0 * std::get<1>(ty) + std::get<3>(ty);
-          double t2 =
-              0 * std::get<0>(tx) + n1 * std::get<1>(tx) + std::get<3>(tx);
-          double t3 =
-              0 * std::get<0>(ty) + n1 * std::get<1>(ty) + std::get<3>(ty);
-    	  if(std::max(t0, t1) > max_0) {
-          	max_0 = std::max(t0, t1);
-          }
-          if(std::max(t2, t3) > max_1) {
-          	max_1 = std::max(t2, t3);
-          }
-          if(std::min(t0, t1) < min_0) {
-          	min_0 = std::min(t0, t1);
-          }
-          if(std::min(t2, t3) < min_1) {
-          	min_1 = std::min(t2, t3);
-          }
+        double t0 =
+            n0 * std::get<0>(tx) + 0 * std::get<1>(tx) + std::get<3>(tx);
+        double t1 =
+            n0 * std::get<0>(ty) + 0 * std::get<1>(ty) + std::get<3>(ty);
+        double t2 =
+            0 * std::get<0>(tx) + n1 * std::get<1>(tx) + std::get<3>(tx);
+        double t3 =
+            0 * std::get<0>(ty) + n1 * std::get<1>(ty) + std::get<3>(ty);
+        if (std::max(t0, t1) > max_0) {
+          max_0 = std::max(t0, t1);
         }
+        if (std::max(t2, t3) > max_1) {
+          max_1 = std::max(t2, t3);
+        }
+        if (std::min(t0, t1) < min_0) {
+          min_0 = std::min(t0, t1);
+        }
+        if (std::min(t2, t3) < min_1) {
+          min_1 = std::min(t2, t3);
+        }
+      }
     }
-   
 
     for (auto const &det : m_config.pDets) {
-		int n0 = m_config.pChannels[std::make_pair(det.first, 0)];
-		int n1 = m_config.pChannels[std::make_pair(det.first, 1)];
-		int r0 = 0;
-		int r1 = 0;
+      int n0 = m_config.pChannels[std::make_pair(det.first, 0)];
+      int n1 = m_config.pChannels[std::make_pair(det.first, 1)];
+      int r0 = 0;
+      int r1 = 0;
 
-		if (m_config.pTransform.size() == m_config.pDets.size()) {
-		  auto tx = m_config.pTransformX[m_config.pDets[det.first]];
-		  auto ty = m_config.pTransformY[m_config.pDets[det.first]];
-		  auto tz = m_config.pTransformZ[m_config.pDets[det.first]];
+      if (m_config.pTransform.size() == m_config.pDets.size()) {
+        auto tx = m_config.pTransformX[m_config.pDets[det.first]];
+        auto ty = m_config.pTransformY[m_config.pDets[det.first]];
+        auto tz = m_config.pTransformZ[m_config.pDets[det.first]];
 
-		  double t0 =
-			  n0 * std::get<0>(tx) + 0 * std::get<1>(tx) + std::get<3>(tx);
-		  double t1 =
-			  n0 * std::get<0>(ty) + 0 * std::get<1>(ty) + std::get<3>(ty);
-		  double t2 =
-			  0 * std::get<0>(tx) + n1 * std::get<1>(tx) + std::get<3>(tx);
-		  double t3 =
-			  0 * std::get<0>(ty) + n1 * std::get<1>(ty) + std::get<3>(ty);
-		  double max1 = std::max(t0, t1);
-		  double max2 = std::max(t2, t3);
-		  n0 = std::max(max1, max2);
-		  n1 = n0;
-		  double min1 = std::min(t0, t1);
-		  double min2 = std::min(t2, t3);
-		  r0 = std::min(min1, min2);
-		  r1 = r0;
-		}
-		if(max_0 > 0 && max_1 > 0) {
-			r0 = min_0;
-     		r1 = min_1;
-     		n0 = max_0;
-    		n1 = max_1;
-		}
-   
-        
+        double t0 =
+            n0 * std::get<0>(tx) + 0 * std::get<1>(tx) + std::get<3>(tx);
+        double t1 =
+            n0 * std::get<0>(ty) + 0 * std::get<1>(ty) + std::get<3>(ty);
+        double t2 =
+            0 * std::get<0>(tx) + n1 * std::get<1>(tx) + std::get<3>(tx);
+        double t3 =
+            0 * std::get<0>(ty) + n1 * std::get<1>(ty) + std::get<3>(ty);
+        double max1 = std::max(t0, t1);
+        double max2 = std::max(t2, t3);
+        n0 = std::max(max1, max2);
+        n1 = n0;
+        double min1 = std::min(t0, t1);
+        double min2 = std::min(t2, t3);
+        r0 = std::min(min1, min2);
+        r1 = r0;
+      }
+      if (max_0 > 0 && max_1 > 0) {
+        r0 = min_0;
+        r1 = min_1;
+        n0 = max_0;
+        n1 = max_1;
+      }
+
       auto dp0 = std::make_pair(det.first, 0);
       auto dp1 = std::make_pair(det.first, 1);
       // 2D detectors

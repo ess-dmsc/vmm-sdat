@@ -1386,3 +1386,11 @@ void Clusterer::FinishAnalysis() {
     m_stats.PrintFECStats(m_config);
   }
 }
+
+void Clusterer::SaveDate(double the_seconds, std::string the_date) {
+  std::cout << "\nXXXXXXXXXXXXXXXXXXXXXXXXXXX Date and time of first pcapng "
+               "packet XXXXXXXXXXXXXXXXXXXXXXXXXXX"
+            << std::endl;
+  std::cout << the_date << std::endl;
+  m_rootFile->SaveDate(the_seconds, the_date);
+}

@@ -152,6 +152,7 @@ int main(int argc, char **argv) {
               }
             }
           }
+
           if (m_config.pShowStats) {
             pcappackets++;
             uint64_t nextFrameCounter =
@@ -215,6 +216,7 @@ int main(int argc, char **argv) {
             nmxstats.ParserGoodFrames = 0;
           }
         }
+        m_Clusterer->SaveDate(pcap.firstPacketSeconds, pcap.firstPacketDate);
         delete parser;
       } else if (m_config.pDataFormat == "ESS") {
         double firstTime = 0;
@@ -348,6 +350,7 @@ int main(int argc, char **argv) {
             }
           }
         }
+        m_Clusterer->SaveDate(pcap.firstPacketSeconds, pcap.firstPacketDate);
         m_stats.IncrementCounter("ErrorBuffer", 384,
                                  readoutParser.Stats.ErrorBuffer);
         m_stats.IncrementCounter("ErrorSize", 384,
