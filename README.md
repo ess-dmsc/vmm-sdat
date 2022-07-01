@@ -279,7 +279,9 @@ to the axes of your detector.
 ## Accessing the produced ROOT tree
 The script accessTree in the build directory shows how to access the produced root trees. The data in the 
 root trees can be further analyzed and plotted. An example.root tree is provided in the source directory.
-
+The time of the first pcapng packet is stored in the file as date and as epochtime in seconds. You can retrieve the values like that:
+TString t  = f->Get("unixtime")->GetTitle()
+TString d  = f->Get("date")->GetTitle()
 
 ## Authors
 
