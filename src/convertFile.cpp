@@ -116,6 +116,7 @@ int main(int argc, char **argv) {
                        static_cast<double>(m_config.pTAC) / 255.0 -
                    calib.time_offset) *
                       calib.time_slope;
+
               if (calib.adc_slope == 0) {
                 // no correction
                 calib.adc_slope = 1.0;
@@ -142,9 +143,18 @@ int main(int argc, char **argv) {
                 corrected_adc = 0;
               }
               uint16_t adc = static_cast<uint16_t>(corrected_adc);
+
+              double timewalk_correction =
+                  calib.timewalk_d +
+                  (calib.timewalk_a - calib.timewalk_d) /
+                      (1 +
+                       pow(corrected_adc / calib.timewalk_c, calib.timewalk_b));
+
+              double corrected_time = chiptime - timewalk_correction;
+
               bool result = m_Clusterer->AnalyzeHits(
                   srs_timestamp, parser->pd.fecId, d.vmmid, d.chno, d.bcid,
-                  d.tdc, adc, d.overThreshold != 0, chiptime);
+                  d.tdc, adc, d.overThreshold != 0, corrected_time);
               if (result == false ||
                   (total_hits >= m_config.nHits && m_config.nHits > 0)) {
                 doContinue = false;
