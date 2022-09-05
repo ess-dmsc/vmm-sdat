@@ -153,11 +153,13 @@ void Statistics::CreateClusterStats(Configuration &config) {
   for (auto const &det : config.pDets) {
     auto plane0 = std::make_pair(det.first, 0);
     auto plane1 = std::make_pair(det.first, 1);
+    auto plane2 = std::make_pair(det.first, 2);
 
     // initialize timestamps
     m_lowestCommonTriggerTimestamp_det[det.first] = 0;
     m_lowestCommonTriggerTimestamp_plane[plane0] = 0;
     m_lowestCommonTriggerTimestamp_plane[plane1] = 0;
+    m_lowestCommonTriggerTimestamp_plane[plane2] = 0;
 
     if (det.second == 0) {
       m_units.emplace(std::make_pair("DeltaTimeHits", "ns"));
@@ -192,12 +194,26 @@ void Statistics::CreateClusterStats(Configuration &config) {
       m_limits.emplace(std::make_pair("ClusterCntPlane", 1));
       m_stats_plane_names.push_back("ClusterCntPlane");
 
-      m_units.emplace(std::make_pair("DeltaTimePlanes", "ns"));
-      m_factors.emplace(std::make_pair("DeltaTimePlanes", 0.02));
-      m_limits.emplace(std::make_pair("DeltaTimePlanes",
-                                      1 + config.pDeltaTimePlanes *
-                                              m_factors["DeltaTimePlanes"]));
-      m_stats_detector_names.push_back("DeltaTimePlanes");
+      m_units.emplace(std::make_pair("DeltaTimePlanes_0_1", "ns"));
+      m_factors.emplace(std::make_pair("DeltaTimePlanes_0_1", 0.02));
+      m_limits.emplace(std::make_pair(
+          "DeltaTimePlanes_0_1",
+          1 + config.pDeltaTimePlanes * m_factors["DeltaTimePlanes_0_1"]));
+      m_stats_detector_names.push_back("DeltaTimePlanes_0_1");
+
+      m_units.emplace(std::make_pair("DeltaTimePlanes_1_2", "ns"));
+      m_factors.emplace(std::make_pair("DeltaTimePlanes_1_2", 0.02));
+      m_limits.emplace(std::make_pair(
+          "DeltaTimePlanes_1_2",
+          1 + config.pDeltaTimePlanes * m_factors["DeltaTimePlanes_1_2"]));
+      m_stats_detector_names.push_back("DeltaTimePlanes_1_2");
+
+      m_units.emplace(std::make_pair("DeltaTimePlanes_0_2", "ns"));
+      m_factors.emplace(std::make_pair("DeltaTimePlanes_0_2", 0.02));
+      m_limits.emplace(std::make_pair(
+          "DeltaTimePlanes_0_2",
+          1 + config.pDeltaTimePlanes * m_factors["DeltaTimePlanes_0_2"]));
+      m_stats_detector_names.push_back("DeltaTimePlanes_0_2");
 
       m_units.emplace(std::make_pair("ChargeRatio_0_1", "%"));
       m_factors.emplace(std::make_pair("ChargeRatio_0_1", 0.1));
@@ -208,6 +224,26 @@ void Statistics::CreateClusterStats(Configuration &config) {
       m_factors.emplace(std::make_pair("ChargeRatio_1_0", 0.1));
       m_limits.emplace(std::make_pair("ChargeRatio_1_0", 10));
       m_stats_detector_names.push_back("ChargeRatio_1_0");
+
+      m_units.emplace(std::make_pair("ChargeRatio_0_2", "%"));
+      m_factors.emplace(std::make_pair("ChargeRatio_0_2", 0.1));
+      m_limits.emplace(std::make_pair("ChargeRatio_0_2", 11));
+      m_stats_detector_names.push_back("ChargeRatio_0_2");
+
+      m_units.emplace(std::make_pair("ChargeRatio_2_0", "%"));
+      m_factors.emplace(std::make_pair("ChargeRatio_2_0", 0.1));
+      m_limits.emplace(std::make_pair("ChargeRatio_2_0", 10));
+      m_stats_detector_names.push_back("ChargeRatio_2_0");
+
+      m_units.emplace(std::make_pair("ChargeRatio_1_2", "%"));
+      m_factors.emplace(std::make_pair("ChargeRatio_1_2", 0.1));
+      m_limits.emplace(std::make_pair("ChargeRatio_1_2", 11));
+      m_stats_detector_names.push_back("ChargeRatio_1_2");
+
+      m_units.emplace(std::make_pair("ChargeRatio_2_1", "%"));
+      m_factors.emplace(std::make_pair("ChargeRatio_2_1", 0.1));
+      m_limits.emplace(std::make_pair("ChargeRatio_2_1", 10));
+      m_stats_detector_names.push_back("ChargeRatio_2_1");
 
       m_units.emplace(std::make_pair("ClusterCntDetector", ""));
       m_factors.emplace(std::make_pair("ClusterCntDetector", 1));
@@ -222,6 +258,8 @@ void Statistics::CreateClusterStats(Configuration &config) {
         std::make_pair(std::make_pair(plane0, "DeltaTimeHits"), v));
     m_stats_plane.emplace(
         std::make_pair(std::make_pair(plane1, "DeltaTimeHits"), v));
+    m_stats_plane.emplace(
+        std::make_pair(std::make_pair(plane2, "DeltaTimeHits"), v));
 
     size = static_cast<int>(m_limits["MissingStripsCluster"]);
     v.resize(size);
@@ -230,6 +268,8 @@ void Statistics::CreateClusterStats(Configuration &config) {
         std::make_pair(std::make_pair(plane0, "MissingStripsCluster"), v));
     m_stats_plane.emplace(
         std::make_pair(std::make_pair(plane1, "MissingStripsCluster"), v));
+    m_stats_plane.emplace(
+        std::make_pair(std::make_pair(plane2, "MissingStripsCluster"), v));
 
     size = static_cast<int>(m_limits["SpanClusterTime"]);
     v.resize(size);
@@ -238,6 +278,8 @@ void Statistics::CreateClusterStats(Configuration &config) {
         std::make_pair(std::make_pair(plane0, "SpanClusterTime"), v));
     m_stats_plane.emplace(
         std::make_pair(std::make_pair(plane1, "SpanClusterTime"), v));
+    m_stats_plane.emplace(
+        std::make_pair(std::make_pair(plane2, "SpanClusterTime"), v));
 
     size = static_cast<int>(m_limits["ClusterSize"]);
     v.resize(size);
@@ -246,6 +288,8 @@ void Statistics::CreateClusterStats(Configuration &config) {
         std::make_pair(std::make_pair(plane0, "ClusterSize"), v));
     m_stats_plane.emplace(
         std::make_pair(std::make_pair(plane1, "ClusterSize"), v));
+    m_stats_plane.emplace(
+        std::make_pair(std::make_pair(plane2, "ClusterSize"), v));
 
     size = static_cast<int>(m_limits["ClusterCntPlane"]);
     v.resize(size);
@@ -254,12 +298,26 @@ void Statistics::CreateClusterStats(Configuration &config) {
         std::make_pair(std::make_pair(plane0, "ClusterCntPlane"), v));
     m_stats_plane.emplace(
         std::make_pair(std::make_pair(plane1, "ClusterCntPlane"), v));
+    m_stats_plane.emplace(
+        std::make_pair(std::make_pair(plane2, "ClusterCntPlane"), v));
 
-    size = static_cast<int>(m_limits["DeltaTimePlanes"]);
+    size = static_cast<int>(m_limits["DeltaTimePlanes_0_1"]);
     v.resize(size);
     std::fill(v.begin(), v.end(), 0);
     m_stats_detector.emplace(
-        std::make_pair(std::make_pair(det.first, "DeltaTimePlanes"), v));
+        std::make_pair(std::make_pair(det.first, "DeltaTimePlanes_0_1"), v));
+
+    size = static_cast<int>(m_limits["DeltaTimePlanes_1_2"]);
+    v.resize(size);
+    std::fill(v.begin(), v.end(), 0);
+    m_stats_detector.emplace(
+        std::make_pair(std::make_pair(det.first, "DeltaTimePlanes_1_2"), v));
+
+    size = static_cast<int>(m_limits["DeltaTimePlanes_0_2"]);
+    v.resize(size);
+    std::fill(v.begin(), v.end(), 0);
+    m_stats_detector.emplace(
+        std::make_pair(std::make_pair(det.first, "DeltaTimePlanes_0_2"), v));
 
     size = static_cast<int>(m_limits["ChargeRatio_0_1"]);
     v.resize(size);
@@ -272,6 +330,30 @@ void Statistics::CreateClusterStats(Configuration &config) {
     std::fill(v.begin(), v.end(), 0);
     m_stats_detector.emplace(
         std::make_pair(std::make_pair(det.first, "ChargeRatio_1_0"), v));
+
+    size = static_cast<int>(m_limits["ChargeRatio_0_2"]);
+    v.resize(size);
+    std::fill(v.begin(), v.end(), 0);
+    m_stats_detector.emplace(
+        std::make_pair(std::make_pair(det.first, "ChargeRatio_0_2"), v));
+
+    size = static_cast<int>(m_limits["ChargeRatio_2_0"]);
+    v.resize(size);
+    std::fill(v.begin(), v.end(), 0);
+    m_stats_detector.emplace(
+        std::make_pair(std::make_pair(det.first, "ChargeRatio_2_0"), v));
+
+    size = static_cast<int>(m_limits["ChargeRatio_1_2"]);
+    v.resize(size);
+    std::fill(v.begin(), v.end(), 0);
+    m_stats_detector.emplace(
+        std::make_pair(std::make_pair(det.first, "ChargeRatio_1_2"), v));
+
+    size = static_cast<int>(m_limits["ChargeRatio_2_1"]);
+    v.resize(size);
+    std::fill(v.begin(), v.end(), 0);
+    m_stats_detector.emplace(
+        std::make_pair(std::make_pair(det.first, "ChargeRatio_2_1"), v));
 
     size = static_cast<int>(m_limits["ClusterCntDetector"]);
     v.resize(size);
@@ -392,6 +474,8 @@ void Statistics::PrintClusterStats(Configuration &config) {
   for (auto const &det : config.pDets) {
     auto dp0 = std::make_pair(det.first, 0);
     auto dp1 = std::make_pair(det.first, 1);
+    auto dp2 = std::make_pair(det.first, 2);
+
     long cnt =
         m_stats_detector[std::make_pair(det.first, "ClusterCntDetector")][0];
     long cnt0 = 1;
@@ -401,6 +485,10 @@ void Statistics::PrintClusterStats(Configuration &config) {
     long cnt1 = 1;
     if (m_stats_plane[std::make_pair(dp1, "ClusterCntPlane")][0] > 0) {
       cnt1 = m_stats_plane[std::make_pair(dp1, "ClusterCntPlane")][0];
+    }
+    long cnt2 = 1;
+    if (m_stats_plane[std::make_pair(dp2, "ClusterCntPlane")][0] > 0) {
+      cnt2 = m_stats_plane[std::make_pair(dp2, "ClusterCntPlane")][0];
     }
 
     std::cout << "\n\n****************************************" << std::endl;
@@ -429,20 +517,44 @@ void Statistics::PrintClusterStats(Configuration &config) {
           StatsOutput(n, v[n], stat, cnt1);
         }
       }
+      if (config.GetDetectorPlane(dp2) == true) {
+        std::cout << "****************************************" << std::endl;
+        std::cout << "\n****************************************" << std::endl;
+        std::cout << "Plane 2: " << stat << std::endl;
+        std::cout << "****************************************" << std::endl;
+        std::vector<long> v = m_stats_plane[std::make_pair(dp2, stat)];
+        for (unsigned int n = 0; n < static_cast<unsigned int>(m_limits[stat]);
+             n++) {
+          StatsOutput(n, v[n], stat, cnt2);
+        }
+      }
       std::cout << "****************************************" << std::endl;
     }
     if (config.GetDetectorPlane(dp0) == true &&
         config.GetDetectorPlane(dp1) == true) {
       for (auto const &stat : m_stats_detector_names) {
-        std::cout << "\n****************************************" << std::endl;
-        std::cout << stat << std::endl;
-        std::cout << "****************************************" << std::endl;
-        std::vector<long> v = m_stats_detector[std::make_pair(det.first, stat)];
-        for (unsigned int n = 0; n < static_cast<unsigned int>(m_limits[stat]);
-             n++) {
-          StatsOutput(n, v[n], stat, cnt, cnt0, cnt1);
+        if (config.GetDetectorPlane(dp2) == true ||
+            (stat.find("_0_2") == std::string::npos &&
+             stat.find("_1_2") == std::string::npos &&
+             stat.find("_2_0") == std::string::npos &&
+             stat.find("_2_1") == std::string::npos)) {
+
+          std::cout << "\n****************************************"
+                    << std::endl;
+          std::cout << stat << std::endl;
+          std::cout << "****************************************" << std::endl;
+          std::vector<long> v =
+              m_stats_detector[std::make_pair(det.first, stat)];
+          for (unsigned int n = 0;
+               n < static_cast<unsigned int>(m_limits[stat]); n++) {
+            if (config.GetDetectorPlane(dp2) == true) {
+              StatsOutput(n, v[n], stat, cnt, cnt0, cnt1, cnt2);
+            } else {
+              StatsOutput(n, v[n], stat, cnt, cnt0, cnt1);
+            }
+          }
+          std::cout << "****************************************" << std::endl;
         }
-        std::cout << "****************************************" << std::endl;
       }
     }
   }
@@ -532,10 +644,11 @@ void Statistics::PrintFECStats(Configuration &config) {
 }
 
 void Statistics::StatsOutput(int n, long val, std::string stat, long cnt,
-                             long cnt0, long cnt1) {
-  if (cnt == 0)
-    cnt = 1;
-  if (m_limits[stat] > 1) {
+                             long cnt0, long cnt1, long cnt2) {
+
+  if (m_limits[stat] > 1 && cnt > 0) {
+    // if (cnt == 0)
+    // cnt = 1;
     if (m_factors[stat] != 1) {
       std::cout << static_cast<unsigned int>(n / m_factors[stat]) << "-"
                 << static_cast<unsigned int>(n / m_factors[stat] +
@@ -550,7 +663,15 @@ void Statistics::StatsOutput(int n, long val, std::string stat, long cnt,
                 << std::endl;
     }
   } else {
-    if (cnt0 > 0 && cnt1 > 0) {
+    if (cnt0 > 0 && cnt1 > 0 && cnt2 > 0) {
+      std::cout << val << " (common cluster in detector, "
+                << std::setprecision(1) << (100 * (double)val / (double)cnt0)
+                << " % plane 0, " << std::setprecision(1) << std::fixed
+                << (100 * (double)val / (double)cnt1) << " % plane 1, "
+                << std::setprecision(1) << std::fixed
+                << (100 * (double)val / (double)cnt2) << " % plane 2)"
+                << std::endl;
+    } else if (cnt0 > 0 && cnt1 > 0) {
       std::cout << val << " (common cluster in detector, "
                 << std::setprecision(1) << (100 * (double)val / (double)cnt0)
                 << " % plane 0, " << std::setprecision(1) << std::fixed

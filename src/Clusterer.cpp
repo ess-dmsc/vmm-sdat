@@ -906,104 +906,108 @@ int Clusterer::MatchClustersDetector(uint8_t det) {
   int clusterCount = 0;
   auto dp0 = std::make_pair(det, 0);
   auto dp1 = std::make_pair(det, 1);
-  ClusterVectorPlane::iterator itStartPlane1 = begin(m_clusters[dp1]);
-  for (auto &c0 : m_clusters[dp0]) {
-    double minDelta = std::numeric_limits<double>::max();
-    double lastDelta_t = std::numeric_limits<double>::max();
-    double delta_t = std::numeric_limits<double>::max();
-    bool isFirstMatch = true;
-    ClusterVectorPlane::iterator bestMatchPlane1 = end(m_clusters[dp1]);
+  auto dp2 = std::make_pair(det, 2);
 
+  bool found1 = false;
+  bool found2 = true;
+  ClusterVectorPlane::iterator itStartPlane1 = begin(m_clusters[dp1]);
+  ClusterVectorPlane::iterator itStartPlane2 = begin(m_clusters[dp2]);
+  for (auto &c0 : m_clusters[dp0]) {
+    if (m_config.GetDetectorPlane(dp2) == true) {
+      found2 = false;
+    }
+    double minDelta1 = std::numeric_limits<double>::max();
+    double lastDelta_t1 = std::numeric_limits<double>::max();
+    double delta_t1 = std::numeric_limits<double>::max();
+    bool isFirstMatch1 = true;
+    ClusterVectorPlane::iterator bestMatchPlane1 = end(m_clusters[dp1]);
+    ClusterVectorPlane::iterator bestMatchPlane2 = end(m_clusters[dp2]);
     for (ClusterVectorPlane::iterator c1 = itStartPlane1;
          c1 != end(m_clusters[dp1]); ++c1) {
       if ((*c1).plane_coincidence == false) {
-
-        double chargeRatio = (double)(c0).adc / (double)(*c1).adc;
-        lastDelta_t = delta_t;
-        delta_t = (*c1).time - c0.time;
+        double chargeRatio1 = (double)(c0).adc / (double)(*c1).adc;
+        lastDelta_t1 = delta_t1;
+        delta_t1 = (*c1).time - c0.time;
         if (m_config.pConditionCoincidence == "utpc") {
-          delta_t = (*c1).time_utpc - c0.time_utpc;
+          delta_t1 = (*c1).time_utpc - c0.time_utpc;
         } else if (m_config.pConditionCoincidence == "charge2") {
-          delta_t = (*c1).time_charge2 - c0.time_charge2;
+          delta_t1 = (*c1).time_charge2 - c0.time_charge2;
         }
-        if (chargeRatio >= m_config.pChargeRatioLower &&
-            chargeRatio <= m_config.pChargeRatioUpper &&
-            std::fabs(delta_t) < minDelta &&
-            std::fabs(delta_t) <= m_config.pDeltaTimePlanes &&
+        if (chargeRatio1 >= m_config.pChargeRatioLower &&
+            chargeRatio1 <= m_config.pChargeRatioUpper &&
+            std::fabs(delta_t1) < minDelta1 &&
+            std::fabs(delta_t1) <= m_config.pDeltaTimePlanes &&
             (c0.size + (*c1).size >= m_config.pCoincidentClusterSize)) {
-          minDelta = std::fabs(delta_t);
+          minDelta1 = std::fabs(delta_t1);
           bestMatchPlane1 = c1;
-          if (isFirstMatch) {
+          if (isFirstMatch1) {
             itStartPlane1 = c1;
-            isFirstMatch = false;
+            isFirstMatch1 = false;
           }
         }
-        if (std::fabs(delta_t) > std::fabs(lastDelta_t)) {
+        if (std::fabs(delta_t1) > std::fabs(lastDelta_t1)) {
           break;
         }
       }
     }
 
     if (bestMatchPlane1 != end(m_clusters[dp1])) {
-      c0.plane_coincidence = true;
-      (*bestMatchPlane1).plane_coincidence = true;
-      ClusterDetector clusterDetector;
-      m_cluster_detector_id++;
-      clusterDetector.id = m_cluster_detector_id;
-      clusterDetector.det = det;
-      clusterDetector.id0 = c0.id;
-      clusterDetector.id1 = (*bestMatchPlane1).id;
-      clusterDetector.size0 = c0.size;
-      clusterDetector.size1 = (*bestMatchPlane1).size;
-      clusterDetector.adc0 = c0.adc;
-      clusterDetector.adc1 = (*bestMatchPlane1).adc;
+      found1 = true;
+      if (m_config.GetDetectorPlane(dp2) == true) {
+        double minDelta2 = std::numeric_limits<double>::max();
+        double lastDelta_t2 = std::numeric_limits<double>::max();
+        double delta_t2 = std::numeric_limits<double>::max();
+        bool isFirstMatch2 = true;
 
-      if (m_config.pTransform.size() == m_config.pDets.size()) {
-        auto tx = m_config.pTransformX[m_config.pDets[det]];
-        auto ty = m_config.pTransformY[m_config.pDets[det]];
-        auto tz = m_config.pTransformZ[m_config.pDets[det]];
-
-        clusterDetector.pos0 = c0.pos * std::get<0>(tx) +
-                               (*bestMatchPlane1).pos * std::get<1>(tx) +
-                               std::get<3>(tx);
-        clusterDetector.pos1 = c0.pos * std::get<0>(ty) +
-                               (*bestMatchPlane1).pos * std::get<1>(ty) +
-                               std::get<3>(ty);
-        clusterDetector.pos2 = c0.pos * std::get<0>(tz) +
-                               (*bestMatchPlane1).pos * std::get<1>(tz) +
-                               std::get<3>(tz);
-
-        clusterDetector.pos0_utpc =
-            c0.pos_utpc * std::get<0>(tx) +
-            (*bestMatchPlane1).pos_utpc * std::get<1>(tx) + std::get<3>(tx);
-        clusterDetector.pos1_utpc =
-            c0.pos_utpc * std::get<0>(ty) +
-            (*bestMatchPlane1).pos_utpc * std::get<1>(ty) + std::get<3>(ty);
-        clusterDetector.pos2_utpc =
-            c0.pos_utpc * std::get<0>(tz) +
-            (*bestMatchPlane1).pos_utpc * std::get<1>(tz) + std::get<3>(tz);
-
-        clusterDetector.pos0_charge2 =
-            c0.pos_charge2 * std::get<0>(tx) +
-            (*bestMatchPlane1).pos_charge2 * std::get<1>(tx) + std::get<3>(tx);
-        clusterDetector.pos1_charge2 =
-            c0.pos_charge2 * std::get<0>(ty) +
-            (*bestMatchPlane1).pos_charge2 * std::get<1>(ty) + std::get<3>(ty);
-        clusterDetector.pos2_charge2 =
-            c0.pos_charge2 * std::get<0>(tz) +
-            (*bestMatchPlane1).pos_charge2 * std::get<1>(tz) + std::get<3>(tz);
-
-        clusterDetector.pos0_algo =
-            c0.pos_algo * std::get<0>(tx) +
-            (*bestMatchPlane1).pos_algo * std::get<1>(tx) + std::get<3>(tx);
-        clusterDetector.pos1_algo =
-            c0.pos_algo * std::get<0>(ty) +
-            (*bestMatchPlane1).pos_algo * std::get<1>(ty) + std::get<3>(ty);
-        clusterDetector.pos2_algo =
-            c0.pos_algo * std::get<0>(tz) +
-            (*bestMatchPlane1).pos_algo * std::get<1>(tz) + std::get<3>(tz);
-
-      } else {
+        for (ClusterVectorPlane::iterator c2 = itStartPlane2;
+             c2 != end(m_clusters[dp2]); ++c2) {
+          if ((*c2).plane_coincidence == false) {
+            double chargeRatio2 = (double)(c0).adc / (double)(*c2).adc;
+            lastDelta_t2 = delta_t2;
+            delta_t2 = (*c2).time - c0.time;
+            if (m_config.pConditionCoincidence == "utpc") {
+              delta_t2 = (*c2).time_utpc - c0.time_utpc;
+            } else if (m_config.pConditionCoincidence == "charge2") {
+              delta_t2 = (*c2).time_charge2 - c0.time_charge2;
+            }
+            if (chargeRatio2 >= m_config.pChargeRatioLower &&
+                chargeRatio2 <= m_config.pChargeRatioUpper &&
+                std::fabs(delta_t2) < minDelta2 &&
+                std::fabs(delta_t2) <= m_config.pDeltaTimePlanes &&
+                (c0.size + (*bestMatchPlane1).size + (*c2).size >=
+                 m_config.pCoincidentClusterSize)) {
+              minDelta2 = std::fabs(delta_t2);
+              bestMatchPlane2 = c2;
+              if (isFirstMatch2) {
+                itStartPlane2 = c2;
+                isFirstMatch2 = false;
+              }
+            }
+            if (std::fabs(delta_t2) > std::fabs(lastDelta_t2)) {
+              break;
+            }
+          }
+        }
+        if (bestMatchPlane2 != end(m_clusters[dp2])) {
+          found2 = true;
+        }
+      }
+      if (found1 == true && found2 == true) {
+        m_cluster_detector_id++;
+        ClusterDetector clusterDetector;
+        c0.plane_coincidence = true;
+        (*bestMatchPlane1).plane_coincidence = true;
+        clusterDetector.id = m_cluster_detector_id;
+        clusterDetector.det = det;
+        clusterDetector.id0 = c0.id;
+        clusterDetector.id1 = (*bestMatchPlane1).id;
+        clusterDetector.id2 = 0;
+        clusterDetector.size0 = c0.size;
+        clusterDetector.size1 = (*bestMatchPlane1).size;
+        clusterDetector.size2 = 0;
+        clusterDetector.adc0 = c0.adc;
+        clusterDetector.adc1 = (*bestMatchPlane1).adc;
+        clusterDetector.adc2 = 0;
         clusterDetector.pos0 = c0.pos;
         clusterDetector.pos1 = (*bestMatchPlane1).pos;
         clusterDetector.pos2 = 0;
@@ -1016,88 +1020,212 @@ int Clusterer::MatchClustersDetector(uint8_t det) {
         clusterDetector.pos0_algo = c0.pos_algo;
         clusterDetector.pos1_algo = (*bestMatchPlane1).pos_algo;
         clusterDetector.pos2_algo = 0;
-      }
-
-      clusterDetector.time0 = c0.time;
-      clusterDetector.time1 = (*bestMatchPlane1).time;
-      clusterDetector.time0_utpc = c0.time_utpc;
-      clusterDetector.time1_utpc = (*bestMatchPlane1).time_utpc;
-      clusterDetector.time0_charge2 = c0.time_charge2;
-      clusterDetector.time1_charge2 = (*bestMatchPlane1).time_charge2;
-      clusterDetector.time0_algo = c0.time_algo;
-      clusterDetector.time1_algo = (*bestMatchPlane1).time_algo;
-      clusterDetector.dt0 = clusterDetector.time0 - last_time0;
-      clusterDetector.dt1 = clusterDetector.time1 - last_time1;
-
-      // std::cout << clusterDetector.dt1 << " " << clusterDetector.time1 << " "
-      // << last_time1 << std::endl;
-      /*
-      clusterDetector.dt0_utpc = clusterDetector.time0_utpc - last_time0_utpc;
-      clusterDetector.dt1_utpc = clusterDetector.time1_utpc - last_time1_utpc;
-      clusterDetector.dt0_charge2 = clusterDetector.time0_charge2 -
-      last_time0_charge2; clusterDetector.dt1_charge2 =
-      clusterDetector.time1_charge2 - last_time1_charge2;
-      */
-      last_time0 = clusterDetector.time0;
-      last_time1 = clusterDetector.time1;
-      /*
-      last_time0_utpc = clusterDetector.time0_utpc;
-      last_time1_utpc = clusterDetector.time1_utpc;
-      last_time0_charge2 = clusterDetector.time0_charge2;
-      last_time1_charge2 = clusterDetector.time1_charge2;
-      */
-      clusterDetector.delta_plane =
-          clusterDetector.time1 - clusterDetector.time0;
-
-      if (m_config.pConditionCoincidence == "utpc") {
-        clusterDetector.delta_plane =
-            clusterDetector.time1_utpc - clusterDetector.time0_utpc;
-      } else if (m_config.pConditionCoincidence == "charge2") {
-        clusterDetector.delta_plane =
-            clusterDetector.time1_charge2 - clusterDetector.time0_charge2;
-      }
-
-      if (m_config.pShowStats) {
-        m_stats.SetStatsDetector("DeltaTimePlanes", det,
-                                 std::fabs(clusterDetector.delta_plane));
-        double ratio =
-            100 * (double)clusterDetector.adc0 / (double)clusterDetector.adc1;
-        if (ratio > 100.0) {
-          ratio =
-              100 * (double)clusterDetector.adc1 / (double)clusterDetector.adc0;
-          m_stats.SetStatsDetector("ChargeRatio_1_0", det, ratio);
+        clusterDetector.time0 = c0.time;
+        clusterDetector.time1 = (*bestMatchPlane1).time;
+        clusterDetector.time2 = 0;
+        clusterDetector.time0_utpc = c0.time_utpc;
+        clusterDetector.time1_utpc = (*bestMatchPlane1).time_utpc;
+        clusterDetector.time2_utpc = 0;
+        clusterDetector.time0_charge2 = c0.time_charge2;
+        clusterDetector.time1_charge2 = (*bestMatchPlane1).time_charge2;
+        clusterDetector.time2_charge2 = 0;
+        clusterDetector.time0_algo = c0.time_algo;
+        clusterDetector.time1_algo = (*bestMatchPlane1).time_algo;
+        clusterDetector.time2_algo = 0;
+        clusterDetector.dt0 = clusterDetector.time0 - last_time0;
+        clusterDetector.dt1 = clusterDetector.time1 - last_time1;
+        clusterDetector.dt2 = 0;
+        clusterDetector.max_delta_time0 = c0.max_delta_time;
+        clusterDetector.max_delta_time1 = (*bestMatchPlane1).max_delta_time;
+        clusterDetector.max_delta_time2 = 0;
+        clusterDetector.max_missing_strip0 = c0.max_missing_strip;
+        clusterDetector.max_missing_strip1 =
+            (*bestMatchPlane1).max_missing_strip;
+        clusterDetector.max_missing_strip2 = 0;
+        clusterDetector.span_cluster0 = c0.span_cluster;
+        clusterDetector.span_cluster1 = (*bestMatchPlane1).span_cluster;
+        clusterDetector.span_cluster2 = 0;
+        clusterDetector.strips0 = c0.strips;
+        clusterDetector.times0 = c0.times;
+        clusterDetector.adcs0 = c0.adcs;
+        clusterDetector.strips1 = (*bestMatchPlane1).strips;
+        clusterDetector.times1 = (*bestMatchPlane1).times;
+        clusterDetector.adcs1 = (*bestMatchPlane1).adcs;
+        if (m_config.GetDetectorPlane(dp2) == true) {
+          (*bestMatchPlane2).plane_coincidence = true;
+          clusterDetector.id2 = (*bestMatchPlane2).id;
+          clusterDetector.size2 = (*bestMatchPlane2).size;
+          clusterDetector.adc2 = (*bestMatchPlane2).adc;
+          clusterDetector.pos2 = (*bestMatchPlane2).pos;
+          clusterDetector.pos2_utpc = (*bestMatchPlane2).pos_utpc;
+          clusterDetector.pos2_charge2 = (*bestMatchPlane2).pos_charge2;
+          clusterDetector.pos2_algo = (*bestMatchPlane2).pos_algo;
+          clusterDetector.time2 = (*bestMatchPlane2).time;
+          clusterDetector.time2_utpc = (*bestMatchPlane2).time_utpc;
+          clusterDetector.time2_charge2 = (*bestMatchPlane2).time_charge2;
+          clusterDetector.time2_algo = (*bestMatchPlane2).time_algo;
+          clusterDetector.dt2 = clusterDetector.time2 - last_time2;
+          clusterDetector.max_delta_time2 = (*bestMatchPlane2).max_delta_time;
+          clusterDetector.max_missing_strip2 =
+              (*bestMatchPlane2).max_missing_strip;
+          clusterDetector.span_cluster2 = (*bestMatchPlane2).span_cluster;
+          clusterDetector.strips2 = (*bestMatchPlane2).strips;
+          clusterDetector.times2 = (*bestMatchPlane2).times;
+          clusterDetector.adcs2 = (*bestMatchPlane2).adcs;
         } else {
-          m_stats.SetStatsDetector("ChargeRatio_0_1", det, ratio);
-        }
-        m_stats.SetStatsDetector("ClusterCntDetector", det, 0);
-        clusterCount++;
-      }
+          if (m_config.pTransform.size() == m_config.pDets.size()) {
+            auto tx = m_config.pTransformX[m_config.pDets[det]];
+            auto ty = m_config.pTransformY[m_config.pDets[det]];
+            auto tz = m_config.pTransformZ[m_config.pDets[det]];
 
-      clusterDetector.max_delta_time0 = c0.max_delta_time;
-      clusterDetector.max_delta_time1 = (*bestMatchPlane1).max_delta_time;
-      clusterDetector.max_missing_strip0 = c0.max_missing_strip;
-      clusterDetector.max_missing_strip1 = (*bestMatchPlane1).max_missing_strip;
-      clusterDetector.span_cluster0 = c0.span_cluster;
-      clusterDetector.span_cluster1 = (*bestMatchPlane1).span_cluster;
-      clusterDetector.strips0 = c0.strips;
-      clusterDetector.times0 = c0.times;
-      clusterDetector.adcs0 = c0.adcs;
-      clusterDetector.strips1 = (*bestMatchPlane1).strips;
-      clusterDetector.times1 = (*bestMatchPlane1).times;
-      clusterDetector.adcs1 = (*bestMatchPlane1).adcs;
-      DTRACE(DEB, "\ncommon cluster det %d x/y: %d/%d", (int)det,
-             clusterDetector.id0, clusterDetector.id1);
-      DTRACE(DEB, "\tpos x/pos y: %f/%f", clusterDetector.pos0,
-             clusterDetector.pos1);
-      DTRACE(DEB, "\ttime x/time y: %llu/%llu", (uint64_t)clusterDetector.time0,
-             (uint64_t)clusterDetector.time1);
-      DTRACE(DEB, "\tadc x/adc y: %u/%u", clusterDetector.adc0,
-             clusterDetector.adc1);
-      DTRACE(DEB, "\tsize x/size y: %u/%u", clusterDetector.size0,
-             clusterDetector.size1);
-      DTRACE(DEB, "\tdelta time planes: %d\n",
-             (int)clusterDetector.delta_plane);
-      m_clusters_detector[det].emplace_back(std::move(clusterDetector));
+            clusterDetector.pos0 = c0.pos * std::get<0>(tx) +
+                                   (*bestMatchPlane1).pos * std::get<1>(tx) +
+                                   std::get<3>(tx);
+            clusterDetector.pos1 = c0.pos * std::get<0>(ty) +
+                                   (*bestMatchPlane1).pos * std::get<1>(ty) +
+                                   std::get<3>(ty);
+            clusterDetector.pos2 = c0.pos * std::get<0>(tz) +
+                                   (*bestMatchPlane1).pos * std::get<1>(tz) +
+                                   std::get<3>(tz);
+
+            clusterDetector.pos0_utpc =
+                c0.pos_utpc * std::get<0>(tx) +
+                (*bestMatchPlane1).pos_utpc * std::get<1>(tx) + std::get<3>(tx);
+            clusterDetector.pos1_utpc =
+                c0.pos_utpc * std::get<0>(ty) +
+                (*bestMatchPlane1).pos_utpc * std::get<1>(ty) + std::get<3>(ty);
+            clusterDetector.pos2_utpc =
+                c0.pos_utpc * std::get<0>(tz) +
+                (*bestMatchPlane1).pos_utpc * std::get<1>(tz) + std::get<3>(tz);
+
+            clusterDetector.pos0_charge2 =
+                c0.pos_charge2 * std::get<0>(tx) +
+                (*bestMatchPlane1).pos_charge2 * std::get<1>(tx) +
+                std::get<3>(tx);
+            clusterDetector.pos1_charge2 =
+                c0.pos_charge2 * std::get<0>(ty) +
+                (*bestMatchPlane1).pos_charge2 * std::get<1>(ty) +
+                std::get<3>(ty);
+            clusterDetector.pos2_charge2 =
+                c0.pos_charge2 * std::get<0>(tz) +
+                (*bestMatchPlane1).pos_charge2 * std::get<1>(tz) +
+                std::get<3>(tz);
+
+            clusterDetector.pos0_algo =
+                c0.pos_algo * std::get<0>(tx) +
+                (*bestMatchPlane1).pos_algo * std::get<1>(tx) + std::get<3>(tx);
+            clusterDetector.pos1_algo =
+                c0.pos_algo * std::get<0>(ty) +
+                (*bestMatchPlane1).pos_algo * std::get<1>(ty) + std::get<3>(ty);
+            clusterDetector.pos2_algo =
+                c0.pos_algo * std::get<0>(tz) +
+                (*bestMatchPlane1).pos_algo * std::get<1>(tz) + std::get<3>(tz);
+          }
+        }
+
+        last_time0 = clusterDetector.time0;
+        last_time1 = clusterDetector.time1;
+        last_time2 = clusterDetector.time2;
+
+        clusterDetector.delta_plane_0_1 =
+            clusterDetector.time1 - clusterDetector.time0;
+        clusterDetector.delta_plane_1_2 =
+            clusterDetector.time2 - clusterDetector.time1;
+        clusterDetector.delta_plane_0_2 =
+            clusterDetector.time2 - clusterDetector.time0;
+
+        if (m_config.pConditionCoincidence == "utpc") {
+          clusterDetector.delta_plane_0_1 =
+              clusterDetector.time1_utpc - clusterDetector.time0_utpc;
+          clusterDetector.delta_plane_1_2 =
+              clusterDetector.time2_utpc - clusterDetector.time1_utpc;
+          clusterDetector.delta_plane_0_2 =
+              clusterDetector.time2_utpc - clusterDetector.time0_utpc;
+        } else if (m_config.pConditionCoincidence == "charge2") {
+          clusterDetector.delta_plane_0_1 =
+              clusterDetector.time1_charge2 - clusterDetector.time0_charge2;
+          clusterDetector.delta_plane_1_2 =
+              clusterDetector.time2_charge2 - clusterDetector.time1_charge2;
+          clusterDetector.delta_plane_0_2 =
+              clusterDetector.time2_charge2 - clusterDetector.time0_charge2;
+        }
+
+        if (m_config.pShowStats) {
+          m_stats.SetStatsDetector("DeltaTimePlanes_0_1", det,
+                                   std::fabs(clusterDetector.delta_plane_0_1));
+          m_stats.SetStatsDetector("DeltaTimePlanes_1_2", det,
+                                   std::fabs(clusterDetector.delta_plane_1_2));
+          m_stats.SetStatsDetector("DeltaTimePlanes_0_2", det,
+                                   std::fabs(clusterDetector.delta_plane_0_2));
+          double ratio =
+              100 * (double)clusterDetector.adc0 / (double)clusterDetector.adc1;
+          if (ratio > 100.0) {
+            ratio = 100 * (double)clusterDetector.adc1 /
+                    (double)clusterDetector.adc0;
+            m_stats.SetStatsDetector("ChargeRatio_1_0", det, ratio);
+          } else {
+            m_stats.SetStatsDetector("ChargeRatio_0_1", det, ratio);
+          }
+          if (m_config.GetDetectorPlane(dp2) == true) {
+            double ratio = 100 * (double)clusterDetector.adc1 /
+                           (double)clusterDetector.adc2;
+            if (ratio > 100.0) {
+              ratio = 100 * (double)clusterDetector.adc2 /
+                      (double)clusterDetector.adc1;
+              m_stats.SetStatsDetector("ChargeRatio_2_1", det, ratio);
+            } else {
+              m_stats.SetStatsDetector("ChargeRatio_1_2", det, ratio);
+            }
+
+            ratio = 100 * (double)clusterDetector.adc0 /
+                    (double)clusterDetector.adc2;
+            if (ratio > 100.0) {
+              ratio = 100 * (double)clusterDetector.adc2 /
+                      (double)clusterDetector.adc0;
+              m_stats.SetStatsDetector("ChargeRatio_2_0", det, ratio);
+            } else {
+              m_stats.SetStatsDetector("ChargeRatio_0_2", det, ratio);
+            }
+          }
+          m_stats.SetStatsDetector("ClusterCntDetector", det, 0);
+          clusterCount++;
+        }
+        if (m_config.GetDetectorPlane(dp2) == true) {
+          DTRACE(DEB, "\ncommon cluster det %d x/y/u: %d/%d/%d", (int)det,
+                 clusterDetector.id0, clusterDetector.id1, clusterDetector.id2);
+          DTRACE(DEB, "\tpos x/pos y/pos u: %f/%f/%f", clusterDetector.pos0,
+                 clusterDetector.pos1, clusterDetector.pos2);
+          DTRACE(DEB, "\ttime x/time y/time u: %llu/%llu/%llu",
+                 (uint64_t)clusterDetector.time0,
+                 (uint64_t)clusterDetector.time1,
+                 (uint64_t)clusterDetector.time2);
+          DTRACE(DEB, "\tadc x/adc y/adc u: %u/%u/%u", clusterDetector.adc0,
+                 clusterDetector.adc1, clusterDetector.adc2);
+          DTRACE(DEB, "\tsize x/size y/size u: %u/%u/%u", clusterDetector.size0,
+                 clusterDetector.size1, clusterDetector.size2);
+          DTRACE(DEB, "\tdelta time planes 0 - 1: %d\n",
+                 (int)clusterDetector.delta_plane_0_1);
+          DTRACE(DEB, "\tdelta time planes 1 - 2: %d\n",
+                 (int)clusterDetector.delta_plane_1_2);
+          DTRACE(DEB, "\tdelta time planes 0 - 2: %d\n",
+                 (int)clusterDetector.delta_plane_0_2);
+        } else {
+          DTRACE(DEB, "\ncommon cluster det %d x/y: %d/%d", (int)det,
+                 clusterDetector.id0, clusterDetector.id1);
+          DTRACE(DEB, "\tpos x/pos y: %f/%f", clusterDetector.pos0,
+                 clusterDetector.pos1);
+          DTRACE(DEB, "\ttime x/time y: %llu/%llu",
+                 (uint64_t)clusterDetector.time0,
+                 (uint64_t)clusterDetector.time1);
+          DTRACE(DEB, "\tadc x/adc y: %u/%u", clusterDetector.adc0,
+                 clusterDetector.adc1);
+          DTRACE(DEB, "\tsize x/size y: %u/%u", clusterDetector.size0,
+                 clusterDetector.size1);
+          DTRACE(DEB, "\tdelta time planes: %d\n",
+                 (int)clusterDetector.delta_plane_0_1);
+        }
+        m_clusters_detector[det].emplace_back(std::move(clusterDetector));
+      }
     }
   }
 
@@ -1124,18 +1252,27 @@ void Clusterer::AnalyzeClustersDetector(uint8_t det) {
   int cnt = 0;
   auto dp0 = std::make_pair(det, 0);
   auto dp1 = std::make_pair(det, 1);
+  auto dp2 = std::make_pair(det, 2);
+
   if (ChooseClustersToBeMatched(dp0) == false && m_clusters[dp0].empty()) {
     return;
   }
   if (ChooseClustersToBeMatched(dp1) == false && m_clusters[dp1].empty()) {
     return;
   }
+  if (m_config.GetDetectorPlane(dp2) == true) {
+    if (ChooseClustersToBeMatched(dp2) == false && m_clusters[dp2].empty()) {
+      return;
+    }
+  }
+
   cnt = MatchClustersDetector(det);
 
   if (m_config.pSaveWhat == 10 || m_config.pSaveWhat == 11 ||
       m_config.pSaveWhat == 110 || m_config.pSaveWhat == 111) {
     m_rootFile->SaveClustersPlane(std::move(m_clusters[dp0]));
     m_rootFile->SaveClustersPlane(std::move(m_clusters[dp1]));
+    m_rootFile->SaveClustersPlane(std::move(m_clusters[dp2]));
   }
 
   if (m_config.pSaveWhat >= 100) {
@@ -1143,6 +1280,7 @@ void Clusterer::AnalyzeClustersDetector(uint8_t det) {
   }
   m_clusters[std::make_pair(det, 0)].clear();
   m_clusters[std::make_pair(det, 1)].clear();
+  m_clusters[std::make_pair(det, 2)].clear();
   m_clusters_detector[det].clear();
 }
 
@@ -1365,15 +1503,18 @@ void Clusterer::FinishAnalysis() {
   for (auto const &det : m_config.pDets) {
     auto dp0 = std::make_pair(det.first, 0);
     auto dp1 = std::make_pair(det.first, 1);
+    auto dp2 = std::make_pair(det.first, 2);
 
     // Set the largest timestamp of plane to detector
     // cluster all remaining data in plane
     m_stats.SetLowestCommonTriggerTimestampPlane(dp0, ts);
     m_stats.SetLowestCommonTriggerTimestampPlane(dp1, ts);
+    m_stats.SetLowestCommonTriggerTimestampPlane(dp2, ts);
     m_stats.SetLowestCommonTriggerTimestampDet(det.first, ts);
 
     AnalyzeClustersPlane(dp0);
     AnalyzeClustersPlane(dp1);
+    AnalyzeClustersPlane(dp2);
     AnalyzeClustersDetector(det.first);
     if (m_config.pSaveWhat % 2 == 1) {
       m_rootFile->SaveHits();
