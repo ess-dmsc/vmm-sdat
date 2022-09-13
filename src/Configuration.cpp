@@ -962,6 +962,7 @@ bool Configuration::CreateMapping() {
         if (searchDetPlaneFec.first == std::make_pair(det, plane) &&
             searchDetPlaneFec.second == fec) {
           found = true;
+          std::cout << plane << std::endl;
           break;
         }
       }

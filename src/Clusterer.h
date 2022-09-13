@@ -58,11 +58,13 @@ private:
 
   double last_time0 = 0;
   double last_time1 = 0;
+  double last_time2 = 0;
+  /*
   double last_time0_utpc = 0;
   double last_time1_utpc = 0;
   double last_time0_charge2 = 0;
   double last_time1_charge2 = 0;
-
+*/
   uint8_t m_oldVmmId = 0;
   uint8_t m_oldFecId = 0;
 
