@@ -345,8 +345,7 @@ RootFile::RootFile(Configuration &config) : m_config(config) {
         cnt2D++;
       }
       // 1D detector
-      else if (m_config.GetDetectorPlane(dp0) == true ||
-               m_config.GetDetectorPlane(dp1) == true) {
+      else if (m_config.GetDetectorPlane(dp0) == true) {
         int nch = 0;
         if (m_config.GetDetectorPlane(dp0)) {
           nch = m_config.pChannels[std::make_tuple(det.first, 0)];
@@ -478,8 +477,7 @@ void RootFile::SaveClustersDetector(ClusterVectorDetector &&clusters_detector) {
         m_TH2D[idx]->Fill(it.pos0, it.pos1, it.adc0);
       }
       // 1D detector
-      else if (m_config.GetDetectorPlane(dp0) == true ||
-               m_config.GetDetectorPlane(dp1) == true) {
+      else if (m_config.GetDetectorPlane(dp0) == true) {
 
         int idx = m_map_TH1D[std::make_pair(it.det, "cluster")];
         m_TH1D[idx]->Fill(it.pos0);
@@ -638,8 +636,7 @@ void RootFile::SaveHistograms() {
       m_TH2D[idx]->SetEntries(n);
       idx = m_map_TH2D[std::make_pair(det.first, "charge")];
       m_TH2D[idx]->SetEntries(n);
-    } else if (m_config.GetDetectorPlane(dp0) == true ||
-               m_config.GetDetectorPlane(dp1) == true) {
+    } else if (m_config.GetDetectorPlane(dp0) == true) {
       if (m_config.createJSON) {
         int id = m_map_TH1D[std::make_pair(det.first, "cluster")];
 
@@ -654,20 +651,18 @@ void RootFile::SaveHistograms() {
         f1 << json;
         f1.close();
       }
-      int bins = 0;
       int n = 0;
-      if (m_config.GetDetectorPlane(dp0)) {
-        bins = m_config.pChannels[std::make_tuple(det.first, 0)] * 4;
-      } else {
-        bins = m_config.pChannels[std::make_tuple(det.first, 1)] * 4;
-      }
+      int bins = m_config.pChannels[std::make_tuple(det.first, 0)] * 4;
+
       for (int b = 1; b <= bins; b++) {
         int idx = m_map_TH1D[std::make_pair(det.first, "cluster")];
+        // Number of clusters in bin
         int cnt = m_TH1D[idx]->GetBinContent(b);
         double val = 0;
         if (cnt > 0) {
           n++;
           idx = m_map_TH1D[std::make_pair(det.first, "size")];
+          // Size divided by cnt
           val = m_TH1D[idx]->GetBinContent(b) / cnt;
           m_TH1D[idx]->SetBinContent(b, val);
 
@@ -676,10 +671,13 @@ void RootFile::SaveHistograms() {
           m_TH1D[idx]->SetBinContent(b, val);
         }
       }
+
       int idx = m_map_TH1D[std::make_pair(det.first, "size")];
       m_TH1D[idx]->SetEntries(n);
+      m_TH1D[idx]->Sumw2(false);
       idx = m_map_TH1D[std::make_pair(det.first, "charge")];
       m_TH1D[idx]->SetEntries(n);
+      m_TH1D[idx]->Sumw2(false);
     }
   }
 }
