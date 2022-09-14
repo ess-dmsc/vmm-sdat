@@ -55,7 +55,8 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
           DEB,
           "\t\tTimestamp %llu larger than 42 bit and 31 times trigger periodd "
           "for FEC %d and vmmId %d!\n",
-          static_cast<uint64_t>(srsTimestamp), (int)fecId, (int)vmmId);
+          static_cast<unsigned long long>(srsTimestamp), (int)fecId,
+          (int)vmmId);
     }
 
     if (srsTimestamp < m_stats.GetMaxTriggerTimestamp(fecId)) {
@@ -68,8 +69,9 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
                "\n*********************************** OVERFLOW  fecId %d, "
                "m_hitNr %d, "
                "srsTimestamp %llu, old srsTimestamp %llu\n",
-               fecId, m_hitNr, static_cast<uint64_t>(srsTimestamp),
-               static_cast<uint64_t>(m_stats.GetMaxTriggerTimestamp(fecId)));
+               fecId, m_hitNr, static_cast<unsigned long long>(srsTimestamp),
+               static_cast<unsigned long long>(
+                   m_stats.GetMaxTriggerTimestamp(fecId)));
 
       } else {
         m_stats.IncrementCounter("TimestampOrderError", fecId);
@@ -77,8 +79,9 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
                "\n*********************************** TIME ERROR  fecId %d, "
                "m_hitNr %d, "
                "srsTimestamp %llu, old srsTimestamp %llu\n",
-               fecId, m_hitNr, static_cast<uint64_t>(srsTimestamp),
-               static_cast<uint64_t>(m_stats.GetMaxTriggerTimestamp(fecId)));
+               fecId, m_hitNr, static_cast<unsigned long long>(srsTimestamp),
+               static_cast<unsigned long long>(
+                   m_stats.GetMaxTriggerTimestamp(fecId)));
       }
     }
 
@@ -95,8 +98,10 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
           "offset period %f, offset %llu, remainder %llu, new time %llu, old "
           "time %llu\n",
           fecId, vmmId, chNo, m_hitNr, m_config.pOffsetPeriod, offset,
-          static_cast<uint64_t>(remainder), static_cast<uint64_t>(srsTimestamp),
-          static_cast<uint64_t>(m_stats.GetOldTriggerTimestamp(fecId)));
+          static_cast<unsigned long long>(remainder),
+          static_cast<unsigned long long>(srsTimestamp),
+          static_cast<unsigned long long>(
+              m_stats.GetOldTriggerTimestamp(fecId)));
     }
   }
 
@@ -243,7 +248,7 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
 
   if (m_stats.GetDeltaTriggerTimestamp(fecId) > 0) {
     DTRACE(DEB, "\n\tTriggerTimestamp %llu [ns]\n",
-           static_cast<uint64_t>(srsTimestamp));
+           static_cast<unsigned long long>(srsTimestamp));
     DTRACE(DEB, "\tTime since last trigger %f us (%.4f kHz)\n",
            m_stats.GetDeltaTriggerTimestamp(fecId) * 0.001,
            (double)(1000000 / m_stats.GetDeltaTriggerTimestamp(fecId)));
@@ -577,8 +582,8 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
          std::fabs(strip1 - strip2) - 1 <= m_config.pMissingStripsClusterX &&
          time1 - startTime <= m_config.pSpanClusterTime &&
          largestTime - time1 <= m_config.pSpanClusterTime)) {
-      DTRACE(DEB, "\tstrip %d, time %llu, adc %d:\n", strip1, (uint64_t)time1,
-             adc1);
+      DTRACE(DEB, "\tstrip %d, time %llu, adc %d:\n", strip1,
+             static_cast<unsigned long long>(time1), adc1);
       if (adc1 > adc2) {
         largestADCTime = time1;
         largestADCPos = strip1;
@@ -1196,9 +1201,9 @@ int Clusterer::MatchClustersDetector(uint8_t det) {
           DTRACE(DEB, "\tpos x/pos y/pos u: %f/%f/%f", clusterDetector.pos0,
                  clusterDetector.pos1, clusterDetector.pos2);
           DTRACE(DEB, "\ttime x/time y/time u: %llu/%llu/%llu",
-                 (uint64_t)clusterDetector.time0,
-                 (uint64_t)clusterDetector.time1,
-                 (uint64_t)clusterDetector.time2);
+                 static_cast<unsigned long long>(clusterDetector.time0),
+                 static_cast<unsigned long long>(clusterDetector.time1),
+                 static_cast<unsigned long long>(clusterDetector.time2));
           DTRACE(DEB, "\tadc x/adc y/adc u: %u/%u/%u", clusterDetector.adc0,
                  clusterDetector.adc1, clusterDetector.adc2);
           DTRACE(DEB, "\tsize x/size y/size u: %u/%u/%u", clusterDetector.size0,
@@ -1215,8 +1220,8 @@ int Clusterer::MatchClustersDetector(uint8_t det) {
           DTRACE(DEB, "\tpos x/pos y: %f/%f", clusterDetector.pos0,
                  clusterDetector.pos1);
           DTRACE(DEB, "\ttime x/time y: %llu/%llu",
-                 (uint64_t)clusterDetector.time0,
-                 (uint64_t)clusterDetector.time1);
+                 static_cast<unsigned long long>(clusterDetector.time0),
+                 static_cast<unsigned long long>(clusterDetector.time1));
           DTRACE(DEB, "\tadc x/adc y: %u/%u", clusterDetector.adc0,
                  clusterDetector.adc1);
           DTRACE(DEB, "\tsize x/size y: %u/%u", clusterDetector.size0,
