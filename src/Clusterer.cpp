@@ -89,7 +89,7 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
                                  m_config.pOffsetPeriod);
     if (remainder > 0) {
       m_stats.IncrementCounter("TriggerPeriodError", fecId);
-      uint64_t offset =
+      unsigned long long offset =
           m_stats.GetDeltaTriggerTimestamp(fecId) / m_config.pOffsetPeriod;
       DTRACE(
           DEB,
