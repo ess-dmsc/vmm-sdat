@@ -97,9 +97,9 @@ try:
 					h = plt.hist(cl['size0'] + cl['size1'], bins = 128, range = [0.0, 128], color='rebeccapurple')
 					h_size = h_size + h[0]
 					fig, ax = plt.subplots(2, 3, gridspec_kw={'height_ratios': [1, 2]})
-					ax[0, 0].step(np.arange(0,64,1),h_size0, color='red')	
-					ax[0, 1].step(np.arange(0,64,1),h_size1, color='red')			
-					ax[0, 2].step(np.arange(0,128,1),h_size, color='red')	
+					ax[0, 0].step(np.arange(0,64,1),h_size0, color='rebeccapurple')	
+					ax[0, 1].step(np.arange(0,64,1),h_size1, color='rebeccapurple')			
+					ax[0, 2].step(np.arange(0,128,1),h_size, color='rebeccapurple')	
 					h_hit_rate.pop(0)
 					h_hit_rate.append(num_hits*1000000000.0/dt_hits)
 					h_bit_rate.pop(0)
