@@ -16,7 +16,9 @@ import numpy as np
 
 #########################
 #Edit the paramters below
-duration=20
+#File sizes (specified in kB) between 10 MB and 20 MB seem to give the best results
+filesize=20000
+duration=10
 interface='en0'
 num_detectors = 1 
 first_detector = 0 
@@ -42,21 +44,35 @@ h_size0 = [0] * 64
 h_size1 = [0] * 64 
 h_size = [0] * 128
   
-   
+firstTime = True   
 try:
-	start_seconds = int( t.time() )
+	cnt = 1
+	time_start = int( t.time() )
 	while True:
+
 		name = file_name + ".pcapng"
-		args = ['tshark', '-w', name, '-a', 'duration:'+str(duration), '-i', interface]
+		#args = ['dumpcap', '-w', name, '-a', 'duration:'+str(duration), '-i', interface]
+		args = ['dumpcap', '-w', name, '-a', 'filesize:'+str(filesize), '-i', interface]
 		#subprocess.call(args)
 		
 		args_vmmsdat = ['../build/convertFile', '-f', "./" + name, '-geo', 'example_monitoring.json', '-bc', '40', '-tac', '60', '-th','0', '-cs','1', '-ccs', '3', '-dt', '200', '-mst', '1', '-spc', '500', '-dp', '200', '-coin', 'center-of-masss', '-crl', '0.2', '-cru', '10', '-save', '[[0],[],[0]]', '-algo', '4', '-info', '', '-df','SRS']
 		subprocess.call(args_vmmsdat)
-		
+		time_now = int( t.time() )
+		print("Analysis " + str(cnt) + ": " + str(time_now - time_start) + " s")
+				
 		for file in os.listdir("."):
 			if file.startswith(file_name) and file.endswith(".root"):
-				tree_detector = uproot.open(file)['clusters_detector']
 				tree_hits = uproot.open(file)['hits']
+				adc = tree_hits.array('adc')
+				if adc.size == 0:
+					continue
+			
+				pos = tree_hits.array('pos')
+				time = tree_hits.array('time')
+				det = tree_hits.array('det')
+				plane = tree_hits.array('plane')
+				
+				tree_detector = uproot.open(file)['clusters_detector']
 				d_adc0 = tree_detector.array('adc0')
 				d_pos0 = tree_detector.array('pos0')
 				d_adc1 = tree_detector.array('adc1')
@@ -67,18 +83,11 @@ try:
 				d_size1 = tree_detector.array('size1')
 				d_det = tree_detector.array('det')
 	
-				adc = tree_hits.array('adc')
-				pos = tree_hits.array('pos')
-				time = tree_hits.array('time')
-				det = tree_hits.array('det')
-				plane = tree_hits.array('plane')
-	
 				data_hits = {'adc': adc,'pos': pos,'time': time, 'det': det,'plane': plane}
 				df_hits = pd.DataFrame(data_hits)
 
 				data_clusters = {'size0': d_size0,'size1': d_size1,'time0': d_time0,'time1': d_time1,'adc0': d_adc0,'pos0': d_pos0,'adc1': d_adc1,'pos1': d_pos1,'det': d_det}
 				df_clusters = pd.DataFrame(data_clusters)	
-
 
 				theDate = t.strftime("%Y%m%d-%H%M%S") 	
 				for i in range(first_detector, num_detectors):
@@ -86,10 +95,25 @@ try:
 					hits1 = df_hits.query("plane == 1 and det == " + str(i))
 					cl = df_clusters.query("det == " + str(i))
 					num_hits = hits0["time"].size +  hits1["time"].size
+					if num_hits == 0:
+						continue
 					dt_hits = max(hits0["time"]) - min(hits0["time"])
+					h_hit_rate.pop(0)
+					h_bit_rate.pop(0)
+					if dt_hits > 0:
+						h_hit_rate.append(num_hits*1000000000.0/dt_hits)
+						h_bit_rate.append(48*num_hits*1000000000.0/(dt_hits*1024*1024))
+					else:
+						h_hit_rate.append(0)
+						h_bit_rate.append(0)						
+										
 					num_clusters = cl["time0"].size
-					dt_cluster = max(cl["time0"]) - min(cl["time0"])
-
+					h_cluster_rate.pop(0)
+					if num_clusters > 0:
+						dt_cluster = max(cl["time0"]) - min(cl["time0"])
+						h_cluster_rate.append(num_clusters*1000000000/dt_cluster)	
+					else:
+						h_cluster_rate.append(0)	
 					h = plt.hist(cl['size0'], bins = 64, range = [0.0, 64], color='rebeccapurple')
 					h_size0 = h_size0 + h[0]
 					h = plt.hist(cl['size1'], bins = 64, range = [0.0, 64], color='rebeccapurple')
@@ -100,14 +124,11 @@ try:
 					ax[0, 0].step(np.arange(0,64,1),h_size0, color='rebeccapurple')	
 					ax[0, 1].step(np.arange(0,64,1),h_size1, color='rebeccapurple')			
 					ax[0, 2].step(np.arange(0,128,1),h_size, color='rebeccapurple')	
-					h_hit_rate.pop(0)
-					h_hit_rate.append(num_hits*1000000000.0/dt_hits)
-					h_bit_rate.pop(0)
-					h_bit_rate.append(48*num_hits*1000000000.0/(dt_hits*1024*1024))
-					h_cluster_rate.pop(0)
-					h_cluster_rate.append(num_clusters*1000000000/dt_cluster)					
-					seconds = t.time()
-					seconds = seconds - start_seconds
+					
+					if firstTime == True:
+						start_seconds = min(hits0["time"])/1000000000
+						firstTime = False
+					seconds = max(hits0["time"])/1000000000 - start_seconds
 					h_time.pop(0)
 					h_time.append(seconds)	
 					ax[1, 0].plot(h_time,h_bit_rate, color='red')	
@@ -243,6 +264,11 @@ try:
 					fig.set_size_inches(17, 8)
 					fig.tight_layout()
 					fig.savefig("det_total_" + str(i) + ".png", format="png")
+					plt.close("all")
+					
+					time_now = int( t.time() )
+					print("Plot " + str(cnt) + ": " + str(time_now-time_start) + " s")
+					cnt = cnt + 1
 
 
 except OSError:

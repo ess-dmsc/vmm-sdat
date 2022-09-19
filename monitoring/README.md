@@ -9,8 +9,5 @@ and open monitorDetector.html in a browser.
 
 To use the monitorDetector script with real data from a network interface, edit the script according the explanation on top of the script.
 
-## Monitoring the GdGEM
-The GdGEM is divided in four quadrants, monitorGdGEM.html shows how to create a monitor with several tabs.
-
 ## Taking physics data and storing it
 The python script storePcapngData.py illustrates how to take data using dumpcap either using a fixed duration per file or a fixed file size. The user has to edit the number of desired files, the file name and the internet interface.
