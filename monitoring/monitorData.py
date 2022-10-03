@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import os
+import os,glob
 import subprocess
 import re
 import sys
@@ -8,6 +8,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import time as t
 import numpy as np
+from matplotlib.colors import LogNorm
 
 #########################
 #To take data via tshark, please uncomment line 51
@@ -16,16 +17,13 @@ import numpy as np
 
 #########################
 #Edit the paramters below
-#File sizes (specified in kB) between 10 MB and 20 MB seem to give the best results
-filesize=20000
-duration=10
-interface='en0'
+file_name="example"
+#file_name="monitoring"
 num_detectors = 1 
 first_detector = 0 
 channels_x = 256
 channels_y = 256
-max_charge = 5000
-file_name="example_monitoring"
+max_charge = 10000
 ##########################
 h1_total = [0] * channels_x    
 h2_total = [0] * channels_y  
@@ -44,24 +42,48 @@ h_size0 = [0] * 64
 h_size1 = [0] * 64 
 h_size = [0] * 128
   
-firstTime = True   
-try:
-	cnt = 1
-	time_start = int( t.time() )
-	while True:
+firstTime = True
+cnt = 0
+fileId=0
+lastFileId = -1 
 
-		name = file_name + ".pcapng"
-		#args = ['dumpcap', '-w', name, '-a', 'duration:'+str(duration), '-i', interface]
-		args = ['dumpcap', '-w', name, '-a', 'filesize:'+str(filesize), '-i', interface]
-		#subprocess.call(args)
-		
+try:
+	fileList = glob.glob('./det*.png', recursive=True)
+	for file in fileList:
+    		try:
+        		os.remove(file)
+    		except OSError:
+        		print("Error while deleting monitoring .png files..")
+	while True:
+		if os.path.isfile('./' + file_name + '_semaphore.txt') :
+			f = open('./' + file_name + '_semaphore.txt', "r") 
+			fileId = int(f.read())
+			print("Semaphore " + str(fileId))
+		else:
+			print("Cannot open file " + file_name + "_semaphore.txt! Waiting for data..")
+			t.sleep(10)
+			continue		
+		name = file_name + "_" + f'{fileId:05}' + ".pcapng"
+		if not os.path.isfile("./" + name) :
+			print(name + " not found!")
+			continue
+		if lastFileId == fileId:
+			print("File " + str(lastFileId) + " already analysed! Waiting for new data..")
+			t.sleep(2)
+			continue
+		time_start = int( t.time() )	
 		args_vmmsdat = ['../build/convertFile', '-f', "./" + name, '-geo', 'example_monitoring.json', '-bc', '40', '-tac', '60', '-th','0', '-cs','1', '-ccs', '3', '-dt', '200', '-mst', '1', '-spc', '500', '-dp', '200', '-coin', 'center-of-masss', '-crl', '0.2', '-cru', '10', '-save', '[[0],[],[0]]', '-algo', '4', '-info', '', '-df','SRS']
+		#args_vmmsdat = ['../build/convertFile', '-f', "./" + name, '-cal', 'complete_calib_2022_09_23.json', '-vmm', '[[0,0,2,10],[0,0,2,11],[0,0,2,8],[0,0,2,9],[0,0,2,12],[0,0,2,13],[0,0,2,2],[0,0,2,3],[0,0,2,0],[0,0,2,1],[0,1,1,10],[0,1,1,11],[0,1,1,8],[0,1,1,9],[0,1,1,4],[0,1,1,5],[0,1,1,2],[0,1,1,3],[0,1,1,0],[0,1,1,1]]','-axis', '[[0,0],0],[[0,1],0]', '-bc', '44.44', '-tac', '60', '-th','0', '-cs','2', '-ccs', '5', '-dt', '200', '-mst', '1', '-spc', '500', '-dp', '500', '-coin', 'center-of-masss', '-crl', '0.2', '-cru', '5', '-save', '[[0],[],[0]]', '-json','0', '-algo', '0', '-info', 'monitor', '-df', 'SRS']			
+		
 		subprocess.call(args_vmmsdat)
-		time_now = int( t.time() )
-		print("Analysis " + str(cnt) + ": " + str(time_now - time_start) + " s")
-				
+		lastFileId = fileId
+		cnt = cnt + 1
+		time_middle = int( t.time() )
+
+		print("Analysis " + str(cnt) + ": " + str(time_middle - time_start) + " s")
+		
 		for file in os.listdir("."):
-			if file.startswith(file_name) and file.endswith(".root"):
+			if file.startswith(file_name + "_" + f'{fileId:05}') and file.endswith(".root"):
 				tree_hits = uproot.open(file)['hits']
 				adc = tree_hits.array('adc')
 				if adc.size == 0:
@@ -166,9 +188,12 @@ try:
 					h1_total = h1_total + h1[0]
 					h2 = ax[0, 1].hist(hits1['pos'], bins = channels_y, range = [0.0, channels_y], color='darkblue')
 					h2_total = h2_total + h2[0]		
-					h3 = ax[0, 2].hist2d(hits0['pos'], hits0['adc'],bins =[channels_x, 128],cmap=plt.cm.jet,range=np.array([(0, channels_x), (0, 1024)]))
+					h3 = ax[0, 2].hist2d(hits0['pos'], hits0['adc'],bins =[channels_x, 128],cmap=plt.cm.jet,range=np.array([(0, channels_x), (0, 1024)]),norm=LogNorm())
+
+					plt.colorbar(h3[3], ax=ax[0, 2], orientation='vertical')
 					h3_total = h3_total + h3[0]
-					h4 = ax[0, 3].hist2d(hits1['pos'], hits1['adc'],bins =[channels_y, 128],cmap=plt.cm.jet, range=np.array([(0, channels_y), (0,1024)]))
+					h4 = ax[0, 3].hist2d(hits1['pos'], hits1['adc'],bins =[channels_y, 128],cmap=plt.cm.jet, range=np.array([(0, channels_y), (0,1024)]),norm=LogNorm())
+					plt.colorbar(h4[3], ax=ax[0, 3], orientation='vertical')
 					h4_total = h4_total + h4[0]
 	
 					
@@ -176,9 +201,10 @@ try:
 					h5_total = h5_total + h5[0]
 					h6 = ax[1, 1].hist(cl['pos1'], bins = channels_y, range = [0.0, channels_y], color='rebeccapurple')
 					h6_total = h6_total + h6[0]
-					h7 = ax[1, 2].hist(cl['adc0']+cl['adc1'], bins = 1000, range = [0.0, 5000],  color='rebeccapurple')
+					h7 = ax[1, 2].hist(cl['adc0']+cl['adc1'], bins = 1000, range = [0.0, max_charge],  color='rebeccapurple')
 					h7_total = h7_total + h7[0]
-					h8 = ax[1, 3].hist2d(cl['pos1'], cl['pos0'],bins =[channels_x, channels_y],cmap=plt.cm.viridis,range=np.array([(0, channels_x), (0, channels_y)]))
+					h8 = ax[1, 3].hist2d(cl['pos0'], cl['pos1'],bins =[channels_x, channels_y],cmap=plt.cm.viridis,range=np.array([(0, channels_x), (0, channels_y)]))
+					plt.colorbar(h8[3], ax=ax[1, 3], orientation='vertical')
 					h8_total = h8_total + h8[0]
 		
 					ax[0, 0].title.set_text("hits pos0")
@@ -221,16 +247,20 @@ try:
 					ax[0, 1].step(np.arange(0,channels_y,1),h2_total, color='darkblue')	
 					xx = np.arange(0, channels_x+1, 1)  # len = 11
 					yy = np.arange(0, 1032, 8)	
-					ax[0, 2].pcolormesh(xx,yy,h3_total.transpose(), cmap=plt.cm.jet)
+					im=ax[0, 2].pcolormesh(xx,yy,h3_total.transpose(), cmap=plt.cm.jet,norm=LogNorm())
+					plt.colorbar(im, ax=ax[0, 2], orientation='vertical')
+
 					xx = np.arange(0, channels_y+1, 1)  # len = 11
 					yy = np.arange(0, 1032, 8)	
-					ax[0, 3].pcolormesh(xx,yy,h4_total.transpose(), cmap=plt.cm.jet)
+					im=ax[0, 3].pcolormesh(xx,yy,h4_total.transpose(), cmap=plt.cm.jet,norm=LogNorm())
+					plt.colorbar(im, ax=ax[0, 3], orientation='vertical')
 					
 					ax[1, 0].step(np.arange(0,channels_x,1),h5_total, color='rebeccapurple')	
 					ax[1, 1].step(np.arange(0,channels_y,1),h6_total, color='rebeccapurple')			
-					ax[1, 2].step(np.arange(0,max_charge,5),h7_total, color='rebeccapurple')	
-					ax[1, 3].imshow(h8_total.transpose(), cmap=plt.cm.viridis,origin='lower' )
-					
+					ax[1, 2].step(np.arange(0,max_charge,10),h7_total, color='rebeccapurple')	
+					im = ax[1, 3].imshow(h8_total.transpose(), cmap=plt.cm.viridis,origin='lower')
+					plt.colorbar(im, ax=ax[1, 3], orientation='vertical')
+
 					ax[0, 0].title.set_text("hits pos0")
 					ax[0, 1].title.set_text("hits pos1")
 					ax[0, 2].title.set_text("hits adc0")
@@ -266,8 +296,8 @@ try:
 					fig.savefig("det_total_" + str(i) + ".png", format="png")
 					plt.close("all")
 					
-					time_now = int( t.time() )
-					print("Plot " + str(cnt) + ": " + str(time_now-time_start) + " s")
+					time_end = int( t.time() )
+					print("Plot " + str(cnt) + ": " + str(time_end-time_middle) + " s")
 					cnt = cnt + 1
 
 

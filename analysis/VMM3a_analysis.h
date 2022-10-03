@@ -108,7 +108,7 @@ public :
    TTreeReaderValue<Double_t> time1_algo = {fReader, "time1_algo"};
    TTreeReaderValue<Double_t> dt0 = {fReader, "dt0"};
    TTreeReaderValue<Double_t> dt1 = {fReader, "dt1"};
-   TTreeReaderValue<Double_t> delta_plane = {fReader, "delta_plane"};
+   TTreeReaderValue<Double_t> delta_plane = {fReader, "delta_plane_0_1"};
    TTreeReaderValue<unsigned short> span_cluster0 = {fReader, "span_cluster0"};
    TTreeReaderValue<unsigned short> span_cluster1 = {fReader, "span_cluster1"};
    TTreeReaderValue<unsigned short> max_delta_time0 = {fReader, "max_delta_time0"};
