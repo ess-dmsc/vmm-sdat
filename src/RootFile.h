@@ -43,7 +43,8 @@ private:
   TTree *m_tree_clusters_detector;
 
   int m_eventNr;
-
+  int bins_0;
+  int bins_1;
   Hit m_hit;
   ClusterPlane m_cluster_plane;
   ClusterDetector m_cluster_detector;
