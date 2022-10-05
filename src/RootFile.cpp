@@ -118,59 +118,74 @@ RootFile::RootFile(Configuration &config) : m_config(config) {
     std::string name = "";
     int cnt1D = 0;
     int cnt2D = 0;
-    int max0 = -999999999;
-    int max1 = -999999999;
-    int min0 = 999999999;
-    int min1 = 999999999;
-    int n0 = 0;
-    int n1 = 0;
-    bins_0 = 0;
-    bins_1 = 0;
+    m_max0 = -999999999;
+    m_max1 = -999999999;
+    m_min0 = 9999999;
+    m_min1 = 9999999;
+    m_bins0 = 0;
+    m_bins1 = 0;
+
     for (auto const &det : m_config.pDets) {
-      n0 = m_config.pChannels[std::make_pair(det.first, 0)];
-      n1 = m_config.pChannels[std::make_pair(det.first, 1)];
+      auto dp0 = std::make_pair(det.first, 0);
+      auto dp1 = std::make_pair(det.first, 1);
+      if (!m_config.pIsPads[det.first] &&
+          m_config.GetDetectorPlane(dp0) == true &&
+          m_config.GetDetectorPlane(dp1) == true) {
+        int n0 = m_config.pChannels[std::make_pair(det.first, 0)];
+        int n1 = m_config.pChannels[std::make_pair(det.first, 1)];
+        if (m_config.pTransform.size() != m_config.pDets.size()) {
+          m_min0 = 0;
+          m_min1 = 0;
+          m_max0 = n0;
+          m_max1 = n1;
+          m_bins0 = n0 * BINNING_FACTOR;
+          m_bins1 = n1 * BINNING_FACTOR;
+        }
+        // Transformation is applied
+        else {
+          auto tx = m_config.pTransformX[m_config.pDets[det.first]];
+          auto ty = m_config.pTransformY[m_config.pDets[det.first]];
+          auto tz = m_config.pTransformZ[m_config.pDets[det.first]];
+          double t0 =
+              n0 * std::get<0>(tx) + 0 * std::get<1>(tx) + std::get<3>(tx);
+          double t1 =
+              n0 * std::get<0>(ty) + 0 * std::get<1>(ty) + std::get<3>(ty);
+          double t2 =
+              0 * std::get<0>(tx) + n1 * std::get<1>(tx) + std::get<3>(tx);
+          double t3 =
+              0 * std::get<0>(ty) + n1 * std::get<1>(ty) + std::get<3>(ty);
 
-      if (m_config.pTransform.size() == m_config.pDets.size()) {
-        auto tx = m_config.pTransformX[m_config.pDets[det.first]];
-        auto ty = m_config.pTransformY[m_config.pDets[det.first]];
-        auto tz = m_config.pTransformZ[m_config.pDets[det.first]];
-        double t0 =
-            n0 * std::get<0>(tx) + 0 * std::get<1>(tx) + std::get<3>(tx);
-        double t1 =
-            n0 * std::get<0>(ty) + 0 * std::get<1>(ty) + std::get<3>(ty);
-        double t2 =
-            0 * std::get<0>(tx) + n1 * std::get<1>(tx) + std::get<3>(tx);
-        double t3 =
-            0 * std::get<0>(ty) + n1 * std::get<1>(ty) + std::get<3>(ty);
-
-        if (std::min(t0, t1) < min0) {
-          min0 = std::min(t0, t1);
-        }
-        if (std::min(t2, t3) < min1) {
-          min1 = std::min(t2, t3);
-        }
-        if (std::max(t0, t1) > max0) {
-          max0 = std::max(t0, t1);
-        }
-        if (std::max(t2, t3) > max1) {
-          max1 = std::max(t2, t3);
+          if (t0 > m_max0) {
+            m_max0 = t0;
+          }
+          if (t1 > m_max0) {
+            m_max0 = t1;
+          }
+          if (t2 > m_max0) {
+            m_max0 = t2;
+          }
+          if (t3 > m_max0) {
+            m_max0 = t3;
+          }
+          if (t0 < m_min0) {
+            m_min0 = t0;
+          }
+          if (t1 < m_min0) {
+            m_min0 = t1;
+          }
+          if (t2 < m_min0) {
+            m_min0 = t2;
+          }
+          if (t3 < m_min0) {
+            m_min0 = t3;
+          }
+          m_max1 = m_max0;
+          m_min1 = m_min0;
+          m_bins0 = (m_max0 - m_min0) * BINNING_FACTOR;
+          m_bins1 = (m_max1 - m_min1) * BINNING_FACTOR;
         }
       }
     }
-
-    if (max0 > max1) {
-      max1 = max0;
-    } else {
-      max0 = max1;
-    }
-    if (min0 < min1) {
-      min1 = min0;
-    } else {
-      min0 = min1;
-    }
-    bins_0 = max0 - min0;
-    bins_1 = max1 - min1;
-
     for (auto const &det : m_config.pDets) {
       auto dp0 = std::make_pair(det.first, 0);
       auto dp1 = std::make_pair(det.first, 1);
@@ -214,8 +229,8 @@ RootFile::RootFile(Configuration &config) : m_config(config) {
         cnt1D++;
 
         name = std::to_string(det.first) + "_cluster";
-        h2 = new TH2D(name.c_str(), name.c_str(), bins_0, min0, max0, bins_1,
-                      min1, max1);
+        h2 = new TH2D(name.c_str(), name.c_str(), m_bins0, m_min0, m_max0,
+                      m_bins1, m_min1, m_max1);
 
         h2->GetXaxis()->SetTitle("x");
         h2->GetYaxis()->SetTitle("y");
@@ -226,72 +241,72 @@ RootFile::RootFile(Configuration &config) : m_config(config) {
         cnt2D++;
 
         name = std::to_string(det.first) + "_cluster_utpc";
-        h2 = new TH2D(name.c_str(), name.c_str(), bins_0, min0, max0, bins_1,
-                      min1, max1);
+        h2 = new TH2D(name.c_str(), name.c_str(), m_bins0, m_min0, m_max0,
+                      m_bins1, m_min1, m_max1);
         m_TH2D.push_back(h2);
         m_map_TH2D.emplace(
             std::make_pair(std::make_pair(det.first, "cluster_utpc"), cnt2D));
         cnt2D++;
 
         name = std::to_string(det.first) + "_cluster_charge2";
-        h2 = new TH2D(name.c_str(), name.c_str(), bins_0, min0, max0, bins_1,
-                      min1, max1);
+        h2 = new TH2D(name.c_str(), name.c_str(), m_bins0, m_min0, m_max0,
+                      m_bins1, m_min1, m_max1);
         m_TH2D.push_back(h2);
         m_map_TH2D.emplace(std::make_pair(
             std::make_pair(det.first, "cluster_charge2"), cnt2D));
         cnt2D++;
 
         name = std::to_string(det.first) + "_cluster_algo";
-        h2 = new TH2D(name.c_str(), name.c_str(), bins_0, min0, max0, bins_1,
-                      min1, max1);
+        h2 = new TH2D(name.c_str(), name.c_str(), m_bins0, m_min0, m_max0,
+                      m_bins1, m_min1, m_max1);
         m_TH2D.push_back(h2);
         m_map_TH2D.emplace(
             std::make_pair(std::make_pair(det.first, "cluster_algo"), cnt2D));
         cnt2D++;
 
         name = std::to_string(det.first) + "_size_plane0";
-        h2 = new TH2D(name.c_str(), name.c_str(), bins_0, min0, max0, bins_1,
-                      min1, max1);
+        h2 = new TH2D(name.c_str(), name.c_str(), m_bins0, m_min0, m_max0,
+                      m_bins1, m_min1, m_max1);
         m_TH2D.push_back(h2);
         m_map_TH2D.emplace(
             std::make_pair(std::make_pair(det.first, "size_plane0"), cnt2D));
         cnt2D++;
 
         name = std::to_string(det.first) + "_size_plane1";
-        h2 = new TH2D(name.c_str(), name.c_str(), bins_0, min0, max0, bins_1,
-                      min1, max1);
+        h2 = new TH2D(name.c_str(), name.c_str(), m_bins0, m_min0, m_max0,
+                      m_bins1, m_min1, m_max1);
         m_TH2D.push_back(h2);
         m_map_TH2D.emplace(
             std::make_pair(std::make_pair(det.first, "size_plane1"), cnt2D));
         cnt2D++;
 
         name = std::to_string(det.first) + "_size_plane01";
-        h2 = new TH2D(name.c_str(), name.c_str(), bins_0, min0, max0, bins_1,
-                      min1, max1);
+        h2 = new TH2D(name.c_str(), name.c_str(), m_bins0, m_min0, m_max0,
+                      m_bins1, m_min1, m_max1);
         m_TH2D.push_back(h2);
         m_map_TH2D.emplace(
             std::make_pair(std::make_pair(det.first, "size_plane01"), cnt2D));
         cnt2D++;
 
         name = std::to_string(det.first) + "_charge_plane0";
-        h2 = new TH2D(name.c_str(), name.c_str(), bins_0, min0, max0, bins_1,
-                      min1, max1);
+        h2 = new TH2D(name.c_str(), name.c_str(), m_bins0, m_min0, m_max0,
+                      m_bins1, m_min1, m_max1);
         m_TH2D.push_back(h2);
         m_map_TH2D.emplace(
             std::make_pair(std::make_pair(det.first, "charge_plane0"), cnt2D));
         cnt2D++;
 
         name = std::to_string(det.first) + "_charge_plane1";
-        h2 = new TH2D(name.c_str(), name.c_str(), bins_0, min0, max0, bins_1,
-                      min1, max1);
+        h2 = new TH2D(name.c_str(), name.c_str(), m_bins0, m_min0, m_max0,
+                      m_bins1, m_min1, m_max1);
         m_TH2D.push_back(h2);
         m_map_TH2D.emplace(
             std::make_pair(std::make_pair(det.first, "charge_plane1"), cnt2D));
         cnt2D++;
 
         name = std::to_string(det.first) + "_charge_plane01";
-        h2 = new TH2D(name.c_str(), name.c_str(), bins_0, min0, max0, bins_1,
-                      min1, max1);
+        h2 = new TH2D(name.c_str(), name.c_str(), m_bins0, m_min0, m_max0,
+                      m_bins1, m_min1, m_max1);
         m_TH2D.push_back(h2);
         m_map_TH2D.emplace(
             std::make_pair(std::make_pair(det.first, "charge_plane01"), cnt2D));
@@ -299,11 +314,16 @@ RootFile::RootFile(Configuration &config) : m_config(config) {
       }
       // Pad detectors
       else if (m_config.pIsPads[det.first]) {
-        int n0 = m_config.pChannels0[det.first];
-        int n1 = m_config.pChannels1[det.first];
+        m_max0 = m_config.pChannels0[det.first] + 1;
+        m_max1 = m_config.pChannels1[det.first] + 1;
+        m_min0 = 0;
+        m_min1 = 0;
+        m_bins0 = m_max0 * BINNING_FACTOR;
+        m_bins1 = m_max1 * BINNING_FACTOR;
+
         name = std::to_string(det.first) + "_cluster";
-        h2 = new TH2D(name.c_str(), name.c_str(), (n0 + 1) * BINNING_FACTOR, 0,
-                      n0, (n1 + 1) * BINNING_FACTOR, 0, n1);
+        h2 = new TH2D(name.c_str(), name.c_str(), m_bins0, m_min0, m_max0,
+                      m_bins1, m_min1, m_max1);
         m_TH2D.push_back(h2);
         m_map_TH2D.emplace(
             std::make_pair(std::make_pair(det.first, "cluster"), cnt2D));
@@ -311,16 +331,16 @@ RootFile::RootFile(Configuration &config) : m_config(config) {
         cnt2D++;
 
         name = std::to_string(det.first) + "_size";
-        h2 = new TH2D(name.c_str(), name.c_str(), (n0 + 1) * 10, 0, n0,
-                      (n1 + 1) * 10, 0, n1);
+        h2 = new TH2D(name.c_str(), name.c_str(), m_bins0, m_min0, m_max0,
+                      m_bins1, m_min1, m_max1);
         m_TH2D.push_back(h2);
         m_map_TH2D.emplace(
             std::make_pair(std::make_pair(det.first, "size"), cnt2D));
         cnt2D++;
 
         name = std::to_string(det.first) + "_charge";
-        h2 = new TH2D(name.c_str(), name.c_str(), (n0 + 1) * 10, 0, n0,
-                      (n1 + 1) * 10, 0, n1);
+        h2 = new TH2D(name.c_str(), name.c_str(), m_bins0, m_min0, m_max0,
+                      m_bins1, m_min1, m_max1);
         m_TH2D.push_back(h2);
         m_map_TH2D.emplace(
             std::make_pair(std::make_pair(det.first, "charge"), cnt2D));
@@ -328,14 +348,15 @@ RootFile::RootFile(Configuration &config) : m_config(config) {
       }
       // 1D detector
       else if (m_config.GetDetectorPlane(dp0) == true) {
-        int nch = 0;
         if (m_config.GetDetectorPlane(dp0)) {
-          nch = m_config.pChannels[std::make_tuple(det.first, 0)];
+          m_max0 = m_config.pChannels[std::make_tuple(det.first, 0)];
         } else {
-          nch = m_config.pChannels[std::make_tuple(det.first, 1)];
+          m_max0 = m_config.pChannels[std::make_tuple(det.first, 1)];
         }
+        m_min0 = 0;
+        m_bins0 = m_max0 * BINNING_FACTOR;
         name = std::to_string(det.first) + "_cluster";
-        h1 = new TH1D(name.c_str(), name.c_str(), nch * BINNING_FACTOR, 0, nch);
+        h1 = new TH1D(name.c_str(), name.c_str(), m_bins0, m_min0, m_max0);
         m_TH1D.push_back(h1);
         m_map_TH1D.emplace(
             std::make_pair(std::make_pair(det.first, "cluster"), cnt1D));
@@ -343,14 +364,14 @@ RootFile::RootFile(Configuration &config) : m_config(config) {
         cnt1D++;
 
         name = std::to_string(det.first) + "_size";
-        h1 = new TH1D(name.c_str(), name.c_str(), nch * BINNING_FACTOR, 0, nch);
+        h1 = new TH1D(name.c_str(), name.c_str(), m_bins0, m_min0, m_max0);
         m_TH1D.push_back(h1);
         m_map_TH1D.emplace(
             std::make_pair(std::make_pair(det.first, "size"), cnt1D));
         cnt1D++;
 
         name = std::to_string(det.first) + "_charge";
-        h1 = new TH1D(name.c_str(), name.c_str(), nch * BINNING_FACTOR, 0, nch);
+        h1 = new TH1D(name.c_str(), name.c_str(), m_bins0, m_min0, m_max0);
         m_TH1D.push_back(h1);
         m_map_TH1D.emplace(
             std::make_pair(std::make_pair(det.first, "charge"), cnt1D));
@@ -484,6 +505,7 @@ void RootFile::SaveHistograms() {
   for (auto const &det : m_config.pDets) {
     auto dp0 = std::make_pair(det.first, 0);
     auto dp1 = std::make_pair(det.first, 1);
+
     if (!m_config.pIsPads[det.first] && m_config.GetDetectorPlane(dp0) &&
         m_config.GetDetectorPlane(dp1)) {
       if (m_config.createJSON) {
@@ -528,8 +550,8 @@ void RootFile::SaveHistograms() {
         f4.close();
       }
       int n = 0;
-      for (int b0 = 1; b0 <= bins_0; b0++) {
-        for (int b1 = 1; b1 <= bins_1; b1++) {
+      for (int b0 = 1; b0 <= m_bins0; b0++) {
+        for (int b1 = 1; b1 <= m_bins1; b1++) {
           int idx = m_map_TH2D[std::make_pair(det.first, "cluster")];
           int cnt = m_TH2D[idx]->GetBinContent(b0, b1);
           double val = 0;
@@ -589,12 +611,10 @@ void RootFile::SaveHistograms() {
         f1 << json;
         f1.close();
       }
-      int bins0 = m_config.pChannels0[det.first] * BINNING_FACTOR;
-      int bins1 = m_config.pChannels1[det.first] * BINNING_FACTOR;
       int n = 0;
 
-      for (int b0 = 1; b0 <= bins0; b0++) {
-        for (int b1 = 1; b1 <= bins1; b1++) {
+      for (int b0 = 1; b0 <= m_bins0; b0++) {
+        for (int b1 = 1; b1 <= m_bins1; b1++) {
           int idx = m_map_TH2D[std::make_pair(det.first, "cluster")];
           int cnt = m_TH2D[idx]->GetBinContent(b0, b1);
           double val = 0;
@@ -630,9 +650,7 @@ void RootFile::SaveHistograms() {
         f1.close();
       }
       int n = 0;
-      int bins = m_config.pChannels[std::make_tuple(det.first, 0)] * 4;
-
-      for (int b = 1; b <= bins; b++) {
+      for (int b = 1; b <= m_bins0; b++) {
         int idx = m_map_TH1D[std::make_pair(det.first, "cluster")];
         // Number of clusters in bin
         int cnt = m_TH1D[idx]->GetBinContent(b);

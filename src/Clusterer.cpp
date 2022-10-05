@@ -1079,52 +1079,62 @@ int Clusterer::MatchClustersDetector(uint8_t det) {
           clusterDetector.adcs2 = (*bestMatchPlane2).adcs;
         } else {
           if (m_config.pTransform.size() == m_config.pDets.size()) {
-            auto tx = m_config.pTransformX[m_config.pDets[det]];
-            auto ty = m_config.pTransformY[m_config.pDets[det]];
-            auto tz = m_config.pTransformZ[m_config.pDets[det]];
+            if (!m_config.pIsPads[det] &&
+                m_config.GetDetectorPlane(dp0) == true &&
+                m_config.GetDetectorPlane(dp1) == true) {
+              auto tx = m_config.pTransformX[m_config.pDets[det]];
+              auto ty = m_config.pTransformY[m_config.pDets[det]];
+              auto tz = m_config.pTransformZ[m_config.pDets[det]];
 
-            clusterDetector.pos0 = c0.pos * std::get<0>(tx) +
-                                   (*bestMatchPlane1).pos * std::get<1>(tx) +
-                                   std::get<3>(tx);
-            clusterDetector.pos1 = c0.pos * std::get<0>(ty) +
-                                   (*bestMatchPlane1).pos * std::get<1>(ty) +
-                                   std::get<3>(ty);
-            clusterDetector.pos2 = c0.pos * std::get<0>(tz) +
-                                   (*bestMatchPlane1).pos * std::get<1>(tz) +
-                                   std::get<3>(tz);
+              clusterDetector.pos0 = c0.pos * std::get<0>(tx) +
+                                     (*bestMatchPlane1).pos * std::get<1>(tx) +
+                                     std::get<3>(tx);
+              clusterDetector.pos1 = c0.pos * std::get<0>(ty) +
+                                     (*bestMatchPlane1).pos * std::get<1>(ty) +
+                                     std::get<3>(ty);
+              clusterDetector.pos2 = c0.pos * std::get<0>(tz) +
+                                     (*bestMatchPlane1).pos * std::get<1>(tz) +
+                                     std::get<3>(tz);
 
-            clusterDetector.pos0_utpc =
-                c0.pos_utpc * std::get<0>(tx) +
-                (*bestMatchPlane1).pos_utpc * std::get<1>(tx) + std::get<3>(tx);
-            clusterDetector.pos1_utpc =
-                c0.pos_utpc * std::get<0>(ty) +
-                (*bestMatchPlane1).pos_utpc * std::get<1>(ty) + std::get<3>(ty);
-            clusterDetector.pos2_utpc =
-                c0.pos_utpc * std::get<0>(tz) +
-                (*bestMatchPlane1).pos_utpc * std::get<1>(tz) + std::get<3>(tz);
+              clusterDetector.pos0_utpc =
+                  c0.pos_utpc * std::get<0>(tx) +
+                  (*bestMatchPlane1).pos_utpc * std::get<1>(tx) +
+                  std::get<3>(tx);
+              clusterDetector.pos1_utpc =
+                  c0.pos_utpc * std::get<0>(ty) +
+                  (*bestMatchPlane1).pos_utpc * std::get<1>(ty) +
+                  std::get<3>(ty);
+              clusterDetector.pos2_utpc =
+                  c0.pos_utpc * std::get<0>(tz) +
+                  (*bestMatchPlane1).pos_utpc * std::get<1>(tz) +
+                  std::get<3>(tz);
 
-            clusterDetector.pos0_charge2 =
-                c0.pos_charge2 * std::get<0>(tx) +
-                (*bestMatchPlane1).pos_charge2 * std::get<1>(tx) +
-                std::get<3>(tx);
-            clusterDetector.pos1_charge2 =
-                c0.pos_charge2 * std::get<0>(ty) +
-                (*bestMatchPlane1).pos_charge2 * std::get<1>(ty) +
-                std::get<3>(ty);
-            clusterDetector.pos2_charge2 =
-                c0.pos_charge2 * std::get<0>(tz) +
-                (*bestMatchPlane1).pos_charge2 * std::get<1>(tz) +
-                std::get<3>(tz);
+              clusterDetector.pos0_charge2 =
+                  c0.pos_charge2 * std::get<0>(tx) +
+                  (*bestMatchPlane1).pos_charge2 * std::get<1>(tx) +
+                  std::get<3>(tx);
+              clusterDetector.pos1_charge2 =
+                  c0.pos_charge2 * std::get<0>(ty) +
+                  (*bestMatchPlane1).pos_charge2 * std::get<1>(ty) +
+                  std::get<3>(ty);
+              clusterDetector.pos2_charge2 =
+                  c0.pos_charge2 * std::get<0>(tz) +
+                  (*bestMatchPlane1).pos_charge2 * std::get<1>(tz) +
+                  std::get<3>(tz);
 
-            clusterDetector.pos0_algo =
-                c0.pos_algo * std::get<0>(tx) +
-                (*bestMatchPlane1).pos_algo * std::get<1>(tx) + std::get<3>(tx);
-            clusterDetector.pos1_algo =
-                c0.pos_algo * std::get<0>(ty) +
-                (*bestMatchPlane1).pos_algo * std::get<1>(ty) + std::get<3>(ty);
-            clusterDetector.pos2_algo =
-                c0.pos_algo * std::get<0>(tz) +
-                (*bestMatchPlane1).pos_algo * std::get<1>(tz) + std::get<3>(tz);
+              clusterDetector.pos0_algo =
+                  c0.pos_algo * std::get<0>(tx) +
+                  (*bestMatchPlane1).pos_algo * std::get<1>(tx) +
+                  std::get<3>(tx);
+              clusterDetector.pos1_algo =
+                  c0.pos_algo * std::get<0>(ty) +
+                  (*bestMatchPlane1).pos_algo * std::get<1>(ty) +
+                  std::get<3>(ty);
+              clusterDetector.pos2_algo =
+                  c0.pos_algo * std::get<0>(tz) +
+                  (*bestMatchPlane1).pos_algo * std::get<1>(tz) +
+                  std::get<3>(tz);
+            }
           }
         }
 
