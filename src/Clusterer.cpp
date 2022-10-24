@@ -5,7 +5,9 @@
 
 #include <chrono>
 #include <functional>
+#include <future>
 #include <iomanip>
+#include <thread>
 #define UNUSED __attribute__((unused))
 
 //#undef TRC_LEVEL
@@ -141,12 +143,23 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
       for (auto const &det : m_config.pDets) {
         auto dp0 = std::make_pair(det.first, 0);
         auto dp1 = std::make_pair(det.first, 1);
+        auto dp2 = std::make_pair(det.first, 2);
         if (m_stats.GetLowestCommonTriggerTimestampDet(det.first) < ts) {
           m_stats.SetLowestCommonTriggerTimestampPlane(dp0, ts);
           m_stats.SetLowestCommonTriggerTimestampPlane(dp1, ts);
+          m_stats.SetLowestCommonTriggerTimestampPlane(dp2, ts);
           m_stats.SetLowestCommonTriggerTimestampDet(det.first, ts);
+          /*
+          std::thread t1(&Clusterer::AnalyzeClustersPlane, this, dp0);
+          std::thread t2(&Clusterer::AnalyzeClustersPlane, this, dp1);
+          std::thread t3(&Clusterer::AnalyzeClustersPlane, this, dp2);
+          t1.join();
+          t2.join();
+          t3.join();
+          */
           AnalyzeClustersPlane(dp0);
           AnalyzeClustersPlane(dp1);
+          AnalyzeClustersPlane(dp2);
           AnalyzeClustersDetector(det.first);
         }
       }
@@ -1526,11 +1539,21 @@ void Clusterer::FinishAnalysis() {
     m_stats.SetLowestCommonTriggerTimestampPlane(dp1, ts);
     m_stats.SetLowestCommonTriggerTimestampPlane(dp2, ts);
     m_stats.SetLowestCommonTriggerTimestampDet(det.first, ts);
+    /*
+        std::thread t1(&Clusterer::AnalyzeClustersPlane, this, dp0);
+        std::thread t2(&Clusterer::AnalyzeClustersPlane, this, dp1);
+        std::thread t3(&Clusterer::AnalyzeClustersPlane, this, dp2);
+        t1.join();
+        t2.join();
+        t3.join();
+    */
 
     AnalyzeClustersPlane(dp0);
     AnalyzeClustersPlane(dp1);
     AnalyzeClustersPlane(dp2);
+
     AnalyzeClustersDetector(det.first);
+
     if (m_config.pSaveWhat % 2 == 1) {
       m_rootFile->SaveHits();
     }
