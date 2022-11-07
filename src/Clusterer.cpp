@@ -486,7 +486,11 @@ int Clusterer::ClusterByPad(std::pair<uint8_t, uint8_t> dp,
       clusterPlane.pos_utpc = clusterPlane.pos;
       clusterPlane.time_algo = xy_time / adcTotal;
       clusterPlane.pos_algo = clusterPlane.pos;
-      clusterPlane.strips = std::move(vIdx);
+      if (plane == 0) {
+        clusterPlane.strips = std::move(vIdx);
+      } else {
+        clusterPlane.strips = std::move(vIdy);
+      }
       clusterPlane.times = std::move(vTimes);
       clusterPlane.adcs = std::move(vADC);
       clusterPlane.max_delta_time = maxDeltaTime;
