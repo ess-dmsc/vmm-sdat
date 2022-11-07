@@ -1,6 +1,5 @@
 [requires]
 fmt/6.2.0
-graylog-logger/2.0.3-dm1@ess-dmsc/stable
 nlohmann_json/3.9.1
 libpcap/1.8.1@bincrafters/stable
 
