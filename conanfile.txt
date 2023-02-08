@@ -1,7 +1,7 @@
 [requires]
 fmt/6.2.0
 nlohmann_json/3.9.1
-libpcap/1.8.1@bincrafters/stable
+libpcap/1.9.1
 
 [generators]
 cmake
