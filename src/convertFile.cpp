@@ -352,9 +352,10 @@ int main(int argc, char **argv) {
             bool result = m_Clusterer->AnalyzeHits(
                 complete_timestamp, assisterId, hit.VMM, hit.Channel, hit.BC,
                 hit.TDC, static_cast<uint16_t>(corrected_adc),
-                overThreshold != 0, corrected_time);
+                overThreshold != 0, corrected_time, hit.GEO);
             if (result == false ||
                 (total_hits >= m_config.nHits && m_config.nHits > 0)) {
+              std::cout << "breakup " << total_hits << " " << m_config.nHits << " " << result << std::endl;
               doContinue = false;
               break;
             }

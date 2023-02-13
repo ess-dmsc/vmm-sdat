@@ -93,7 +93,7 @@ public:
   std::string pConditionCoincidence = "center-of-mass";
   double pChargeRatioLower = 0.5;
   double pChargeRatioUpper = 2;
-  int nHits = 0;
+  uint64_t nHits = 0;
   //**************************************************************
   // END PARAMETERS
   //**************************************************************

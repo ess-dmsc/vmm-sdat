@@ -34,11 +34,11 @@ Clusterer::~Clusterer() { RootFile::Dispose(); }
 bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
                             uint16_t chNo, uint16_t bcid, uint16_t tdc,
                             uint16_t adc, bool overThresholdFlag,
-                            double chipTime) {
+                            double chipTime, uint8_t geoId) {
 
   int pos0 = m_config.pPositions0[fecId][vmmId][chNo];
   int pos1 = m_config.pPositions1[fecId][vmmId][chNo];
-  // std::cout << "pos0/pos1 " << pos0 << " " << pos1 << std::endl;
+
   if (pos0 == -1) {
     DTRACE(DEB, "\t\tDetector or Plane not defined for FEC %d and vmmId %d!\n",
            (int)fecId, (int)vmmId);
@@ -135,8 +135,10 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
     if (m_config.pSaveWhat >= 10) {
       uint64_t ts = 0;
       for (auto const &fec : m_config.pFecs) {
-        if (ts == 0 || ts > m_stats.GetOldTriggerTimestamp(fec)) {
-          ts = m_stats.GetOldTriggerTimestamp(fec);
+        if (fec != 384) {
+          if (ts == 0 || ts > m_stats.GetOldTriggerTimestamp(fec)) {
+            ts = m_stats.GetOldTriggerTimestamp(fec);
+          }
         }
       }
 
@@ -182,6 +184,7 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
         theHit0.plane = 0;
         theHit0.fec = fecId;
         theHit0.vmm = vmmId;
+        theHit0.geo_id = geoId;
         theHit0.readout_time = srsTimestamp;
         theHit0.ch = chNo;
         theHit0.pos = (uint16_t)pos0;
@@ -199,6 +202,7 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
         theHit1.plane = 1;
         theHit1.fec = fecId;
         theHit1.vmm = vmmId;
+        theHit1.geo_id = geoId;
         theHit1.readout_time = srsTimestamp;
         theHit1.ch = chNo;
         theHit1.pos = (uint16_t)pos1;
@@ -216,6 +220,7 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
         theHit.plane = plane;
         theHit.fec = fecId;
         theHit.vmm = vmmId;
+        theHit.geo_id = geoId;
         theHit.readout_time = srsTimestamp;
         theHit.ch = chNo;
         theHit.pos = (uint16_t)pos0;
@@ -285,7 +290,6 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
   if (m_stats.GetMaxTriggerTimestamp(fecId) < srsTimestamp) {
     m_stats.SetMaxTriggerTimestamp(fecId, srsTimestamp);
   }
-
   m_oldVmmId = vmmId;
   m_oldFecId = fecId;
 
@@ -294,9 +298,6 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
 
 //====================================================================================================================
 int Clusterer::ClusterByTime(std::pair<uint8_t, uint8_t> dp) {
-
-  // std::pair<uint8_t, uint8_t> dp = std::make_pair(det, plane);
-
   ClusterContainer cluster;
   double maxDeltaTime = 0;
   int clusterCount = 0;
@@ -1264,16 +1265,12 @@ int Clusterer::MatchClustersDetector(uint8_t det) {
   return clusterCount;
 }
 
-// void Clusterer::AnalyzeClustersPlane(uint8_t det, uint8_t plane,
-// HitContainer& hits, HitContainer& newHits, double timeReadyToCluster,
-// uint16_t correctionTime)
 void Clusterer::AnalyzeClustersPlane(std::pair<uint8_t, uint8_t> dp) {
 
   if (ChooseHitsToBeClustered(dp) == false && m_hits[dp].empty()) {
     return;
   }
   int cnt = ClusterByTime(dp);
-
   DTRACE(DEB, "%d cluster in detector %d plane %d\n", cnt, (int)std::get<0>(dp),
          (int)std::get<1>(dp));
 
@@ -1333,7 +1330,6 @@ bool Clusterer::ChooseHitsToBeClustered(std::pair<uint8_t, uint8_t> dp) {
 
   // Nothing to cluster, tuples in newHits vector too recent
   if (std::get<0>(*theMin) > timeReadyToCluster) {
-
     //(smallest timestamp larger than
     // m_stats.GetLowestCommonTriggerTimestampPlane(dp)) Will be clustered
     // later
@@ -1366,10 +1362,6 @@ bool Clusterer::ChooseHitsToBeClustered(std::pair<uint8_t, uint8_t> dp) {
     timeReadyToCluster = std::get<0>(*it);
     ++it;
   }
-
-  // std::cout << "still in cluster " << std::get < 0 > (*it) << "\n" <<
-  // std::endl;
-
   int index = std::distance(m_hits_new[dp].begin(), it);
   // Insert the data that is ready to be clustered from newHits into hits
   m_hits[dp].insert(m_hits[dp].end(),

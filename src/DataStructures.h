@@ -8,6 +8,7 @@ struct Hit {
   uint8_t vmm;
   double readout_time;
   double time;
+  uint8_t geo_id;
   uint8_t ch;
   uint16_t pos;
   uint16_t bcid;
