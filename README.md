@@ -266,7 +266,10 @@ plane clusters also in the detector cluster tree. The entries of the missing pla
     	ADC and/or time correction in the form of a slope and an offset correction. 
     	The calibration file can be produced with the VMM slow control tool. Optional parameter. 
 
-  
+    -t0: SRS data format: Time correction in ns for each vmm in the format
+        [[fec0, vmm0,correction0], [fec1, vmm1, correction1]]. The correction value is subtracted from all timestamps. 
+        If instead of a number the word 'run' is put as correction, the first timestamp of the run is used as correction. For the ESS data format, the first timestamp is always substracted to get smaller timestamps.
+        Optional argument for SRS data format (default 0)
 
 ## Running the program
 In the run folder there is a script and example data that show how to use the convertFile utility. 

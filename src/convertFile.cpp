@@ -290,19 +290,10 @@ int main(int argc, char **argv) {
             if (firstTime == 0) {
               firstTime = hit.TimeHigh * 1.0E+09;
             }
-            double t0_correction = 0;
-            std::pair<uint8_t, uint8_t> fec_vmm =
-                std::make_pair(assisterId, hit.VMM);
-            auto searchMap = m_config.pFecVMM_time0.find(fec_vmm);
-            if (searchMap != m_config.pFecVMM_time0.end()) {
-              std::string t0 = m_config.pFecVMM_time0[fec_vmm];
-              if (t0 == "run") {
-                t0_correction = firstTime;
-              } else {
-                t0_correction = std::stod(t0);
-              }
-            }
-            double complete_timestamp = hit.TimeHigh * 1.0E+09 - t0_correction +
+            // ESS time format use 64bit timestamp in nanoseconds
+            // To be able to use double as type for timestamp calculation,
+            // we have to subtract the first timestamp of the run
+            double complete_timestamp = hit.TimeHigh * 1.0E+09 - firstTime +
                                         hit.TimeLow * m_config.pBCTime_ns * 0.5;
             uint16_t adc = hit.OTADC & 0x03ff;
             bool overThreshold = hit.OTADC & 0x8000;
@@ -355,7 +346,8 @@ int main(int argc, char **argv) {
                 overThreshold != 0, corrected_time, hit.GEO);
             if (result == false ||
                 (total_hits >= m_config.nHits && m_config.nHits > 0)) {
-              std::cout << "breakup " << total_hits << " " << m_config.nHits << " " << result << std::endl;
+              std::cout << "breakup " << total_hits << " " << m_config.nHits
+                        << " " << result << std::endl;
               doContinue = false;
               break;
             }

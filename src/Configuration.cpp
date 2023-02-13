@@ -146,7 +146,7 @@ bool Configuration::PrintUsage(const std::string &errorMessage, char *argv) {
          "The correction value is subtracted from all timestamps.\n"
          "        If instead of a number the word 'run' is put as correction,"
          " the first timestamp of the run is used as correction. "
-         "Optional argument(default 0)\n "
+         "Optional argument for SRS data format (default 0)\n "
       << std::endl;
   std::cout
       << "-th:    threshold value in ADC counts. Optional argument (default 0, "
