@@ -17,8 +17,8 @@ from matplotlib.colors import LogNorm
 file_name="example"
 #file_name="monitoring"
 detector_id = 0 
-channels_x = 640
-channels_y = 640
+channels_x = 256
+channels_y = 256
 max_charge = 10000
 ##########################
 h1_total = [0] * channels_x    
@@ -33,6 +33,8 @@ h8_total = np.zeros((channels_x, channels_y))
 h_cluster_rate = [0] * 200  
 h_hit_rate = [0] * 200 
 h_time = [0] * 200 
+h_percentage_x = [0] * 200 
+h_percentage_y = [0] * 200 
 h_size0 = [0] * 32
 h_size1 = [0] * 32 
 h_size01 = [0] * 64
@@ -54,7 +56,7 @@ color_y ='darkgreen'
 color_xy = 'rebeccapurple'
 color_rate = 'red'
 fig_w = 17
-fig_h = 10
+fig_h = 9
 line_width = 3
 
 start_time = timer()
@@ -84,7 +86,7 @@ try:
 			t.sleep(2)
 			continue
 		args_vmmsdat = ['../build/convertFile', '-f', "./" + name, '-geo', 'example_monitoring.json', '-bc', '40', '-tac', '60', '-th','0', '-cs','1', '-ccs', '3', '-dt', '200', '-mst', '1', '-spc', '500', '-dp', '200', '-coin', 'center-of-masss', '-crl', '0.2', '-cru', '10', '-save', '[[0],[],[0]]', '-algo', '4', '-info', '', '-df','SRS']
-#		args_vmmsdat = ['../build/convertFile', '-f', "./" + name, '-vmm', #'[[[0,0,0,8],[0,0,0,9],[0,0,0,6],[0,0,0,7],[0,0,0,4],[0,0,0,5],[0,0,0,2],[0,0,0,3],[0,0,0,0],[0,0,0,1],[0,1,1,0],[0,1,1,1],[0,1,1,2],[0,1,1,3],[0,1,1,4],[0,1,1,5],[0,1,1,6],[0,1,1,7],[0,1,1,8],[0,1,1,9]]','-axis', '[[0,0],1],[[0,1],0]', '-bc', #'44.02', '-tac', '60', '-th','0', '-cs','1', '-ccs', '2', '-dt', '200', '-mst', '1', '-spc', '500', '-dp', '500', '-coin', 'center-of-masss', '-crl', '0.1', '-cru', '10', '-save', '[[0],[],[0]]', '-json','0', '-algo', '0', '-info', 'monitor', '-df', #'ESS']			
+		#args_vmmsdat = ['../build/convertFile', '-f', "./" + name, '-vmm', '[[[0,0,0,8],[0,0,0,9],[0,0,0,6],[0,0,0,7],[0,0,0,4],[0,0,0,5],[0,0,0,2],[0,0,0,3],[0,0,0,0],[0,0,0,1],[0,1,1,0],[0,1,1,1],[0,1,1,2],[0,1,1,3],[0,1,1,4],[0,1,1,5],[0,1,1,6],[0,1,1,7],[0,1,1,8],[0,1,1,9]]','-axis', '[[0,0],1],[[0,1],0]', '-bc', '44.02', '-tac', '60', '-th','0', '-cs','1', '-ccs', '2', '-dt', '200', '-mst', '1', '-spc', '500', '-dp', '500', '-coin', 'center-of-masss', '-crl', '0.1', '-cru', '10', '-save', '[[0],[0],[0]]', '-json','0', '-algo', '0', '-info', 'monitor', '-df', 'ESS']			
 		
 		subprocess.call(args_vmmsdat)
 		lastFileId = fileId
@@ -121,7 +123,7 @@ try:
 				dt_hits = max(hits0["time"]) - min(hits0["time"])
 				h_hit_rate.pop(0)
 				if dt_hits > 0:
-					h_hit_rate.append(num_hits*1000000000.0/dt_hits)
+					h_hit_rate.append(num_hits*1000000.0/dt_hits)
 				else:
 					h_hit_rate.append(0)
 				h_time.pop(0)
@@ -155,13 +157,31 @@ try:
 				cl = df_clusters.query("det == " + str(detector_id))
 				num_clusters = cl["time0"].size
 				if num_clusters == 0:
-					continue 
+					continue
 				dt_cluster = max(cl["time0"]) - min(cl["time0"])
 				h_cluster_rate.pop(0)
 				if dt_cluster > 0:
-					h_cluster_rate.append(num_clusters*1000000000/dt_cluster)	
+					h_cluster_rate.append(num_clusters*1000000/dt_cluster)	
 				else:
-					h_cluster_rate.append(0)	
+					h_cluster_rate.append(0)
+						
+				tree_plane= uproot.open(file)['clusters_plane']
+				p_det = tree_plane.array('det')
+				p_plane = tree_plane.array('plane')
+				plane_clusters = {'det': p_det,'plane': p_plane}
+				df_plane = pd.DataFrame(plane_clusters)
+					 
+				pl0 = df_plane.query("det == " + str(detector_id) + " and plane == 0")
+				num_clusters_x = pl0["det"].size
+				
+				pl1 = df_plane.query("det == " + str(detector_id) + " and plane == 1")
+				num_clusters_y = pl1["det"].size
+				
+				h_percentage_x.pop(0)
+				h_percentage_y.pop(0)
+				h_percentage_x.append(num_clusters*100/num_clusters_x)
+				h_percentage_y.append(num_clusters*100/num_clusters_y)
+	
 				
 					
 				####################################################################	
@@ -206,8 +226,10 @@ try:
 				
 				ax[2, 0].step(np.arange(-5,505,10),h_max_delta_time0, color=color_x, linewidth=line_width)
 				ax[2, 1].step(np.arange(-5,505,10),h_max_delta_time1, color=color_y, linewidth=line_width)
-				ax[2, 2].plot(h_time,h_hit_rate, color=color_rate, linewidth=line_width)		
-				ax[2, 3].plot(h_time,h_cluster_rate, color=color_rate, linewidth=line_width)		
+				ax[2, 2].plot(h_time,h_percentage_x, color=color_x, linewidth=line_width)
+				ax[2, 2].plot(h_time,h_percentage_y, color=color_y, linewidth=line_width)
+				ax[2, 3].plot(h_time,h_hit_rate, color=color_rate, linewidth=line_width, linestyle='dashed')
+				ax[2, 3].plot(h_time,h_cluster_rate, color=color_rate, linewidth=line_width)					
 			
 				ax[0, 0].title.set_text("clusters size0")
 				ax[0, 1].title.set_text("clusters size1")
@@ -237,16 +259,16 @@ try:
 						
 				ax[2, 0].title.set_text("max_delta_time0")
 				ax[2, 1].title.set_text("max_delta_time1")
-				ax[2, 2].title.set_text("hit rate")
-				ax[2, 3].title.set_text("cluster rate")
+				ax[2, 2].title.set_text("common clusters: plane 0 (blue), plane 1 (green)")
+				ax[2, 3].title.set_text("rate: hit (dashed), cluster (solid)")
 				ax[2, 0].set_xlabel('ns')
 				ax[2, 0].set_ylabel('counts')
 				ax[2, 1].set_xlabel('time [ns]')
 				ax[2, 1].set_ylabel('counts')
-				ax[2, 2].set_xlabel('time [ns]')
-				ax[2, 2].set_ylabel('counts')
-				ax[2, 3].set_xlabel('time [ns]')
-				ax[2, 3].set_ylabel('counts')						
+				ax[2, 2].set_xlabel('time since start of acq [s]')
+				ax[2, 2].set_ylabel('percent [%]')	
+				ax[2, 3].set_xlabel('time since start of acq [s]')
+				ax[2, 3].set_ylabel('rate [kHz]')
 												
 				fig.set_size_inches(fig_w, fig_h)
 				fig.tight_layout()
