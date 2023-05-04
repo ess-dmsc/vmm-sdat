@@ -195,6 +195,19 @@ bool Configuration::PrintUsage(const std::string &errorMessage, char *argv) {
   std::cout << "        3: COG2 including only over Threshold hits"
             << std::endl;
   std::cout << "        4: position and time of largest ADC" << std::endl;
+  std::cout << "        5: trigger pattern (NIP box), the trigger pattern is "
+               "stored as integer in time_algo2"
+            << std::endl;
+  std::cout << "           The vmm that is connected to the NIP box has to be "
+               "defined as plane 2 of the detector."
+            << std::endl;
+  std::cout << "           The channels of the VMM have to be mapped to the "
+               "strips in the form:"
+            << std::endl;
+  std::cout << "           channel representing bit 0 = strip 0, channel for "
+               "bit 1  = strip 1 and so on."
+            << std::endl;
+
   std::cout << "-crl:   Valid clusters normally have the same amount of charge "
                "in both detector planes (ratio of charge plane 0/charge plane "
                "1 is 100\% or 1.\n"

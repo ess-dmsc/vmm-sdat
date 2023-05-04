@@ -595,11 +595,12 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
 
     // Add members of a cluster, if it is either the beginning of a cluster,
     // or if strip gap and time span is correct
-    if (stripCount == 0 ||
-        (std::fabs(strip1 - strip2) > 0 &&
-         std::fabs(strip1 - strip2) - 1 <= m_config.pMissingStripsClusterX &&
-         time1 - startTime <= m_config.pSpanClusterTime &&
-         largestTime - time1 <= m_config.pSpanClusterTime)) {
+    if (stripCount == 0 || (std::fabs(strip1 - strip2) > 0 &&
+                            ((plane == 2 && m_config.pAlgo == 5) ||
+                             (std::fabs(strip1 - strip2) - 1 <=
+                              m_config.pMissingStripsClusterX)) &&
+                            time1 - startTime <= m_config.pSpanClusterTime &&
+                            largestTime - time1 <= m_config.pSpanClusterTime)) {
       DTRACE(DEB, "\tstrip %d, time %llu, adc %d:\n", strip1,
              static_cast<unsigned long long>(time1), adc1);
       if (adc1 > adc2) {
@@ -644,8 +645,11 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
       vADC.emplace_back(adc1);
       stripCount++;
     }
-    // Stop clustering if gap between strips is too large or time span too long
-    else if (std::fabs(strip1 - strip2) - 1 > m_config.pMissingStripsClusterX ||
+    // Stop clustering if gap between strips is too large or time span too
+    // long
+    else if ((!(plane == 2 && m_config.pAlgo == 5) &&
+              (std::fabs(strip1 - strip2) - 1 >
+               m_config.pMissingStripsClusterX)) ||
              time1 - startTime > m_config.pSpanClusterTime ||
              largestTime - time1 > m_config.pSpanClusterTime) {
       // Valid cluster
@@ -701,6 +705,16 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
         else if (m_config.pAlgo == 4) {
           pos_algo = largestADCPos;
           time_algo = largestADCTime;
+        }
+        // trigger pattern
+        else if (m_config.pAlgo == 5) {
+          pos_algo = 0;
+          time_algo = 0;
+          if (plane == 2) {
+            for (int n = 0; n < vStrips.size(); n++) {
+              time_algo = time_algo + pow(2.0, vStrips[n]);
+            }
+          }
         }
 
         clusterPlane.time_utpc = time_utpc;
@@ -814,6 +828,16 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
     else if (m_config.pAlgo == 4) {
       pos_algo = largestADCPos;
       time_algo = largestADCTime;
+    }
+    // trigger pattern
+    else if (m_config.pAlgo == 5) {
+      pos_algo = 0;
+      time_algo = 0;
+      if (plane == 2) {
+        for (int n = 0; n < vStrips.size(); n++) {
+          time_algo = time_algo + pow(2.0, vStrips[n]);
+        }
+      }
     }
     clusterPlane.time_utpc = time_utpc;
     clusterPlane.pos_utpc = pos_utpc;
