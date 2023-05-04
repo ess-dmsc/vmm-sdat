@@ -47,6 +47,73 @@ void RootFile::SaveDate(double the_seconds, std::string the_date) {
   datetime.SetName("date");
   datetime.SetTitle(str_date);
   datetime.Write();
+
+  TNamed channelMapping;
+  channelMapping.SetName("channel mapping");
+  channelMapping.SetTitle(m_config.pChannelMapping.c_str());
+  channelMapping.Write();
+
+  TNamed chargeRatioLower;
+  chargeRatioLower.SetName("charge_ratio_lower");
+  std::string sChargeRatioLower = std::to_string(m_config.pChargeRatioLower);
+  chargeRatioLower.SetTitle(sChargeRatioLower.c_str());
+  chargeRatioLower.Write();
+
+  TNamed chargeRatioUpper;
+  chargeRatioUpper.SetName("charge_ratio_lower");
+  std::string sChargeRatioUpper = std::to_string(m_config.pChargeRatioUpper);
+  chargeRatioUpper.SetTitle(sChargeRatioUpper.c_str());
+  chargeRatioUpper.Write();
+
+  TNamed bc;
+  bc.SetName("bc");
+  std::string sBC = std::to_string(m_config.pBC);
+  bc.SetTitle(sBC.c_str());
+  bc.Write();
+
+  TNamed tac;
+  tac.SetName("tac");
+  std::string sTAC = std::to_string(m_config.pTAC);
+  tac.SetTitle(sTAC.c_str());
+  tac.Write();
+
+  TNamed minClusterSize;
+  minClusterSize.SetName("min_cluster_size");
+  std::string sMinClusterSize = std::to_string(m_config.pMinClusterSize);
+  minClusterSize.SetTitle(sMinClusterSize.c_str());
+  minClusterSize.Write();
+
+  TNamed coincidentClusterSize;
+  coincidentClusterSize.SetName("coincident_cluster_size");
+  std::string sCoincidentClusterSize =
+      std::to_string(m_config.pCoincidentClusterSize);
+  coincidentClusterSize.SetTitle(sCoincidentClusterSize.c_str());
+  coincidentClusterSize.Write();
+
+  TNamed deltaTimeHits;
+  deltaTimeHits.SetName("delta_time_hits");
+  std::string sDeltaTimeHits = std::to_string(m_config.pDeltaTimeHits);
+  deltaTimeHits.SetTitle(sDeltaTimeHits.c_str());
+  deltaTimeHits.Write();
+
+  TNamed missingStripsClusterX;
+  missingStripsClusterX.SetName("missing_strips");
+  std::string sMissingStripsClusterX =
+      std::to_string(m_config.pMissingStripsClusterX);
+  missingStripsClusterX.SetTitle(sMissingStripsClusterX.c_str());
+  missingStripsClusterX.Write();
+
+  TNamed spanClusterTime;
+  spanClusterTime.SetName("span_cluster_time");
+  std::string sSpanClusterTime = std::to_string(m_config.pSpanClusterTime);
+  spanClusterTime.SetTitle(sSpanClusterTime.c_str());
+  spanClusterTime.Write();
+
+  TNamed deltaTimePlanes;
+  deltaTimePlanes.SetName("delta_time_planes");
+  std::string sDeltaTimePlanes = std::to_string(m_config.pDeltaTimePlanes);
+  deltaTimePlanes.SetTitle(sDeltaTimePlanes.c_str());
+  deltaTimePlanes.Write();
 }
 
 RootFile::RootFile(Configuration &config) : m_config(config) {

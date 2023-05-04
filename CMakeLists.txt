@@ -88,10 +88,12 @@ target_link_libraries(vmm-sdat ${ROOT_LIBRARIES} fmt pcap)
 #---Create  a main program using the library
 add_executable(convertFile ${CMAKE_CURRENT_SOURCE_DIR}/src/convertFile.cpp)
 add_executable(accessTree ${CMAKE_CURRENT_SOURCE_DIR}/analysis/accessTree.cpp)
+add_executable(normalizeHisto ${CMAKE_CURRENT_SOURCE_DIR}/analysis/normalizeHisto.cpp)
 
 
 target_link_libraries(convertFile vmm-sdat)
 target_link_libraries(accessTree vmm-sdat)
+target_link_libraries(normalizeHisto vmm-sdat)
 
 target_compile_definitions(vmm-sdat PUBLIC __FAVOR_BSD)
 

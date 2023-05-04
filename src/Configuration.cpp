@@ -7,6 +7,7 @@
 #include "Configuration.h"
 #include <cmath>
 #include <cstring>
+#include <ctime>
 #include <iomanip>
 #include <regex>
 #include <string>
@@ -723,38 +724,23 @@ bool Configuration::ParseCommandLine(int argc, char **argv) {
   } else if (pRootFilename.find(".pcapng") != std::string::npos) {
     pRootFilename.replace(pRootFilename.size() - 7, pRootFilename.size(), "");
   }
-  std::string strParams;
 
-  if (pChannelMapping != "gem") {
-    pInfo = pInfo + "_" + pChannelMapping;
-  }
+  time_t ttime = time(0);
+  tm *local_time = localtime(&ttime);
+  auto t = std::time(nullptr);
+  auto tm = *std::localtime(&t);
+  std::stringstream sTime;
+  sTime << std::put_time(&tm, "%Y%m%d%H%M%S");
+
+  std::string strParams = "_";
+  strParams += sTime.str();
+
   if (pInfo.length() > 0) {
     strParams += "_";
     strParams += pInfo;
   }
   strParams += ".root";
-  std::string sChargeRatioLower = std::to_string(pChargeRatioLower);
-  std::replace(sChargeRatioLower.begin(), sChargeRatioLower.end(), '.', 'p');
-  sChargeRatioLower =
-      std::regex_replace(sChargeRatioLower, std::regex("00000"), "0");
-
-  std::string sChargeRatioUpper = std::to_string(pChargeRatioUpper);
-  std::replace(sChargeRatioUpper.begin(), sChargeRatioUpper.end(), '.', 'p');
-  sChargeRatioUpper =
-      std::regex_replace(sChargeRatioUpper, std::regex("00000"), "0");
-  std::stringstream sBC;
-  sBC << std::setprecision(3) << std::fixed << pBC;
-  std::string strBc = sBC.str();
-  std::replace(strBc.begin(), strBc.end(), '.', 'p');
-  pRootFilename =
-      pRootFilename + "_bc_" + strBc + "_tac_" + std::to_string((int)pTAC) +
-      "_ccs_" + std::to_string((int)pCoincidentClusterSize) + "_cs_" +
-      std::to_string((int)pMinClusterSize) + "_dt_" +
-      std::to_string((int)pDeltaTimeHits) + "_mst_" +
-      std::to_string((int)pMissingStripsClusterX) + "_spc_" +
-      std::to_string((int)pSpanClusterTime) + "_dp_" +
-      std::to_string((int)pDeltaTimePlanes) + "_cr_" + sChargeRatioLower + "-" +
-      sChargeRatioUpper + "_coin_" + pConditionCoincidence + strParams;
+  pRootFilename = pRootFilename + strParams;
 
   return true;
 }

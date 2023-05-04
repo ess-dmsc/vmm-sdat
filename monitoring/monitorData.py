@@ -10,7 +10,7 @@ from timeit import default_timer as timer
 import time as t
 import numpy as np
 from matplotlib.colors import LogNorm
-
+import gc
 
 #########################
 #Edit the paramters below
@@ -27,7 +27,7 @@ h3_total = np.zeros((channels_x, 128))
 h4_total = np.zeros((channels_y, 128))
 h5_total = [0] * channels_x    
 h6_total = [0] * channels_y
-h7_total = [0] * 1000
+h7_total = [0] * int(max_charge*0.1)
 h8_total = np.zeros((channels_x, channels_y))    
 
 h_cluster_rate = [0] * 200  
@@ -85,12 +85,11 @@ try:
 			print("File " + str(lastFileId) + " already analysed! Waiting for new data..")
 			t.sleep(2)
 			continue
-		args_vmmsdat = ['../build/convertFile', '-f', "./" + name, '-geo', 'example_monitoring.json', '-bc', '40', '-tac', '60', '-th','0', '-cs','1', '-ccs', '3', '-dt', '200', '-mst', '1', '-spc', '500', '-dp', '200', '-coin', 'center-of-masss', '-crl', '0.2', '-cru', '10', '-save', '[[0],[],[0]]', '-algo', '4', '-info', '', '-df','SRS']
+		args_vmmsdat = ['../build/convertFile', '-f', "./" + name, '-geo', 'example_monitoring.json', '-bc', '40', '-tac', '60', '-th','0', '-cs','1', '-ccs', '3', '-dt', '200', '-mst', '1', '-spc', '500', '-dp', '200', '-coin', 'center-of-masss', '-crl', '0.2', '-cru', '10', '-save', '[[0],[0],[0]]', '-algo', '4', '-info', '', '-df','SRS']
 		#args_vmmsdat = ['../build/convertFile', '-f', "./" + name, '-vmm', '[[[0,0,0,8],[0,0,0,9],[0,0,0,6],[0,0,0,7],[0,0,0,4],[0,0,0,5],[0,0,0,2],[0,0,0,3],[0,0,0,0],[0,0,0,1],[0,1,1,0],[0,1,1,1],[0,1,1,2],[0,1,1,3],[0,1,1,4],[0,1,1,5],[0,1,1,6],[0,1,1,7],[0,1,1,8],[0,1,1,9]]','-axis', '[[0,0],1],[[0,1],0]', '-bc', '44.02', '-tac', '60', '-th','0', '-cs','1', '-ccs', '2', '-dt', '200', '-mst', '1', '-spc', '500', '-dp', '500', '-coin', 'center-of-masss', '-crl', '0.1', '-cru', '10', '-save', '[[0],[0],[0]]', '-json','0', '-algo', '0', '-info', 'monitor', '-df', 'ESS']			
 		
 		subprocess.call(args_vmmsdat)
 		lastFileId = fileId
-		cnt = cnt + 1
 		now_time = timer()
 
 		print("Analysis " + str(cnt) + ": " + str(now_time - start_time) + " s")
@@ -273,7 +272,7 @@ try:
 				fig.set_size_inches(fig_w, fig_h)
 				fig.tight_layout()
 				fig.savefig("det_stats_" + str(detector_id) + ".png", format="png")
-					
+				fig.clf()	
 
 				####################################################################	
 				# Latest histograms
@@ -296,7 +295,7 @@ try:
 				h5_total = h5_total + h5[0]
 				h6 = ax[1, 1].hist(cl['pos1'], bins = channels_y, range = [0.0, channels_y], color=color_y)
 				h6_total = h6_total + h6[0]
-				h7 = ax[1, 2].hist(cl['adc0']+cl['adc1'], bins = 1000, range = [0.0, max_charge],  color=color_xy)
+				h7 = ax[1, 2].hist(cl['adc0']+cl['adc1'], bins = int(max_charge*0.1), range = [0.0, max_charge],  color=color_xy)
 				h7_total = h7_total + h7[0]
 				h8 = ax[1, 3].hist2d(cl['pos0'], cl['pos1'],bins =[channels_x, channels_y],cmap=plt.cm.viridis,range=np.array([(0, channels_x), (0, channels_y)]))
 				plt.colorbar(h8[3], ax=ax[1, 3], orientation='vertical')
@@ -334,7 +333,7 @@ try:
 				fig.set_size_inches(fig_w, fig_h)
 				fig.tight_layout()
 				fig.savefig("det_" + str(detector_id) + ".png", format="png")
-
+				fig.clf()
 					
 				####################################################################	
 				# Total histograms
@@ -395,7 +394,10 @@ try:
 				####################################################################	
 				# clean up
 				####################################################################			
+				fig.clf()
 				plt.close("all")
+				gc.collect()
+
 				end_time = timer()
 				print("Plot " + str(cnt) + ": " + str(end_time-start_time) + " s")
 				cnt = cnt + 1

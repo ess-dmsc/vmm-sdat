@@ -39,3 +39,9 @@ This example can be edited to analyze and plot different data from the tree. In 
 This example creates a multitude of plots for the LET Multigrid detector that consists of grids and wires. It can be easily adapted to detector with an x/y readout by replacing wires with x and strips with y. To execute the script, the following strips are necessary:
 1. start root by typing in a terminal: root
 2. in root, type ".x plots_LET.C++("example_LET",".",0)"
+
+### Normalization of histograms
+The script normalizeHisto can be used to normalize histograms, or carry out a 
+This example creates a multitude of plots for the LET Multigrid detector that consists of grids and wires. It can be easily adapted to detector with an x/y readout by replacing wires with x and strips with y. To execute the script, the following strips are necessary:
+1. start root by typing in a terminal: root
+2. in root, type ".x plots_LET.C++("example_LET",".",0)"
