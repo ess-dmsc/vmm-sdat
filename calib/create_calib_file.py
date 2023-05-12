@@ -1,6 +1,7 @@
 import json
 import argparse
 import os
+import re
 text_description =  "JSON calibration file manipulator. The tool create_calib_file.py creates a calibration file for a whole system of multiple hybrids. The user has to specify the JSON mapping file that describes the system (mapping between hybrid, FEC and VMM), the name for the new combined system calibration file, the directory with the calibration files of the individual hybrids, and the  choice of calibrations (ADC, time, time walk)."
 parser = argparse.ArgumentParser(description=text_description,
 								 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -53,8 +54,9 @@ with open(calib, 'w') as json_file:
 				d.update(y)				
 			if is_adc:
 				for filename in os.listdir(directory):
-					search_name = "vmm_adc_calibration_" + d["hybridID"]
-					if filename.startswith(search_name) and filename.endswith(".json"): 
+					search_name = "vmm_calibration_ADC"
+					if bool(re.search(search_name + "_FEC._" + d["hybridID"], filename)) == True and filename.endswith(".json"):
+						print(filename)
 						with open(filename, "r") as file:
 							the_calib  = json.load(file)
 							for c in the_calib["vmm_calibration"]:
@@ -63,8 +65,9 @@ with open(calib, 'w') as json_file:
 									d["adc_offsets"] = c["adc_offsets"]
 			if is_time:
 				for filename in os.listdir(directory):
-					search_name = "vmm_time_calibration_" + d["hybridID"]
-					if filename.startswith(search_name) and filename.endswith(".json"): 
+					search_name = "vmm_calibration_time"
+					if bool(re.search(search_name + "_FEC._" + d["hybridID"], filename)) == True and filename.endswith(".json"):
+						print(filename)
 						with open(filename, "r") as file:
 							the_calib  = json.load(file)
 							for c in the_calib["vmm_calibration"]:
@@ -73,8 +76,9 @@ with open(calib, 'w') as json_file:
 									d["time_offsets"] = c["time_offsets"]
 			if is_timewalk:
 				for filename in os.listdir(directory):
-					search_name = "vmm_timewalk_calibration_" + d["hybridID"]
-					if filename.startswith(search_name) and filename.endswith(".json"): 
+					search_name = "vmm_calibration_timewalk"
+					if bool(re.search(search_name + "_FEC._" + d["hybridID"], filename)) == True and filename.endswith(".json"):
+						print(filename)
 						with open(filename, "r") as file:						
 							the_calib  = json.load(file)
 							for c in the_calib["vmm_calibration"]:
