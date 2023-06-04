@@ -185,6 +185,7 @@ RootFile::RootFile(Configuration &config) : m_config(config) {
     std::string name = "";
     int cnt1D = 0;
     int cnt2D = 0;
+
     m_max0 = -999999999;
     m_max1 = -999999999;
     m_min0 = 9999999;
@@ -195,11 +196,13 @@ RootFile::RootFile(Configuration &config) : m_config(config) {
     for (auto const &det : m_config.pDets) {
       auto dp0 = std::make_pair(det.first, 0);
       auto dp1 = std::make_pair(det.first, 1);
+      // 2D detectors
       if (!m_config.pIsPads[det.first] &&
           m_config.GetDetectorPlane(dp0) == true &&
           m_config.GetDetectorPlane(dp1) == true) {
-        int n0 = m_config.pChannels[std::make_pair(det.first, 0)];
-        int n1 = m_config.pChannels[std::make_pair(det.first, 1)];
+        int n0 = m_config.pChannels[dp0];
+        int n1 = m_config.pChannels[dp1];
+
         if (m_config.pTransform.size() != m_config.pDets.size()) {
           m_min0 = 0;
           m_min1 = 0;
@@ -251,15 +254,7 @@ RootFile::RootFile(Configuration &config) : m_config(config) {
           m_bins0 = (m_max0 - m_min0) * BINNING_FACTOR;
           m_bins1 = (m_max1 - m_min1) * BINNING_FACTOR;
         }
-      }
-    }
-    for (auto const &det : m_config.pDets) {
-      auto dp0 = std::make_pair(det.first, 0);
-      auto dp1 = std::make_pair(det.first, 1);
-      // 2D detectors
-      if (!m_config.pIsPads[det.first] &&
-          m_config.GetDetectorPlane(dp0) == true &&
-          m_config.GetDetectorPlane(dp1) == true) {
+
         name = std::to_string(det.first) + "_delta_time_planes";
         h1 = new TH1D(name.c_str(), name.c_str(), 1000, -500, 500);
         m_TH1D.push_back(h1);

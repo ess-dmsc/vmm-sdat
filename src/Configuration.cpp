@@ -126,15 +126,17 @@ bool Configuration::PrintUsage(const std::string &errorMessage, char *argv) {
   std::cout << "-tl:    Translate coordinates. Per detector a tuple with three "
                "values in mm, e.g for two detectors [[t0,t1,t2], [t0,t1,t2]].\n"
             << std::endl;
-  std::cout << "-ro:    Rotate around plane 0, plane 1, plane 2. Per detector "
+  std::cout << "-ro:    Rotate around axis 0, axis 1, axis 2. Per detector "
                "a tuple with three angles in degrees, e.g for two detectors "
                "[[r0,r1,r2], [r0,r1,r2]].\n"
             << std::endl;
   std::cout << "-tr:    Transform detector coordinates. S=scale, T=translate, "
-               "R0=rotation plane 0, R1=rotation plane1, R2=rotation plane2.\n"
+               "R0=rotation axis 0, R1=rotation axis 1, R2=rotation axis 2.\n"
             << "        example (two detectors): -tr [[S,T,R2], [S,T, R2]]. "
                "First scaling, then translation, then rotation around normal "
-               "axis to plane0 and plane 1.\n"
+               "axis to plane0 and plane 1 (axis 2 is normal for a detector "
+               "with plane 0 and 1,\nthe rotation is always around the origin "
+               "of the coordinate system).\n"
             << std::endl;
   std::cout
       << "-bc:    bunch crossing clock. Optional argument (default 40 MHz).\n"
