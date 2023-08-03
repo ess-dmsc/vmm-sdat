@@ -1,5 +1,5 @@
-// Obtain the spatial resolution and efficiency vs detector gain
-// -------------------------------------------------------------
+// Obtain the spatial resolution and other parameters
+// --------------------------------------------------
 // lucian.scharenberg@cern.ch
 // July and August 2023
 
@@ -52,6 +52,16 @@ TH1D *getHistogramAnamicom(const char *filename, const char *histname) {
 }
 
 pair<double, double> getAmplitude(const char *filename, const char *histname) {
+
+    TFile *f = new TFile(filename);
+    TH1D *h = (TH1D*)f->Get(histname);
+    h->SetDirectory(0);
+
+    return {h->GetMean(), h->GetMeanError()};
+  
+}
+
+pair<double, double> getClusterSize(const char *filename, const char *histname) {
 
     TFile *f = new TFile(filename);
     TH1D *h = (TH1D*)f->Get(histname);
@@ -361,14 +371,15 @@ void spatialResolution() {
     //      https://doi.org/10.1016/j.nima.2004.08.132
     string resMethod = "full";
 
-    // Decide whether the efficiency or the signal amplitude (mean of
-    // the Landau distribution) is supposed to be plotted.
-    // In case of anamicom data, this only makes sense for COG
-    // reconstruction.
-    // The default is the efficiency, i.e. calcEff = true.
-    // If the amplitude is supposed to be plotted, set calcEff to
-    // false.
-    bool calcEff = true;
+    // Decide which parameter, in addition to the spatial resolution
+    // is supposed to be plotted.
+    // All values of
+    // * Detector plane efficiency        -> 'E'
+    // * Average cluster charge per plane -> 'A'
+    // * Average cluster size per plane   -> 'S'
+    // are calculated and stored in the CSV file, but only one of them
+    // is plotted. The default is the efficiency.
+    char plotParameter = 'E';
   
     // Detector positions 
     double zT1 = 0.0;
@@ -403,10 +414,20 @@ void spatialResolution() {
     vector<double> resolutionXError;
     vector<double> resolutionYError;
 
-    vector<double> effAmplX;
-    vector<double> effAmplY;
-    vector<double> effAmplXError;
-    vector<double> effAmplYError;
+    vector<double> efficiencyX;
+    vector<double> efficiencyY;
+    vector<double> efficiencyXError;
+    vector<double> efficiencyYError;
+
+    vector<double> amplitudeX;
+    vector<double> amplitudeY;
+    vector<double> amplitudeXError;
+    vector<double> amplitudeYError;
+
+    vector<double> clusterSizeX;
+    vector<double> clusterSizeY;
+    vector<double> clusterSizeXError;
+    vector<double> clusterSizeYError;
     
     for (int g = 0; g < voltage.size(); g++) {
         gain.push_back(voltage[g] / 0.3);
@@ -434,7 +455,7 @@ void spatialResolution() {
     }
 
     // Get the resolution and the efficiency
-    double res, effAmpl, resError, effAmplError;
+    double res, resError, eff, effError, ampl, amplError, size, sizeError;
 
     for (int i = 0; i < runNumbers.size(); i++) {
 
@@ -479,44 +500,60 @@ void spatialResolution() {
 
 	}
 
-	if (calcEff) {
-	    
-	    effAmpl = getEfficiency(fileList[i].c_str(), ("hits0mm" + iDUTX).c_str(), ("inefficspots0mm" + iDUTX).c_str());
-	    effAmplError = getEfficiencyError(fileList[i].c_str(), ("hits0mm" + iDUTX).c_str(), ("inefficspots0mm" + iDUTX).c_str());
-	    effAmplX.push_back(effAmpl * 100.0);
-	    effAmplXError.push_back(effAmplError * 100.0);
+	eff = getEfficiency(fileList[i].c_str(), ("hits0mm" + iDUTX).c_str(), ("inefficspots0mm" + iDUTX).c_str());
+	effError = getEfficiencyError(fileList[i].c_str(), ("hits0mm" + iDUTX).c_str(), ("inefficspots0mm" + iDUTX).c_str());
+	efficiencyX.push_back(eff * 100.0);
+	efficiencyXError.push_back(effError * 100.0);
 
-	    effAmpl = getEfficiency(fileList[i].c_str(), ("hits0mm" + iDUTY).c_str(), ("inefficspots0mm" + iDUTY).c_str());
-	    effAmplError = getEfficiencyError(fileList[i].c_str(), ("hits0mm" + iDUTY).c_str(), ("inefficspots0mm" + iDUTY).c_str());
-	    effAmplY.push_back(effAmpl * 100.0);
-	    effAmplYError.push_back(effAmplError * 100.0);
+	eff = getEfficiency(fileList[i].c_str(), ("hits0mm" + iDUTY).c_str(), ("inefficspots0mm" + iDUTY).c_str());
+	effError = getEfficiencyError(fileList[i].c_str(), ("hits0mm" + iDUTY).c_str(), ("inefficspots0mm" + iDUTY).c_str());
+	efficiencyY.push_back(eff * 100.0);
+	efficiencyYError.push_back(effError * 100.0);
 
-	}
-	else {
+	ampl = getAmplitude(fileList[i].c_str(), ("totcha" + iDUTX).c_str()).first;
+	amplError = getAmplitude(fileList[i].c_str(), ("totcha" + iDUTX).c_str()).second;
+	amplitudeX.push_back(ampl);
+	amplitudeXError.push_back(amplError);
 
-	    effAmpl = getAmplitude(fileList[i].c_str(), ("totcha" + iDUTX).c_str()).first;
-	    effAmplError = getAmplitude(fileList[i].c_str(), ("totcha" + iDUTX).c_str()).second;
-	    effAmplX.push_back(effAmpl);
-	    effAmplXError.push_back(effAmplError);
+	ampl = getAmplitude(fileList[i].c_str(), ("totcha" + iDUTY).c_str()).first;
+	amplError = getAmplitude(fileList[i].c_str(), ("totcha" + iDUTY).c_str()).second;
+	amplitudeY.push_back(ampl);
+	amplitudeYError.push_back(amplError);
 
-	    effAmpl = getAmplitude(fileList[i].c_str(), ("totcha" + iDUTY).c_str()).first;
-	    effAmplError = getAmplitude(fileList[i].c_str(), ("totcha" + iDUTY).c_str()).second;
-	    effAmplY.push_back(effAmpl);
-	    effAmplYError.push_back(effAmplError);
+	size = getClusterSize(fileList[i].c_str(), ("nohitstrips" + iDUTX).c_str()).first;
+	sizeError = getClusterSize(fileList[i].c_str(), ("nohitstrips" + iDUTX).c_str()).second;
+	clusterSizeX.push_back(size);
+	clusterSizeXError.push_back(sizeError);
 
-	}
+	size = getClusterSize(fileList[i].c_str(), ("nohitstrips" + iDUTY).c_str()).first;
+	sizeError = getClusterSize(fileList[i].c_str(), ("nohitstrips" + iDUTY).c_str()).second;
+	clusterSizeY.push_back(size);
+	clusterSizeYError.push_back(sizeError);
         
     }
 
     // Save the data to file
     ofstream csvFile("./dataPoints/" + plotNameBase + nBins + ".csv");
     if (csvFile.is_open()) {
+	csvFile << "Gain"                    << "," << "Gain Error" << ","
+		<< "Resolution X (um)"       << "," << "Resolution X Error (um)"       << ","
+		<< "Resolution Y (um)"       << "," << "Resolution Y Error (um)"       << ","
+		<< "Efficiency X (%)"        << "," << "Efficiency X Error (%)"        << ","
+		<< "Efficiency Y (%)"        << "," << "Efficiency Y Error (%)"        << ","
+		<< "Mean charge X (ADC)"     << "," << "Mean charge X Error (ADC)"     << ","
+		<< "Mean charge Y (ADC)"     << "," << "Mean charge Y Error (ADC)"     << ","
+		<< "Cluster size X (Strips)" << "," << "Cluster size X Error (Strips)" << ","
+		<< "Cluster size Y (Strips)" << "," << "Cluster size Y Error (Strips)" << endl;
         for (int line = 0; line < resolutionX.size(); line++) {
-            csvFile << gain[line] << "," << gainError[line] << ","
-                    << resolutionX[line] << "," << resolutionXError[line] << ","
-                    << resolutionY[line] << "," << resolutionYError[line] << ","
-                    << effAmplX[line] << "," << effAmplXError[line] << ","
-                    << effAmplY[line] << "," << effAmplYError[line] << endl;
+            csvFile << gain[line] << ","  << gainError[line] << ","
+                    << resolutionX[line]  << "," << resolutionXError[line]  << ","
+                    << resolutionY[line]  << "," << resolutionYError[line]  << ","
+                    << efficiencyX[line]  << "," << efficiencyXError[line]  << ","
+                    << efficiencyY[line]  << "," << efficiencyYError[line]  << ","
+		    << amplitudeX[line]   << "," << amplitudeXError[line]   << ","
+                    << amplitudeY[line]   << "," << amplitudeYError[line]   << ","
+		    << clusterSizeX[line] << "," << clusterSizeXError[line] << ","
+                    << clusterSizeY[line] << "," << clusterSizeYError[line] << endl;
         }
     }
     else {
@@ -536,17 +573,26 @@ void spatialResolution() {
     double limitSecondY1 = 0.0;
     double limitSecondY2 = 0.0;
 
-    if (calcEff) {
-	
+    switch (plotParameter) {
+
+    case 'E':
+
 	limitSecondY1 = 0.0;
 	limitSecondY2 = 100.0;
-
-    }
-    else {
+	break;
 	
+    case 'A':
+
 	limitSecondY1 = 0.0;
 	limitSecondY2 = 1500.0;
+	break;
 
+    case 'S':
+
+	limitSecondY1 = 0.0;
+	limitSecondY2 = 10.0;
+	break;
+	
     }
     
     auto graphX = new TGraphErrors((int)resolutionX.size(), &gain[0], &resolutionX[0], &gainError[0], &resolutionXError[0]);
@@ -561,60 +607,121 @@ void spatialResolution() {
     graphY->SetMarkerStyle(21);
     mgRes->Add(graphY);
 
-    auto mgEffAmpl = new TMultiGraph();
+    auto mgOther = new TMultiGraph();
 
     // Scale the effAmpl to match the second Y axis
-    for (int e = 0; e < effAmplX.size(); e++) {
-        effAmplX[e] = effAmplX[e] * (limitY2 - limitY1) / (limitSecondY2 - limitSecondY1) + limitSecondY1;
-        effAmplY[e] = effAmplY[e] * (limitY2 - limitY1) / (limitSecondY2 - limitSecondY1) + limitSecondY1;
-        effAmplXError[e] = effAmplXError[e] * (limitY2 - limitY1) / (limitSecondY2 - limitSecondY1) + limitSecondY1;
-        effAmplYError[e] = effAmplYError[e] * (limitY2 - limitY1) / (limitSecondY2 - limitSecondY1) + limitSecondY1;
-    }
-    
-    auto graphEffAmplX = new TGraphErrors((int)effAmplX.size(), &gain[0], &effAmplX[0], &gainError[0], &effAmplXError[0]);
-    graphEffAmplX->SetLineColor(kBlack);
-    graphEffAmplX->SetMarkerColor(kBlack);
-    graphEffAmplX->SetMarkerStyle(24);
-    mgEffAmpl->Add(graphEffAmplX);
+    double scalingFactor = (limitY2 - limitY1) / (limitSecondY2 - limitSecondY1) + limitSecondY1;
 
-    auto graphEffAmplY = new TGraphErrors((int)effAmplY.size(), &gain[0], &effAmplY[0], &gainError[0], &effAmplYError[0]);
-    graphEffAmplY->SetLineColor(kRed);
-    graphEffAmplY->SetMarkerColor(kRed);
-    graphEffAmplY->SetMarkerStyle(25);
-    mgEffAmpl->Add(graphEffAmplY);
+    for (int i = 0; i < gain.size(); i++) {
+
+	switch (plotParameter) {
+	    
+	case 'E':
+	    
+	    efficiencyX[i] = efficiencyX[i] * scalingFactor;
+	    efficiencyY[i] = efficiencyY[i] * scalingFactor;
+	    efficiencyXError[i] = efficiencyXError[i] * scalingFactor;
+	    efficiencyYError[i] = efficiencyYError[i] * scalingFactor;
+	    break;
+
+	case 'A':
+
+	    amplitudeX[i] = amplitudeX[i] * scalingFactor;
+	    amplitudeY[i] = amplitudeY[i] * scalingFactor;
+	    amplitudeXError[i] = amplitudeXError[i] * scalingFactor;
+	    amplitudeYError[i] = amplitudeYError[i] * scalingFactor;
+	    break;
+
+	case 'S':
+
+	    clusterSizeX[i] = clusterSizeX[i] * scalingFactor;
+	    clusterSizeY[i] = clusterSizeY[i] * scalingFactor;
+	    clusterSizeXError[i] = clusterSizeXError[i] * scalingFactor;
+	    clusterSizeYError[i] = clusterSizeYError[i] * scalingFactor;
+	    break;
+
+	}
+
+    }
+
+    TGraphErrors *graphOtherX;
+    TGraphErrors *graphOtherY;
+    
+    switch (plotParameter) {
+
+    case 'E':
+	    
+	graphOtherX = new TGraphErrors((int)efficiencyX.size(), &gain[0], &efficiencyX[0], &gainError[0], &efficiencyXError[0]);
+	graphOtherY = new TGraphErrors((int)efficiencyY.size(), &gain[0], &efficiencyY[0], &gainError[0], &efficiencyYError[0]);
+	break;
+    
+    case 'A':
+
+	graphOtherX = new TGraphErrors((int)amplitudeX.size(), &gain[0], &amplitudeX[0], &gainError[0], &amplitudeXError[0]);
+	graphOtherY = new TGraphErrors((int)amplitudeY.size(), &gain[0], &amplitudeY[0], &gainError[0], &amplitudeYError[0]);
+	break;
+
+    case 'S':
+
+	graphOtherX = new TGraphErrors((int)clusterSizeX.size(), &gain[0], &clusterSizeX[0], &gainError[0], &clusterSizeXError[0]);
+	graphOtherY = new TGraphErrors((int)clusterSizeY.size(), &gain[0], &clusterSizeY[0], &gainError[0], &clusterSizeYError[0]);
+	break;
+	    
+    }
+
+    graphOtherX->SetLineColor(kBlack);
+    graphOtherX->SetMarkerColor(kBlack);
+    graphOtherX->SetMarkerStyle(24);
+    mgOther->Add(graphOtherX);
+
+    graphOtherY->SetLineColor(kRed);
+    graphOtherY->SetMarkerColor(kRed);
+    graphOtherY->SetMarkerStyle(25);
+    mgOther->Add(graphOtherY);
 
     mgRes->GetXaxis()->SetTitle("Drift field / V/cm");
     mgRes->GetXaxis()->SetLimits(limitX1, limitX2);
     mgRes->GetYaxis()->SetTitle("Spatial resolution / #mum");
     mgRes->GetYaxis()->SetRangeUser(limitY1, limitY2);
     mgRes->Draw("APL");
-    mgEffAmpl->Draw("PL");
+    mgOther->Draw("PL");
   
     TGaxis *axis = new TGaxis(limitX2, limitY1, limitX2, limitY2, limitSecondY1, limitSecondY2, 510, "+L");
     axis->SetLabelFont(42);
     axis->SetTitleFont(42);
-    if (calcEff) {
-	axis->SetTitle("Efficiency / %");
-    }
-    else {
-	axis->SetTitle("Mean signal charge / ADC counts");
-    }
-    
-    axis->Draw();
-    
+
     auto legend = new TLegend(0.6, 0.45, 0.85, 0.65);
     legend->SetTextFont(42);
     legend->SetBorderSize(0.0);
-    legend->AddEntry(graphX, "Spat. Res. X", "lep");
-    legend->AddEntry(graphY, "Spat. Res. Y", "lep");
-    if (calcEff) {
-	legend->AddEntry(graphEffAmplX, "Eff. X", "lp");
-	legend->AddEntry(graphEffAmplY, "Eff. Y", "lp");
+    legend->AddEntry(graphX, "Res. X", "lep");
+    legend->AddEntry(graphY, "Res. Y", "lep");
+
+    switch (plotParameter) {
+    
+    case 'E':
+
+	axis->SetTitle("Efficiency / %");
+	legend->AddEntry(graphOtherX, "Eff. X", "lep");
+	legend->AddEntry(graphOtherY, "Eff. Y", "lep");
+	break;
+
+    case 'A':
+	
+	axis->SetTitle("Mean signal charge / ADC counts");
+	legend->AddEntry(graphOtherX, "Ampl. X", "lep");
+	legend->AddEntry(graphOtherY, "Ampl. Y", "lep");
+	break;
+
+    case 'S':
+
+	axis->SetTitle("Average cluster size / Strips");
+	legend->AddEntry(graphOtherX, "Size X", "lep");
+	legend->AddEntry(graphOtherY, "Size Y", "lep");
+	break;
+	    
     }
-    else {
-	legend->AddEntry(graphEffAmplX, "Ampl. X", "lp");
-	legend->AddEntry(graphEffAmplY, "Ampl. Y", "lp");
-    }
+    
+    axis->Draw();
     legend->Draw();
   
     cFull->Update();
