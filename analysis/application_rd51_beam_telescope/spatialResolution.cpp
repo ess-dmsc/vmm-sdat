@@ -1,7 +1,7 @@
 // Obtain the spatial resolution and efficiency vs detector gain
 // -------------------------------------------------------------
 // lucian.scharenberg@cern.ch
-// 04/15/17/20/25 July 2023
+// July and August 2023
 
 using namespace ROOT;
 using namespace std;
@@ -49,6 +49,16 @@ TH1D *getHistogramAnamicom(const char *filename, const char *histname) {
 
     return h;
 
+}
+
+pair<double, double> getAmplitude(const char *filename, const char *histname) {
+
+    TFile *f = new TFile(filename);
+    TH1D *h = (TH1D*)f->Get(histname);
+    h->SetDirectory(0);
+
+    return {h->GetMean(), h->GetMeanError()};
+  
 }
 
 double fitDoubleGaussian(double *x, double *par) {
@@ -329,7 +339,7 @@ pair<double, double> getTrackResolution(string fileName, string runNumber,
 
 }
 
-void spatialResolutionEfficiency() {
+void spatialResolution() {
 
     // Decide which method to use to determine the width of the
     // residual distributions
@@ -350,6 +360,15 @@ void spatialResolutionEfficiency() {
     //   -> just use the geometric mean as described in here
     //      https://doi.org/10.1016/j.nima.2004.08.132
     string resMethod = "full";
+
+    // Decide whether the efficiency or the signal amplitude (mean of
+    // the Landau distribution) is supposed to be plotted.
+    // In case of anamicom data, this only makes sense for COG
+    // reconstruction.
+    // The default is the efficiency, i.e. calcEff = true.
+    // If the amplitude is supposed to be plotted, set calcEff to
+    // false.
+    bool calcEff = true;
   
     // Detector positions 
     double zT1 = 0.0;
@@ -378,15 +397,17 @@ void spatialResolutionEfficiency() {
     vector<double> voltage = {30.0, 60.0, 90.0, 120.0, 150.0, 180.0, 210.0, 240.0, 270.0, 300.0, 600.0, 900.0, 1100.0, 1300.0, 1500.0, 1700.0};
     vector<double> gain;
     vector<double> gainError;
+
     vector<double> resolutionX;
     vector<double> resolutionY;
     vector<double> resolutionXError;
     vector<double> resolutionYError;
-    vector<double> efficiencyX;
-    vector<double> efficiencyY;
-    vector<double> efficiencyXError;
-    vector<double> efficiencyYError;
 
+    vector<double> effAmplX;
+    vector<double> effAmplY;
+    vector<double> effAmplXError;
+    vector<double> effAmplYError;
+    
     for (int g = 0; g < voltage.size(); g++) {
         gain.push_back(voltage[g] / 0.3);
         gainError.push_back(0.0);
@@ -413,7 +434,7 @@ void spatialResolutionEfficiency() {
     }
 
     // Get the resolution and the efficiency
-    double res, eff, resError, effError;
+    double res, effAmpl, resError, effAmplError;
 
     for (int i = 0; i < runNumbers.size(); i++) {
 
@@ -457,16 +478,33 @@ void spatialResolutionEfficiency() {
 	    resolutionYError.push_back(resError * 1000.0);
 
 	}
-        
-        eff = getEfficiency(fileList[i].c_str(), ("hits0mm" + iDUTX).c_str(), ("inefficspots0mm" + iDUTX).c_str());
-        effError = getEfficiencyError(fileList[i].c_str(), ("hits0mm" + iDUTX).c_str(), ("inefficspots0mm" + iDUTX).c_str());
-        efficiencyX.push_back(eff * 100.0);
-        efficiencyXError.push_back(effError * 100.0);
 
-        eff = getEfficiency(fileList[i].c_str(), ("hits0mm" + iDUTY).c_str(), ("inefficspots0mm" + iDUTY).c_str());
-        effError = getEfficiencyError(fileList[i].c_str(), ("hits0mm" + iDUTY).c_str(), ("inefficspots0mm" + iDUTY).c_str());
-        efficiencyY.push_back(eff * 100.0);
-        efficiencyYError.push_back(effError * 100.0);
+	if (calcEff) {
+	    
+	    effAmpl = getEfficiency(fileList[i].c_str(), ("hits0mm" + iDUTX).c_str(), ("inefficspots0mm" + iDUTX).c_str());
+	    effAmplError = getEfficiencyError(fileList[i].c_str(), ("hits0mm" + iDUTX).c_str(), ("inefficspots0mm" + iDUTX).c_str());
+	    effAmplX.push_back(effAmpl * 100.0);
+	    effAmplXError.push_back(effAmplError * 100.0);
+
+	    effAmpl = getEfficiency(fileList[i].c_str(), ("hits0mm" + iDUTY).c_str(), ("inefficspots0mm" + iDUTY).c_str());
+	    effAmplError = getEfficiencyError(fileList[i].c_str(), ("hits0mm" + iDUTY).c_str(), ("inefficspots0mm" + iDUTY).c_str());
+	    effAmplY.push_back(effAmpl * 100.0);
+	    effAmplYError.push_back(effAmplError * 100.0);
+
+	}
+	else {
+
+	    effAmpl = getAmplitude(fileList[i].c_str(), ("totcha" + iDUTX).c_str()).first;
+	    effAmplError = getAmplitude(fileList[i].c_str(), ("totcha" + iDUTX).c_str()).second;
+	    effAmplX.push_back(effAmpl);
+	    effAmplXError.push_back(effAmplError);
+
+	    effAmpl = getAmplitude(fileList[i].c_str(), ("totcha" + iDUTY).c_str()).first;
+	    effAmplError = getAmplitude(fileList[i].c_str(), ("totcha" + iDUTY).c_str()).second;
+	    effAmplY.push_back(effAmpl);
+	    effAmplYError.push_back(effAmplError);
+
+	}
         
     }
 
@@ -477,8 +515,8 @@ void spatialResolutionEfficiency() {
             csvFile << gain[line] << "," << gainError[line] << ","
                     << resolutionX[line] << "," << resolutionXError[line] << ","
                     << resolutionY[line] << "," << resolutionYError[line] << ","
-                    << efficiencyX[line] << "," << efficiencyXError[line] << ","
-                    << efficiencyY[line] << "," << efficiencyYError[line] << endl;
+                    << effAmplX[line] << "," << effAmplXError[line] << ","
+                    << effAmplY[line] << "," << effAmplYError[line] << endl;
         }
     }
     else {
@@ -489,60 +527,79 @@ void spatialResolutionEfficiency() {
     auto cFull = new TCanvas("cFull", "", 800, 600);
     cFull->cd();
   
-    auto mg = new TMultiGraph();
+    auto mgRes = new TMultiGraph();
 
     double limitX1 = 0.0;
     double limitX2 = 6000.0;
     double limitY1 = 0.0;
     double limitY2 = 140.0;
     double limitSecondY1 = 0.0;
-    double limitSecondY2 = 100.0;
+    double limitSecondY2 = 0.0;
+
+    if (calcEff) {
+	
+	limitSecondY1 = 0.0;
+	limitSecondY2 = 100.0;
+
+    }
+    else {
+	
+	limitSecondY1 = 0.0;
+	limitSecondY2 = 1500.0;
+
+    }
     
     auto graphX = new TGraphErrors((int)resolutionX.size(), &gain[0], &resolutionX[0], &gainError[0], &resolutionXError[0]);
     graphX->SetLineColor(kBlack);
     graphX->SetMarkerColor(kBlack);
     graphX->SetMarkerStyle(20);
-    mg->Add(graphX);
+    mgRes->Add(graphX);
 
     auto graphY = new TGraphErrors((int)resolutionY.size(), &gain[0], &resolutionY[0], &gainError[0], &resolutionYError[0]);
     graphY->SetLineColor(kRed);
     graphY->SetMarkerColor(kRed);
     graphY->SetMarkerStyle(21);
-    mg->Add(graphY);
+    mgRes->Add(graphY);
 
-    auto mgEff = new TMultiGraph();
+    auto mgEffAmpl = new TMultiGraph();
 
-    // Scale the efficiency to match the second Y axis
-    for (int e = 0; e < efficiencyX.size(); e++) {
-        efficiencyX[e] = efficiencyX[e] * (limitY2 - limitY1) / (limitSecondY2 - limitSecondY1) + limitSecondY1;
-        efficiencyY[e] = efficiencyY[e] * (limitY2 - limitY1) / (limitSecondY2 - limitSecondY1) + limitSecondY1;
-        efficiencyXError[e] = efficiencyXError[e] * (limitY2 - limitY1) / (limitSecondY2 - limitSecondY1) + limitSecondY1;
-        efficiencyYError[e] = efficiencyYError[e] * (limitY2 - limitY1) / (limitSecondY2 - limitSecondY1) + limitSecondY1;
+    // Scale the effAmpl to match the second Y axis
+    for (int e = 0; e < effAmplX.size(); e++) {
+        effAmplX[e] = effAmplX[e] * (limitY2 - limitY1) / (limitSecondY2 - limitSecondY1) + limitSecondY1;
+        effAmplY[e] = effAmplY[e] * (limitY2 - limitY1) / (limitSecondY2 - limitSecondY1) + limitSecondY1;
+        effAmplXError[e] = effAmplXError[e] * (limitY2 - limitY1) / (limitSecondY2 - limitSecondY1) + limitSecondY1;
+        effAmplYError[e] = effAmplYError[e] * (limitY2 - limitY1) / (limitSecondY2 - limitSecondY1) + limitSecondY1;
     }
     
-    auto effX = new TGraphErrors((int)efficiencyX.size(), &gain[0], &efficiencyX[0], &gainError[0], &efficiencyXError[0]);
-    effX->SetLineColor(kBlack);
-    effX->SetMarkerColor(kBlack);
-    effX->SetMarkerStyle(24);
-    mgEff->Add(effX);
+    auto graphEffAmplX = new TGraphErrors((int)effAmplX.size(), &gain[0], &effAmplX[0], &gainError[0], &effAmplXError[0]);
+    graphEffAmplX->SetLineColor(kBlack);
+    graphEffAmplX->SetMarkerColor(kBlack);
+    graphEffAmplX->SetMarkerStyle(24);
+    mgEffAmpl->Add(graphEffAmplX);
 
-    auto effY = new TGraphErrors((int)efficiencyY.size(), &gain[0], &efficiencyY[0], &gainError[0], &efficiencyYError[0]);
-    effY->SetLineColor(kRed);
-    effY->SetMarkerColor(kRed);
-    effY->SetMarkerStyle(25);
-    mgEff->Add(effY);
+    auto graphEffAmplY = new TGraphErrors((int)effAmplY.size(), &gain[0], &effAmplY[0], &gainError[0], &effAmplYError[0]);
+    graphEffAmplY->SetLineColor(kRed);
+    graphEffAmplY->SetMarkerColor(kRed);
+    graphEffAmplY->SetMarkerStyle(25);
+    mgEffAmpl->Add(graphEffAmplY);
 
-    mg->GetXaxis()->SetTitle("Drift field / V/cm");
-    mg->GetXaxis()->SetLimits(limitX1, limitX2);
-    mg->GetYaxis()->SetTitle("Spatial resolution / #mum");
-    mg->GetYaxis()->SetRangeUser(limitY1, limitY2);
-    mg->Draw("APL");
-    mgEff->Draw("PL");
+    mgRes->GetXaxis()->SetTitle("Drift field / V/cm");
+    mgRes->GetXaxis()->SetLimits(limitX1, limitX2);
+    mgRes->GetYaxis()->SetTitle("Spatial resolution / #mum");
+    mgRes->GetYaxis()->SetRangeUser(limitY1, limitY2);
+    mgRes->Draw("APL");
+    mgEffAmpl->Draw("PL");
   
     TGaxis *axis = new TGaxis(limitX2, limitY1, limitX2, limitY2, limitSecondY1, limitSecondY2, 510, "+L");
     axis->SetLabelFont(42);
     axis->SetTitleFont(42);
-    axis->SetTitle("Efficiency / %");
+    if (calcEff) {
+	axis->SetTitle("Efficiency / %");
+    }
+    else {
+	axis->SetTitle("Mean signal charge / ADC counts");
+    }
+    
     axis->Draw();
     
     auto legend = new TLegend(0.6, 0.45, 0.85, 0.65);
@@ -550,12 +607,18 @@ void spatialResolutionEfficiency() {
     legend->SetBorderSize(0.0);
     legend->AddEntry(graphX, "Spat. Res. X", "lep");
     legend->AddEntry(graphY, "Spat. Res. Y", "lep");
-    legend->AddEntry(effX, "Eff. X", "lp");
-    legend->AddEntry(effY, "Eff. Y", "lp");
+    if (calcEff) {
+	legend->AddEntry(graphEffAmplX, "Eff. X", "lp");
+	legend->AddEntry(graphEffAmplY, "Eff. Y", "lp");
+    }
+    else {
+	legend->AddEntry(graphEffAmplX, "Ampl. X", "lp");
+	legend->AddEntry(graphEffAmplY, "Ampl. Y", "lp");
+    }
     legend->Draw();
   
     cFull->Update();
-    cFull->SaveAs("./spatialResolutionEfficiency.pdf");
+    cFull->SaveAs("./spatialResolution.pdf");
     //cFull->SaveAs(plotName.c_str());
     
 }

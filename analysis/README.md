@@ -57,7 +57,7 @@ This example creates a multitude of plots for the LET Multigrid detector that co
 In addition to the analysis methods that are introduced in general in `examples_read_data`, also specific analysis programs for one specific application are shown here.
 
 
-### RD51 Beam Telescope [`application_rd51_beam_telescope']
+### RD51 Beam Telescope [`application_rd51_beam_telescope`]
 
 For the RD51 Beam Telescope (see [https://doi.org/10.1088/1748-0221/18/05/C05017](https://doi.org/10.1088/1748-0221/18/05/C05017)), which is read out with VMM3a/SRS, the data from the vmm-sdat root tree are taken and analysed by [anamicom](https://gitlab.physik.uni-muenchen.de/Jonathan.Bortfeldt/anamicom).
 Anamicom takes the root tree from vmm-sdat and performs the event building and the track reconstruction for the charged particle tracks recorded with the beam telescope.
