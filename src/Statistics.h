@@ -22,8 +22,6 @@ public:
                         uint64_t increment = 1);
   long GetCounter(std::string error, uint16_t fecId);
 
-  double GetDeltaTriggerTimestamp(uint16_t fecId);
-  void SetDeltaTriggerTimestamp(uint16_t fecId, double val);
   double GetOldTriggerTimestamp(uint16_t fecId);
   void SetOldTriggerTimestamp(uint16_t fecId, double srsTimestamp);
   double GetFirstTriggerTimestamp(uint16_t fecId);
@@ -32,6 +30,7 @@ public:
   void SetMaxTriggerTimestamp(uint16_t fecId, double srsTimestamp);
   uint64_t GetLastFrameCounter(uint16_t fecId);
   void SetLastFrameCounter(uint16_t fecId, uint64_t frameCounter);
+
   double GetLowestCommonTriggerTimestampDet(uint8_t det);
   void SetLowestCommonTriggerTimestampDet(uint8_t det, double val);
   double GetLowestCommonTriggerTimestampPlane(std::pair<uint8_t, uint8_t> dp);

@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 project(vmm-sdat)
 
 set(CMAKE_BUILD_TYPE RelWithDebInfo)
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -fsanitize=address -O0 -ggdb")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb")
 
@@ -69,6 +69,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/analysis)
 ROOT_GENERATE_DICTIONARY(vmm-sdatDict 
 ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ParserSRS.h 
 ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/VMM3Parser.h
+${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ParserVTC.h
 ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ReadoutParser.h
 ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/SRSTime.h  
 ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/CalibrationFile.h 
@@ -82,14 +83,15 @@ ${CMAKE_CURRENT_SOURCE_DIR}/src/Configuration.h ${CMAKE_CURRENT_SOURCE_DIR}/src/
 #---Create a shared library with generated dictionary
 add_library(vmm-sdat SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ParserSRS.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/VMM3Parser.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ReadoutParser.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ParserVTC.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/SRSTime.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/CalibrationFile.cpp 
 ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ReaderPcap.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Clusterer.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/RootFile.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Configuration.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Statistics.cpp vmm-sdatDict.cxx)
 target_link_libraries(vmm-sdat ${ROOT_LIBRARIES} fmt pcap)
 
 #---Create  a main program using the library
 add_executable(convertFile ${CMAKE_CURRENT_SOURCE_DIR}/src/convertFile.cpp)
-add_executable(accessTree ${CMAKE_CURRENT_SOURCE_DIR}/analysis/accessTree.cpp)
-add_executable(normalizeHisto ${CMAKE_CURRENT_SOURCE_DIR}/analysis/normalizeHisto.cpp)
+add_executable(accessTree ${CMAKE_CURRENT_SOURCE_DIR}/analysis/examples_read_data/accessTree.cpp)
+add_executable(normalizeHisto ${CMAKE_CURRENT_SOURCE_DIR}/analysis/examples_read_data/normalizeHisto.cpp)
 
 
 target_link_libraries(convertFile vmm-sdat)

@@ -4,7 +4,7 @@
 #include "Statistics.h"
 
 void Statistics::CreatePCAPStats(Configuration &config) {
-  if (config.pDataFormat == "SRS") {
+  if (config.pDataFormat == "SRS" || config.pDataFormat == "VTC") {
     m_counter_names.push_back("ParserFrameSeqErrors");
     m_counter_names.push_back("ParserFrameMissingErrors");
     m_counter_names.push_back("ParserFramecounterOverflows");
@@ -127,7 +127,6 @@ void Statistics::CreateFECStats(Configuration &config) {
   m_counter_names.push_back("TimestampTooLarge");
   m_counter_names.push_back("TimestampOrderError");
   m_counter_names.push_back("TimestampOverflow");
-  m_counter_names.push_back("TriggerPeriodError");
 
   for (auto const &fec : config.pFecs) {
     m_deltaTriggerTimestamp.emplace(std::make_pair(fec, 0));
@@ -141,9 +140,6 @@ void Statistics::CreateFECStats(Configuration &config) {
 
     m_counters.emplace(
         std::make_pair(std::make_pair(fec, "TimestampOverflow"), 0));
-
-    m_counters.emplace(
-        std::make_pair(std::make_pair(fec, "TriggerPeriodError"), 0));
   }
 }
 
@@ -407,14 +403,6 @@ long Statistics::GetCounter(std::string error, uint16_t fecId) {
   return m_counters[std::make_pair(fecId, error)];
 }
 
-double Statistics::GetDeltaTriggerTimestamp(uint16_t fecId) {
-  return m_deltaTriggerTimestamp[fecId];
-}
-
-void Statistics::SetDeltaTriggerTimestamp(uint16_t fecId, double val) {
-  m_deltaTriggerTimestamp[fecId] = val;
-}
-
 double Statistics::GetOldTriggerTimestamp(uint16_t fecId) {
   return m_oldTriggerTimestamp[fecId];
 }
@@ -562,10 +550,18 @@ void Statistics::PrintClusterStats(Configuration &config) {
 
 void Statistics::PrintFECStats(Configuration &config) {
   for (auto const &fec : config.pFecs) {
-    if (config.pDataFormat == "SRS") {
-      std::cout << "\n****************************************" << std::endl;
-      std::cout << "FEC " << (int)fec << std::endl;
-      std::cout << "****************************************" << std::endl;
+    if (config.pDataFormat == "SRS" || config.pDataFormat == "VTC") {
+
+      if (config.pDataFormat == "VTC") {
+        std::cout << "\n****************************************" << std::endl;
+        std::cout << "VTC " << (int)fec << std::endl;
+        std::cout << "****************************************" << std::endl;
+      } else if (config.pDataFormat == "SRS") {
+        std::cout << "\n****************************************" << std::endl;
+        std::cout << "FEC " << (int)fec << std::endl;
+        std::cout << "****************************************" << std::endl;
+      }
+
       for (unsigned int n = 0; n < m_counter_names.size(); n++) {
         std::cout << m_counter_names[n] << ": "
                   << GetCounter(m_counter_names[n], fec) << std::endl;
@@ -573,6 +569,7 @@ void Statistics::PrintFECStats(Configuration &config) {
       uint64_t first = GetFirstTriggerTimestamp(fec);
       uint64_t max = GetMaxTriggerTimestamp(fec);
       uint64_t last = GetOldTriggerTimestamp(fec);
+
       int overflow = GetCounter("TimestampOverflow", fec);
       m_acq_time = 0;
 
@@ -592,12 +589,22 @@ void Statistics::PrintFECStats(Configuration &config) {
       std::cout << "****************************************" << std::endl;
       std::cout << "Acq time: " << std::setprecision(1) << std::fixed
                 << m_acq_time << " ms" << std::endl;
-      std::cout << "Hit rate FEC: " << std::scientific
-                << 1000 * GetCounter("ParserData", fec) / m_acq_time << " hit/s"
-                << std::endl;
-      std::cout << "Data rate FEC: " << std::scientific
-                << 1000 * GetCounter("ParserData", fec) * 48 / m_acq_time
-                << " bit/s" << std::endl;
+      if (config.pDataFormat == "VTC") {
+        std::cout << "Hit rate VTC: " << std::scientific
+                  << 1000 * GetCounter("ParserData", fec) / m_acq_time
+                  << " hit/s" << std::endl;
+        std::cout << "Data rate VTC: " << std::scientific
+                  << 1000 * GetCounter("ParserData", fec) * 64 / m_acq_time
+                  << " bit/s" << std::endl;
+      } else if (config.pDataFormat == "SRS") {
+        std::cout << "Hit rate FEC: " << std::scientific
+                  << 1000 * GetCounter("ParserData", fec) / m_acq_time
+                  << " hit/s" << std::endl;
+        std::cout << "Data rate FEC: " << std::scientific
+                  << 1000 * GetCounter("ParserData", fec) * 48 / m_acq_time
+                  << " bit/s" << std::endl;
+      }
+
       std::cout << "****************************************" << std::endl;
     } else {
 

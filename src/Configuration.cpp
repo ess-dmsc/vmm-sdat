@@ -698,8 +698,8 @@ bool Configuration::ParseCommandLine(int argc, char **argv) {
       pAlgo = atoi(argv[i + 1]);
     } else if (strncmp(argv[i], "-df", 3) == 0) {
       pDataFormat = argv[i + 1];
-      std::vector<std::string> v_valid_values = {"ESS", "SRS", "SRS_ESS",
-                                                 "ess", "srs", "srs_ess"};
+      std::vector<std::string> v_valid_values = {"ESS", "SRS", "VTC",
+                                                 "ess", "srs", "vtc"};
       auto searchValid =
           std::find(v_valid_values.begin(), v_valid_values.end(), pDataFormat);
       if (searchValid == v_valid_values.end()) {

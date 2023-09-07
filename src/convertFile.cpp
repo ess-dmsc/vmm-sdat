@@ -9,6 +9,7 @@
 #include "Configuration.h"
 #include <parser/CalibrationFile.h>
 #include <parser/ParserSRS.h>
+#include <parser/ParserVTC.h>
 #include <parser/ReaderPcap.h>
 #include <parser/Trace.h>
 #include <parser/VMM3Parser.h>
@@ -43,7 +44,165 @@ int main(int argc, char **argv) {
     }
 
     if (m_config.pIsPcap) {
-      if (m_config.pDataFormat == "SRS") {
+      if (m_config.pDataFormat == "VTC") {
+        double firstTime = 0;
+        char buffer[10000];
+        Gem::SRSTime srs_time;
+        srs_time.bc_clock_MHz(m_config.pBC);
+        srs_time.tac_slope_ns(m_config.pTAC);
+
+        Gem::NMXStats nmxstats;
+        Gem::ParserVTC *parser = new Gem::ParserVTC(2000, nmxstats, srs_time);
+        Gem::CalibrationFile calfile(m_config.pCalFilename);
+        ReaderPcap pcap(m_config.pFileName);
+        int ret = pcap.open();
+        if (ret < 0) {
+          std::cout << "Error opening file: " << m_config.pFileName
+                    << ": return value " << ret << std::endl;
+          return -1;
+        }
+        uint64_t pcappackets = 0;
+        int rdsize;
+        bool doContinue = true;
+        while (doContinue &&
+               (rdsize = pcap.read((char *)&buffer, sizeof(buffer))) != -1) {
+          if (rdsize == 0) {
+            continue; // non udp data
+          }
+          int hits = parser->receive(buffer, rdsize);
+
+          total_hits += hits;
+
+          for (int i = 0; i < hits; i++) {
+            auto &d = parser->data[i];
+            double vtc_timestamp =
+                static_cast<double>(d.clockCounter) * m_config.pOffsetPeriod;
+            if (firstTime == 0) {
+              firstTime = vtc_timestamp;
+            }
+            double t0_correction = 0;
+            std::pair<uint8_t, uint8_t> fec_vmm = std::make_pair(0, d.vmmid);
+            auto searchMap = m_config.pFecVMM_time0.find(fec_vmm);
+            if (searchMap != m_config.pFecVMM_time0.end()) {
+              std::string t0 = m_config.pFecVMM_time0[fec_vmm];
+              if (t0 == "run") {
+                t0_correction = firstTime;
+              } else {
+                t0_correction = std::stod(t0);
+              }
+            }
+            vtc_timestamp = vtc_timestamp - t0_correction;
+            auto calib = calfile.getCalibration(0, d.vmmid, d.chno);
+            double chiptime =
+                static_cast<double>(d.bcid) * m_config.pBCTime_ns +
+                (1.5 * m_config.pBCTime_ns -
+                 static_cast<double>(d.tdc) *
+                     static_cast<double>(m_config.pTAC) / 255.0 -
+                 calib.time_offset) *
+                    calib.time_slope;
+
+            if (calib.adc_slope == 0) {
+              // no correction
+              calib.adc_slope = 1.0;
+            }
+
+            uint16_t corrected_adc = static_cast<uint16_t>(
+                (static_cast<double>(d.adc) - calib.adc_offset) *
+                calib.adc_slope);
+
+            if (corrected_adc > 1023) {
+              DTRACE(DEB,
+                     "After correction, ADC value larger than 1023 "
+                     "(10bit)!\nUncorrected ADC value %d, uncorrected ADC "
+                     "value %d\n",
+                     d.adc, corrected_adc);
+
+              corrected_adc = 1023;
+            } else if (corrected_adc < 0) {
+              DTRACE(DEB,
+                     "After correction, ADC value smaller than 0!"
+                     "\nUncorrected ADC value %d, uncorrected ADC "
+                     "value %d\n",
+                     d.adc, corrected_adc);
+              corrected_adc = 0;
+            }
+            uint16_t adc = static_cast<uint16_t>(corrected_adc);
+
+            double timewalk_correction =
+                calib.timewalk_d +
+                (calib.timewalk_a - calib.timewalk_d) /
+                    (1 +
+                     pow(corrected_adc / calib.timewalk_c, calib.timewalk_b));
+
+            double corrected_time = chiptime - timewalk_correction;
+
+            bool result = m_Clusterer->AnalyzeHits(
+                vtc_timestamp, 0, d.vmmid, d.chno, d.bcid, d.tdc, adc,
+                d.overThreshold != 0, corrected_time);
+            if (result == false ||
+                (total_hits >= m_config.nHits && m_config.nHits > 0)) {
+              doContinue = false;
+              break;
+            }
+          }
+
+          if (m_config.pShowStats) {
+            pcappackets++;
+            uint64_t nextFrameCounter = m_stats.GetLastFrameCounter(0) + 1;
+
+            if (nextFrameCounter != parser->hdr.frameCounter) {
+              if (parser->hdr.frameCounter > nextFrameCounter) {
+                if (m_stats.GetCounter("ParserGoodFrames", 0) > 0) {
+                  m_stats.IncrementCounter("ParserFrameMissingErrors", 0,
+                                           parser->hdr.frameCounter -
+                                               nextFrameCounter);
+                }
+              } else {
+                if (nextFrameCounter - parser->hdr.frameCounter > 0x0FFFFFFF) {
+                  m_stats.IncrementCounter("ParserFramecounterOverflows", 0, 1);
+                } else {
+                  m_stats.IncrementCounter("ParserFrameSeqErrors", 0, 1);
+                }
+              }
+            } else {
+              if (parser->hdr.frameCounter == 0) {
+                m_stats.IncrementCounter("ParserFramecounterOverflows", 0, 1);
+              }
+            }
+            m_stats.SetLastFrameCounter(0, parser->hdr.frameCounter);
+
+            // nmxstats.ParserFrameSeqErrors = 0;
+            // nmxstats.ParserFrameMissingErrors = 0;
+            // nmxstats.ParserFramecounterOverflows = 0;
+
+            m_stats.IncrementCounter("ParserReadouts", 0,
+                                     nmxstats.ParserReadouts);
+            m_stats.IncrementCounter("ParserMarkers", 0,
+                                     nmxstats.ParserMarkers);
+            m_stats.IncrementCounter("ParserData", 0, nmxstats.ParserData);
+            nmxstats.ParserReadouts = 0;
+            nmxstats.ParserMarkers = 0;
+            nmxstats.ParserData = 0;
+
+            m_stats.IncrementCounter("ParserTimestampSeqErrors", 0,
+                                     nmxstats.ParserTimestampSeqErrors);
+            m_stats.IncrementCounter("ParserTimestampOverflows", 0,
+                                     nmxstats.ParserTimestampOverflows);
+            nmxstats.ParserTimestampSeqErrors = 0;
+            nmxstats.ParserTimestampOverflows = 0;
+
+            m_stats.IncrementCounter("ParserBadFrames", 0,
+                                     nmxstats.ParserBadFrames);
+            m_stats.IncrementCounter("ParserGoodFrames", 0,
+                                     nmxstats.ParserGoodFrames);
+
+            nmxstats.ParserBadFrames = 0;
+            nmxstats.ParserGoodFrames = 0;
+          }
+        }
+        m_Clusterer->SaveDate(pcap.firstPacketSeconds, pcap.firstPacketDate);
+        delete parser;
+      } else if (m_config.pDataFormat == "SRS") {
         double firstTime = 0;
         char buffer[10000];
         Gem::SRSTime srs_time;
@@ -60,8 +219,8 @@ int main(int argc, char **argv) {
                     << ": return value " << ret << std::endl;
           return -1;
         }
+
         uint64_t pcappackets = 0;
-        int lastFecID = 0;
         int rdsize;
         bool doContinue = true;
         while (doContinue &&
@@ -88,6 +247,7 @@ int main(int argc, char **argv) {
               triggerOffset = -99.0;
             }
             if (d.hasDataMarker && d.fecTimeStamp > 0 && triggerOffset != -99) {
+
               double srs_timestamp =
                   (static_cast<double>(d.fecTimeStamp) * m_config.pBCTime_ns +
                    m_config.pOffsetPeriod * triggerOffset);
@@ -151,7 +311,6 @@ int main(int argc, char **argv) {
                        pow(corrected_adc / calib.timewalk_c, calib.timewalk_b));
 
               double corrected_time = chiptime - timewalk_correction;
-
               bool result = m_Clusterer->AnalyzeHits(
                   srs_timestamp, parser->pd.fecId, d.vmmid, d.chno, d.bcid,
                   d.tdc, adc, d.overThreshold != 0, corrected_time);
@@ -346,8 +505,6 @@ int main(int argc, char **argv) {
                 overThreshold != 0, corrected_time, hit.GEO);
             if (result == false ||
                 (total_hits >= m_config.nHits && m_config.nHits > 0)) {
-              std::cout << "breakup " << total_hits << " " << m_config.nHits
-                        << " " << result << std::endl;
               doContinue = false;
               break;
             }
@@ -410,7 +567,12 @@ int main(int argc, char **argv) {
     int elapsed_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(
                               timeEnd - timeStart)
                               .count();
-
+    int hit_size = 160;
+    if (m_config.pDataFormat == "VTC") {
+      hit_size = 64;
+    } else if (m_config.pDataFormat == "SRS") {
+      hit_size = 48;
+    }
     std::cout << "\n****************************************" << std::endl;
     std::cout << "Stats (analysis):" << std::endl;
     std::cout << "****************************************" << std::endl;
@@ -420,7 +582,8 @@ int main(int argc, char **argv) {
               << static_cast<double>(1000 * total_hits / elapsed_seconds)
               << " hit/s" << std::endl;
     std::cout << "Data rate: " << std::scientific
-              << static_cast<double>(1000 * total_hits * 48 / elapsed_seconds)
+              << static_cast<double>(1000 * total_hits * hit_size /
+                                     elapsed_seconds)
               << " bit/s" << std::endl;
     std::cout << "****************************************" << std::endl;
   }

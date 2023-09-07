@@ -44,6 +44,15 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
            (int)fecId, (int)vmmId);
     return true;
   }
+  // if (tdc == 0 || (overThresholdFlag == 1 && adc < 16) || adc == 0) {
+  if (adc == 0 || (vmmId == 1 && chNo == 63 && bcid == 4095 && tdc == 255 &&
+                   adc == 1023 && srsTimestamp == 6871947571200.000000)) {
+    DTRACE(DEB,
+           "\t\tInvalid data FEC %d, vmmId %d, adc %d, tdc %d, ovThr %d, time "
+           "%f!\n",
+           (int)fecId, (int)vmmId, adc, tdc, overThresholdFlag, srsTimestamp);
+    return true;
+  }
 
   if (m_config.pShowStats && m_config.pDataFormat == "SRS") {
     // Biggest possible time should be:
@@ -87,23 +96,42 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
       }
     }
 
-    double remainder = std::fmod(m_stats.GetDeltaTriggerTimestamp(fecId),
-                                 m_config.pOffsetPeriod);
-    if (remainder > 0) {
-      m_stats.IncrementCounter("TriggerPeriodError", fecId);
-      unsigned long long offset =
-          m_stats.GetDeltaTriggerTimestamp(fecId) / m_config.pOffsetPeriod;
+  } else if (m_config.pShowStats && m_config.pDataFormat == "VTC") {
+    // Biggest possible time should be:
+    // from VTC: 2^26-1 = 0x3FFFFFF overflow period
+    // converted to ns: 0x3FFFFFF * overflow period = 6871947571200 ns
+    if (srsTimestamp > 6871947571200.0) {
+      m_stats.IncrementCounter("TimestampTooLarge", fecId);
       DTRACE(
           DEB,
-          "\n******* ERROR: SRS timestamp wrong increment: fec "
-          "%d,vmmId %d, chNo %d, hit %d, "
-          "offset period %f, offset %llu, remainder %llu, new time %llu, old "
-          "time %llu\n",
-          fecId, vmmId, chNo, m_hitNr, m_config.pOffsetPeriod, offset,
-          static_cast<unsigned long long>(remainder),
-          static_cast<unsigned long long>(srsTimestamp),
-          static_cast<unsigned long long>(
-              m_stats.GetOldTriggerTimestamp(fecId)));
+          "\t\tTimestamp %llu larger than 26 bit multiplied by overflow period "
+          "for FEC %d and vmmId %d!\n",
+          static_cast<unsigned long long>(srsTimestamp), (int)fecId,
+          (int)vmmId);
+    }
+
+    if (srsTimestamp < m_stats.GetMaxTriggerTimestamp(fecId)) {
+      if (m_stats.GetMaxTriggerTimestamp(fecId) >
+          6000000000000.0 + srsTimestamp) {
+        m_stats.IncrementCounter("TimestampOverflow", fecId);
+        DTRACE(DEB,
+               "\n*********************************** OVERFLOW  fecId %d, "
+               "m_hitNr %d, "
+               "srsTimestamp %llu, old srsTimestamp %llu\n",
+               fecId, m_hitNr, static_cast<unsigned long long>(srsTimestamp),
+               static_cast<unsigned long long>(
+                   m_stats.GetMaxTriggerTimestamp(fecId)));
+
+      } else {
+        m_stats.IncrementCounter("TimestampOrderError", fecId);
+        DTRACE(DEB,
+               "\n*********************************** TIME ERROR  fecId %d, "
+               "m_hitNr %d, "
+               "srsTimestamp %llu, old srsTimestamp %llu\n",
+               fecId, m_hitNr, static_cast<unsigned long long>(srsTimestamp),
+               static_cast<unsigned long long>(
+                   m_stats.GetMaxTriggerTimestamp(fecId)));
+      }
     }
   }
 
@@ -113,13 +141,9 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
     double factor = 16.0;
     if (srsTimestamp >= m_stats.GetOldTriggerTimestamp(fecId) +
                             factor * m_config.pOffsetPeriod) {
-      if (m_config.pShowStats) {
-        m_stats.SetDeltaTriggerTimestamp(
-            fecId, srsTimestamp - m_stats.GetOldTriggerTimestamp(fecId));
-      }
       newData = true;
     }
-  } else if (m_config.pDataFormat == "ESS") {
+  } else if (m_config.pDataFormat == "ESS" || m_config.pDataFormat == "VTC") {
     double buffer_interval_ns = 10000000.0;
     if (srsTimestamp >=
         m_stats.GetOldTriggerTimestamp(fecId) + buffer_interval_ns) {
@@ -264,14 +288,6 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
     }
   }
 
-  if (m_stats.GetDeltaTriggerTimestamp(fecId) > 0) {
-    DTRACE(DEB, "\n\tTriggerTimestamp %llu [ns]\n",
-           static_cast<unsigned long long>(srsTimestamp));
-    DTRACE(DEB, "\tTime since last trigger %f us (%.4f kHz)\n",
-           m_stats.GetDeltaTriggerTimestamp(fecId) * 0.001,
-           (double)(1000000 / m_stats.GetDeltaTriggerTimestamp(fecId)));
-  }
-
   if (m_oldFecId != fecId || newData) {
     DTRACE(DEB, "\tfecId  %d\n", fecId);
   }
@@ -287,6 +303,7 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
   if (m_stats.GetFirstTriggerTimestamp(fecId) == 0) {
     m_stats.SetFirstTriggerTimestamp(fecId, srsTimestamp);
   }
+
   if (m_stats.GetMaxTriggerTimestamp(fecId) < srsTimestamp) {
     m_stats.SetMaxTriggerTimestamp(fecId, srsTimestamp);
   }
@@ -328,6 +345,7 @@ int Clusterer::ClusterByTime(std::pair<uint8_t, uint8_t> dp) {
         }
       }
     }
+
     cluster.emplace_back(strip1, time1, adc1, strip2);
   }
 
@@ -589,14 +607,12 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
       largestTime = time1;
       largestADCTime = time1;
       largestADCPos = strip1;
-      // position_utpc = (double)strip1;
       DTRACE(DEB, "\nDetector %d, plane %d cluster:\n", (int)det, (int)plane);
     }
 
     // Add members of a cluster, if it is either the beginning of a cluster,
     // or if strip gap and time span is correct
-    if (stripCount == 0 || (std::fabs(strip1 - strip2) > 0 &&
-                            ((plane == 2 && m_config.pAlgo == 5) ||
+    if (stripCount == 0 || (((plane == 2 && m_config.pAlgo == 5) ||
                              (std::fabs(strip1 - strip2) - 1 <=
                               m_config.pMissingStripsClusterX)) &&
                             time1 - startTime <= m_config.pSpanClusterTime &&
@@ -615,7 +631,6 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
         idx_left = stripCount;
         idx_right = stripCount;
         largestTime = time1;
-        // position_utpc = (double)strip1;
       }
       if (time1 < startTime) {
         startTime = time1;
@@ -652,6 +667,7 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
                m_config.pMissingStripsClusterX)) ||
              time1 - startTime > m_config.pSpanClusterTime ||
              largestTime - time1 > m_config.pSpanClusterTime) {
+
       // Valid cluster
       if (stripCount < m_config.pMinClusterSize || totalADC == 0) {
         DTRACE(DEB, "******** INVALID CLUSTER SIZE ********%d\n\n", stripCount);
@@ -729,6 +745,7 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
         clusterPlane.strips = std::move(vStrips);
         clusterPlane.times = std::move(vTimes);
         clusterPlane.adcs = std::move(vADC);
+
         m_cluster_id++;
 
         DTRACE(DEB, "Cluster id %d\n", m_cluster_id);
@@ -786,7 +803,8 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
     }
   }
 
-  // At the end of the clustering, check again if there is a last valid cluster
+  // At the end of the clustering, check again if there is a last valid
+  // cluster
   if (stripCount >= m_config.pMinClusterSize && totalADC > 0) {
     spanCluster = (largestTime - startTime);
     centerOfGravity = (centerOfGravity / totalADC);
@@ -945,9 +963,35 @@ void Clusterer::AlgorithmUTPC(int idx_min_largest_time,
   } else if (m_config.pAlgo == 0) {
     positionAlgo = (p1 * a1 + p2 * a2 + p3 * a3) / (a1 + a2 + a3);
     timeAlgo = (t1 * a1 + t2 * a2 + t3 * a3) / (a1 + a2 + a3);
+  } else if (m_config.pAlgo == 6) {
+    double slope = 0.0;
+    double offset = 0.0;
+    double sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+    size_t nPoints = vStrips.size();
+
+    auto min_time = *std::min_element(vTimes.begin(), vTimes.end());
+    if (nPoints >= 2) {
+      for (int n = 0; n < nPoints; n++) {
+        double theMean = 0;
+        double theXValue = 0;
+        sumX += vStrips[n];
+        sumY += vTimes[n] - min_time;
+        sumXY += vStrips[n] * (vTimes[n] - min_time);
+        sumX2 += vStrips[n] * vStrips[n];
+      }
+
+      double xMean = sumX / static_cast<double>(nPoints);
+      double yMean = sumY / static_cast<double>(nPoints);
+      double denominator = sumX2 - sumX * xMean;
+      if (std::fabs(denominator) > 1e-7) {
+        slope = (sumXY - sumX * yMean) / denominator;
+        offset = yMean - slope * xMean;
+      }
+    }
+    positionAlgo = slope;
+    timeAlgo = offset;
   }
 }
-
 //====================================================================================================================
 int Clusterer::MatchClustersDetector(uint8_t det) {
   int clusterCount = 0;
