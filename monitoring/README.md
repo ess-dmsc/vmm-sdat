@@ -18,3 +18,7 @@ To run the monitoring with real data, first edit the file **_storeMonitoringData
 
 ## How to take physics data and store it
 The python script **_storePcapngData.py_** illustrates how to take data using *dumpcap* either using a fixed duration per file or a fixed file size. The user has to edit the number of desired files, the file name and the internet interface.
+
+
+##Interactive Monitoring
+The folder interactive monitoring contains a similar type of monitoring, but with interactive plots.

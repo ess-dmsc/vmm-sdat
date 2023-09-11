@@ -44,9 +44,17 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
            (int)fecId, (int)vmmId);
     return true;
   }
-  // if (tdc == 0 || (overThresholdFlag == 1 && adc < 16) || adc == 0) {
-  if (adc == 0 || (vmmId == 1 && chNo == 63 && bcid == 4095 && tdc == 255 &&
-                   adc == 1023 && srsTimestamp == 6871947571200.000000)) {
+  if (tdc == 0 || (overThresholdFlag == 1 && adc < 16) || adc == 0) {
+    DTRACE(DEB,
+           "\t\tInvalid data FEC %d, vmmId %d, adc %d, tdc %d, ovThr %d, time "
+           "%f!\n",
+           (int)fecId, (int)vmmId, adc, tdc, overThresholdFlag, srsTimestamp);
+    return true;
+  }
+
+  if (m_config.pDataFormat == "VTC" &&
+      (vmmId == 1 && chNo == 63 && bcid == 4095 && tdc == 255 && adc == 1023 &&
+       srsTimestamp == 6871947571200.000000)) {
     DTRACE(DEB,
            "\t\tInvalid data FEC %d, vmmId %d, adc %d, tdc %d, ovThr %d, time "
            "%f!\n",
@@ -345,7 +353,6 @@ int Clusterer::ClusterByTime(std::pair<uint8_t, uint8_t> dp) {
         }
       }
     }
-
     cluster.emplace_back(strip1, time1, adc1, strip2);
   }
 
@@ -591,6 +598,7 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
     strip1 = std::get<0>(itCluster);
     time1 = std::get<1>(itCluster);
     adc1 = std::get<2>(itCluster);
+
     if (adc1 > 1024) {
       ovTh = true;
     } else {
@@ -617,8 +625,10 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
                               m_config.pMissingStripsClusterX)) &&
                             time1 - startTime <= m_config.pSpanClusterTime &&
                             largestTime - time1 <= m_config.pSpanClusterTime)) {
+
       DTRACE(DEB, "\tstrip %d, time %llu, adc %d:\n", strip1,
              static_cast<unsigned long long>(time1), adc1);
+
       if (adc1 > adc2) {
         largestADCTime = time1;
         largestADCPos = strip1;
@@ -667,7 +677,6 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
                m_config.pMissingStripsClusterX)) ||
              time1 - startTime > m_config.pSpanClusterTime ||
              largestTime - time1 > m_config.pSpanClusterTime) {
-
       // Valid cluster
       if (stripCount < m_config.pMinClusterSize || totalADC == 0) {
         DTRACE(DEB, "******** INVALID CLUSTER SIZE ********%d\n\n", stripCount);
@@ -698,6 +707,7 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
         clusterPlane.adc = totalADC;
         clusterPlane.time = centerOfTime;
         clusterPlane.pos = centerOfGravity;
+
         clusterPlane.time_charge2 = centerOfTime2;
         clusterPlane.pos_charge2 = centerOfGravity2;
 
@@ -777,29 +787,40 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
         }
         clusterCount++;
       }
-      // Reset all parameters
-      startTime = 0;
-      largestTime = 0;
-      largestADCTime = 0;
-      largestADCPos = 0;
-      stripCount = 0;
-      centerOfGravity = 0;
-      centerOfTime = 0;
-      totalADC = 0;
-      centerOfGravity2 = 0;
-      centerOfTime2 = 0;
-      totalADC2 = 0;
-      centerOfGravity_ovTh = 0;
-      centerOfTime_ovTh = 0;
-      totalADC_ovTh = 0;
-      centerOfGravity2_ovTh = 0;
-      centerOfTime2_ovTh = 0;
-      totalADC2_ovTh = 0;
-      strip1 = 0;
-      maxMissingStrip = 0;
+
+      // Clear vectors
       vADC.clear();
       vStrips.clear();
       vTimes.clear();
+      // Strip that caused gap in cluster is added as first strip of new
+      // cluster
+      vStrips.emplace_back(strip1);
+      vTimes.emplace_back(time1);
+      vADC.emplace_back(adc1);
+      stripCount = 1;
+      largestADCTime = time1;
+      largestADCPos = strip1;
+      idx_right = 0;
+      idx_left = 0;
+      largestTime = time1;
+      startTime = time1;
+      maxMissingStrip = 0;
+      spanCluster = 0;
+      totalADC = adc1;
+      totalADC2 = adc1 * adc1;
+      centerOfGravity = strip1 * adc1;
+      centerOfTime = time1 * adc1;
+      centerOfGravity2 = strip1 * adc1 * adc1;
+      centerOfTime2 = time1 * adc1 * adc1;
+
+      if (ovTh) {
+        totalADC_ovTh = adc1;
+        totalADC2_ovTh = adc1 * adc1;
+        centerOfGravity_ovTh = strip1 * adc1;
+        centerOfTime_ovTh = time1 * adc1;
+        centerOfGravity2_ovTh = strip1 * adc1 * adc1;
+        centerOfTime2_ovTh = time1 * adc1 * adc1;
+      }
     }
   }
 
@@ -964,8 +985,8 @@ void Clusterer::AlgorithmUTPC(int idx_min_largest_time,
     positionAlgo = (p1 * a1 + p2 * a2 + p3 * a3) / (a1 + a2 + a3);
     timeAlgo = (t1 * a1 + t2 * a2 + t3 * a3) / (a1 + a2 + a3);
   } else if (m_config.pAlgo == 6) {
-    double slope = 0.0;
-    double offset = 0.0;
+    double slope = -99999.0;
+    double offset = -99999.0;
     double sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
     size_t nPoints = vStrips.size();
 
@@ -1324,6 +1345,11 @@ int Clusterer::MatchClustersDetector(uint8_t det) {
                  clusterDetector.size1);
           DTRACE(DEB, "\tdelta time planes: %d\n",
                  (int)clusterDetector.delta_plane_0_1);
+          if (clusterDetector.size0 + clusterDetector.size1 == 317) {
+            printf("\ncommon cluster det %d id %d,  x/y: %d/%d", (int)det,
+                   clusterDetector.id, clusterDetector.id0,
+                   clusterDetector.id1);
+          }
         }
         m_clusters_detector[det].emplace_back(std::move(clusterDetector));
       }
