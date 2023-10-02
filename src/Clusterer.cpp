@@ -987,6 +987,7 @@ void Clusterer::AlgorithmUTPC(int idx_min_largest_time,
   } else if (m_config.pAlgo == 6) {
     double slope = -99999.0;
     double offset = -99999.0;
+    double sum_dev = 0;
     double sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
     size_t nPoints = vStrips.size();
 
@@ -1008,9 +1009,21 @@ void Clusterer::AlgorithmUTPC(int idx_min_largest_time,
         slope = (sumXY - sumX * yMean) / denominator;
         offset = yMean - slope * xMean;
       }
+      slope = 0.009 * slope;
+      offset = 0.009 * offset;
+
+      for (int n = 0; n < nPoints; n++) {
+        double y_fit = slope * vStrips[n] + offset;
+        double y_meas = 0.009 * (vTimes[n] - min_time);
+        double delta_y = y_fit - y_meas;
+        double delta_fit = delta_y * std::cos(std::atan(slope));
+        sum_dev += std::abs(delta_fit);
+      }
+      sum_dev = sum_dev / nPoints;
     }
     positionAlgo = slope;
     timeAlgo = offset;
+    positionUTPC = sum_dev;
   }
 }
 //====================================================================================================================
@@ -1662,4 +1675,13 @@ void Clusterer::SaveDate(double the_seconds, std::string the_date) {
             << std::endl;
   std::cout << the_date << std::endl;
   m_rootFile->SaveDate(the_seconds, the_date);
+}
+
+void Clusterer::FillCalibHistos(uint16_t fec, uint8_t vmm, uint8_t ch,
+                                float adc, float adc_corrected, float chip_time,
+                                float chip_time_corrected) {
+  if (m_config.useCalibration && m_config.calibrationHistogram) {
+    m_rootFile->FillCalibHistos(fec, vmm, ch, adc, adc_corrected, chip_time,
+                                chip_time_corrected);
+  }
 }

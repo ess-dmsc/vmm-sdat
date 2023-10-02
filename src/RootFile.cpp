@@ -116,10 +116,66 @@ void RootFile::SaveDate(double the_seconds, std::string the_date) {
   deltaTimePlanes.Write();
 }
 
+void RootFile::FillCalibHistos(uint16_t fec, uint8_t vmm, uint8_t ch, float adc,
+                               float adc_corrected, float chip_time,
+                               float chip_time_corrected) {
+
+  int idx = m_map_calib_TH2D[std::make_tuple(fec, vmm, "adc_without_calib")];
+  m_calib_TH2D[idx]->Fill(ch, adc);
+  idx = m_map_calib_TH2D[std::make_tuple(fec, vmm, "adc_with_calib")];
+  m_calib_TH2D[idx]->Fill(ch, adc_corrected);
+  idx = m_map_calib_TH2D[std::make_tuple(fec, vmm, "time_without_calib")];
+  m_calib_TH2D[idx]->Fill(ch, chip_time);
+  idx = m_map_calib_TH2D[std::make_tuple(fec, vmm, "time_with_calib")];
+  m_calib_TH2D[idx]->Fill(ch, chip_time_corrected);
+}
+
 RootFile::RootFile(Configuration &config) : m_config(config) {
   m_fileName = m_config.pRootFilename.c_str();
   m_file = TFile::Open(m_fileName, "RECREATE");
   m_eventNr = 0;
+
+  if (m_config.useCalibration && m_config.calibrationHistogram) {
+    TH2D *h2;
+    std::string name = "";
+    int cntCal = 0;
+    for (int i = 0; i < m_config.pVMMs.size(); i++) {
+      auto tuple = m_config.pVMMs[i];
+      auto det = std::get<0>(tuple);
+      auto plane = std::get<1>(tuple);
+      auto fec = std::get<2>(tuple);
+      auto vmm = std::get<3>(tuple);
+
+      name = "fec" + std::to_string(fec) + "_vmm" + std::to_string(vmm) +
+             "_adc_with_calib";
+      h2 = new TH2D(name.c_str(), name.c_str(), 64, 0, 64, 1023, 0, 1023);
+      m_calib_TH2D.push_back(h2);
+      m_map_calib_TH2D.emplace(
+          std::make_pair(std::make_tuple(fec, vmm, "adc_with_calib"), cntCal));
+      cntCal++;
+      name = "fec" + std::to_string(fec) + "_vmm" + std::to_string(vmm) +
+             "_adc_without_calib";
+      h2 = new TH2D(name.c_str(), name.c_str(), 64, 0, 64, 1023, 0, 1023);
+      m_calib_TH2D.push_back(h2);
+      m_map_calib_TH2D.emplace(std::make_pair(
+          std::make_tuple(fec, vmm, "adc_without_calib"), cntCal));
+      cntCal++;
+      name = "fec" + std::to_string(fec) + "_vmm" + std::to_string(vmm) +
+             "_time_with_calib";
+      h2 = new TH2D(name.c_str(), name.c_str(), 64, 0, 64, 350, 0, 35);
+      m_calib_TH2D.push_back(h2);
+      m_map_calib_TH2D.emplace(
+          std::make_pair(std::make_tuple(fec, vmm, "time_with_calib"), cntCal));
+      cntCal++;
+      name = "fec" + std::to_string(fec) + "_vmm" + std::to_string(vmm) +
+             "_time_without_calib";
+      h2 = new TH2D(name.c_str(), name.c_str(), 64, 0, 64, 350, 0, 35);
+      m_calib_TH2D.push_back(h2);
+      m_map_calib_TH2D.emplace(std::make_pair(
+          std::make_tuple(fec, vmm, "time_without_calib"), cntCal));
+      cntCal++;
+    }
+  }
 
   switch (m_config.pSaveWhat) {
   case 1:
@@ -440,6 +496,8 @@ RootFile::RootFile(Configuration &config) : m_config(config) {
         cnt1D++;
       }
     }
+  }
+  if (m_config.useCalibration) {
   }
   std::cout << "ROOT file " << m_fileName << " created!" << std::endl;
 }

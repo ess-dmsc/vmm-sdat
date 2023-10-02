@@ -24,7 +24,7 @@ bool Configuration::PrintUsage(const std::string &errorMessage, char *argv) {
          "-51.2, 100]]\" -ro \"[[0,0,45]]\" -tr \"[[S,T,R2]]\" "
       << "-bc 40 -tac 60 -th 0 -cs 1 -ccs 3 -dt 200 -mst 1 -spc 500 "
       << "-dp 200 -coin center-of-mass -crl 0.75 -cru 3.0 -save [[1],[1],[1]] "
-         "-swap 0 -json 0 -n 0 -df SRS"
+         "-swap 0 -json 0 -n 0 -df SRS -cahi 1"
       << std::endl;
 
   std::cout << "\n\nFlags:\n" << std::endl;
@@ -261,6 +261,13 @@ bool Configuration::PrintUsage(const std::string &errorMessage, char *argv) {
       << "        ESS: used for assister cards, no markers, timestamps are "
          "part of the data"
       << std::endl;
+  std::cout
+      << "-cahi:    Calibration histograms: If a calibration file is used, "
+      << "histograms of the calibrated and uncalibrated adc and time can be "
+         "produced.\n"
+      << "With the help of these histograms the effect of the calibration can "
+         "be checked."
+      << "        default: 0" << std::endl;
   std::cout << "-info:  Additional info the user wants to be added to the end "
                "of the newly created file name.\n"
             << std::endl;
@@ -602,6 +609,12 @@ bool Configuration::ParseCommandLine(int argc, char **argv) {
       pSpanClusterTime = atof(argv[i + 1]);
     } else if (strncmp(argv[i], "-dp", 3) == 0) {
       pDeltaTimePlanes = atof(argv[i + 1]);
+    } else if (strncmp(argv[i], "-cahi", 5) == 0) {
+      if (atoi(argv[i + 1]) == 1) {
+        calibrationHistogram = true;
+      } else {
+        calibrationHistogram = false;
+      }
     } else if (strncmp(argv[i], "-save", 5) == 0) {
       std::string parameterString = argv[i + 1];
       char removeChars[] = " ";

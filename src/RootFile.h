@@ -29,6 +29,9 @@ public:
   void SaveClustersPlane(ClusterVectorPlane &&clusters_plane);
   void SaveClustersDetector(ClusterVectorDetector &&clusters_detector);
   void SaveDate(double the_seconds, std::string the_date);
+  void FillCalibHistos(uint16_t fec, uint8_t vmm, uint8_t ch, float adc,
+                       float adc_corrected, float chip_time,
+                       float chip_time_corrected);
 
 private:
   Configuration &m_config;
@@ -58,9 +61,11 @@ private:
 
   std::map<std::pair<uint8_t, std::string>, int> m_map_TH2D;
   std::map<std::pair<uint8_t, std::string>, int> m_map_TH1D;
+  std::map<std::tuple<uint16_t, uint8_t, std::string>, int> m_map_calib_TH2D;
 
   std::vector<TH1D *> m_TH1D;
   std::vector<TH2D *> m_TH2D;
+  std::vector<TH2D *> m_calib_TH2D;
 
   ClassDef(RootFile, 1)
 };

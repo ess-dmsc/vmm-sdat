@@ -40,7 +40,7 @@ public:
   // bottom side), the channel 0 of the VMM 0 is always where the HDMI cable is
   // connected If the planes are correctly used as described above, the VMM IDs
   // are always in icreasing order PER HYBRID (e.g. 14, 15 or e.g. 0, 1)
-  std::vector<std::tuple<uint8_t, uint8_t, uint8_t, uint8_t>> pVMMs{
+  std::vector<std::tuple<uint8_t, uint8_t, uint16_t, uint8_t>> pVMMs{
       {1, 0, 1, 0}, {1, 0, 1, 1}, {1, 0, 1, 2}, {1, 0, 1, 3},
       {1, 1, 1, 6}, {1, 1, 1, 7}, {1, 1, 1, 8}, {1, 1, 1, 9}};
 
@@ -89,6 +89,7 @@ public:
   std::string pGeometryFile = "";
   bool createJSON = false;
   bool useCalibration = false;
+  bool calibrationHistogram = false;
   int pSaveWhat = 111;
   std::string pConditionCoincidence = "center-of-mass";
   double pChargeRatioLower = 0.5;

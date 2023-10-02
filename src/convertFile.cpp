@@ -93,18 +93,13 @@ int main(int argc, char **argv) {
             }
             vtc_timestamp = vtc_timestamp - t0_correction;
             auto calib = calfile.getCalibration(0, d.vmmid, d.chno);
-            double chiptime =
+            double chiptime_corrected =
                 static_cast<double>(d.bcid) * m_config.pBCTime_ns +
                 (1.5 * m_config.pBCTime_ns -
                  static_cast<double>(d.tdc) *
                      static_cast<double>(m_config.pTAC) / 255.0 -
                  calib.time_offset) *
                     calib.time_slope;
-
-            if (calib.adc_slope == 0) {
-              // no correction
-              calib.adc_slope = 1.0;
-            }
 
             uint16_t corrected_adc = static_cast<uint16_t>(
                 (static_cast<double>(d.adc) - calib.adc_offset) *
@@ -126,7 +121,21 @@ int main(int argc, char **argv) {
                      d.adc, corrected_adc);
               corrected_adc = 0;
             }
-            uint16_t adc = static_cast<uint16_t>(corrected_adc);
+            double time_without_calib =
+                (1.5 * m_config.pBCTime_ns -
+                 static_cast<double>(d.tdc) *
+                     static_cast<double>(m_config.pTAC) / 255.0);
+
+            double time_with_calib =
+                (1.5 * m_config.pBCTime_ns -
+                 static_cast<double>(d.tdc) *
+                     static_cast<double>(m_config.pTAC) / 255.0 -
+                 calib.time_offset) *
+                calib.time_slope;
+
+            m_Clusterer->FillCalibHistos(0, d.vmmid, d.chno, d.adc,
+                                         corrected_adc, time_without_calib,
+                                         time_with_calib);
 
             double timewalk_correction =
                 calib.timewalk_d +
@@ -134,10 +143,10 @@ int main(int argc, char **argv) {
                     (1 +
                      pow(corrected_adc / calib.timewalk_c, calib.timewalk_b));
 
-            double corrected_time = chiptime - timewalk_correction;
+            double corrected_time = chiptime_corrected - timewalk_correction;
 
             bool result = m_Clusterer->AnalyzeHits(
-                vtc_timestamp, 0, d.vmmid, d.chno, d.bcid, d.tdc, adc,
+                vtc_timestamp, 0, d.vmmid, d.chno, d.bcid, d.tdc, corrected_adc,
                 d.overThreshold != 0, corrected_time);
             if (result == false ||
                 (total_hits >= m_config.nHits && m_config.nHits > 0)) {
@@ -269,18 +278,14 @@ int main(int argc, char **argv) {
               srs_timestamp = srs_timestamp - t0_correction;
               auto calib =
                   calfile.getCalibration(parser->pd.fecId, d.vmmid, d.chno);
-              double chiptime =
+
+              double chiptime_corrected =
                   static_cast<double>(d.bcid) * m_config.pBCTime_ns +
                   (1.5 * m_config.pBCTime_ns -
                    static_cast<double>(d.tdc) *
                        static_cast<double>(m_config.pTAC) / 255.0 -
                    calib.time_offset) *
                       calib.time_slope;
-
-              if (calib.adc_slope == 0) {
-                // no correction
-                calib.adc_slope = 1.0;
-              }
 
               uint16_t corrected_adc = static_cast<uint16_t>(
                   (static_cast<double>(d.adc) - calib.adc_offset) *
@@ -302,7 +307,22 @@ int main(int argc, char **argv) {
                        d.adc, corrected_adc);
                 corrected_adc = 0;
               }
-              uint16_t adc = static_cast<uint16_t>(corrected_adc);
+
+              double time_without_calib =
+                  (1.5 * m_config.pBCTime_ns -
+                   static_cast<double>(d.tdc) *
+                       static_cast<double>(m_config.pTAC) / 255.0);
+
+              double time_with_calib =
+                  (1.5 * m_config.pBCTime_ns -
+                   static_cast<double>(d.tdc) *
+                       static_cast<double>(m_config.pTAC) / 255.0 -
+                   calib.time_offset) *
+                  calib.time_slope;
+
+              m_Clusterer->FillCalibHistos(parser->pd.fecId, d.vmmid, d.chno,
+                                           d.adc, corrected_adc,
+                                           time_without_calib, time_with_calib);
 
               double timewalk_correction =
                   calib.timewalk_d +
@@ -310,10 +330,11 @@ int main(int argc, char **argv) {
                       (1 +
                        pow(corrected_adc / calib.timewalk_c, calib.timewalk_b));
 
-              double corrected_time = chiptime - timewalk_correction;
+              double corrected_time = chiptime_corrected - timewalk_correction;
+
               bool result = m_Clusterer->AnalyzeHits(
                   srs_timestamp, parser->pd.fecId, d.vmmid, d.chno, d.bcid,
-                  d.tdc, adc, d.overThreshold != 0, corrected_time);
+                  d.tdc, corrected_adc, d.overThreshold != 0, corrected_time);
               if (result == false ||
                   (total_hits >= m_config.nHits && m_config.nHits > 0)) {
                 doContinue = false;
@@ -498,6 +519,22 @@ int main(int argc, char **argv) {
                      pow(corrected_adc / calib.timewalk_c, calib.timewalk_b));
 
             double corrected_time = chiptime_corrected - timewalk_correction;
+
+            double time_without_calib =
+                (1.5 * m_config.pBCTime_ns -
+                 static_cast<double>(hit.TDC) *
+                     static_cast<double>(m_config.pTAC) / 255.0);
+
+            double time_with_calib =
+                (1.5 * m_config.pBCTime_ns -
+                 static_cast<double>(hit.TDC) *
+                     static_cast<double>(m_config.pTAC) / 255.0 -
+                 calib.time_offset) *
+                calib.time_slope;
+
+            m_Clusterer->FillCalibHistos(assisterId, hit.VMM, hit.Channel, adc,
+                                         corrected_adc, time_without_calib,
+                                         time_with_calib);
 
             bool result = m_Clusterer->AnalyzeHits(
                 complete_timestamp, assisterId, hit.VMM, hit.Channel, hit.BC,
