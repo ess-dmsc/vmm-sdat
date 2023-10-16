@@ -4,6 +4,7 @@ project(vmm-sdat)
 
 set(CMAKE_BUILD_TYPE RelWithDebInfo)
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH ON)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -fsanitize=address -O0 -ggdb")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb")
 
@@ -65,28 +66,43 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
 include_directories(${VERSION_INCLUDE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/analysis)
 
+set(HEADERS
+RootFile.h
+DataStructures.h
+Configuration.h
+)
 
-ROOT_GENERATE_DICTIONARY(vmm-sdatDict 
-${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ParserSRS.h 
-${CMAKE_CURRENT_SOURCE_DIR}/src/parser/VMM3Parser.h
-${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ParserVTC.h
-${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ReadoutParser.h
-${CMAKE_CURRENT_SOURCE_DIR}/src/parser/SRSTime.h  
-${CMAKE_CURRENT_SOURCE_DIR}/src/parser/CalibrationFile.h 
-${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ReaderPcap.h  
-${CMAKE_CURRENT_SOURCE_DIR}/src/Clusterer.h 
-${CMAKE_CURRENT_SOURCE_DIR}/src/RootFile.h 
-${CMAKE_CURRENT_SOURCE_DIR}/src/DataStructures.h 
-${CMAKE_CURRENT_SOURCE_DIR}/src/Configuration.h ${CMAKE_CURRENT_SOURCE_DIR}/src/Statistics.h LINKDEF ${CMAKE_CURRENT_SOURCE_DIR}/src/convertLinkDef.h MODULE vmm-sdat)
-
-
-#---Create a shared library with generated dictionary
-add_library(vmm-sdat SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ParserSRS.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/VMM3Parser.cpp
+set(SOURCES
+${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ParserSRS.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/src/parser/VMM3Parser.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ReadoutParser.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ParserVTC.cpp
-${CMAKE_CURRENT_SOURCE_DIR}/src/parser/SRSTime.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/CalibrationFile.cpp 
-${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ReaderPcap.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Clusterer.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/RootFile.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Configuration.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Statistics.cpp vmm-sdatDict.cxx)
-target_link_libraries(vmm-sdat ${ROOT_LIBRARIES} fmt pcap)
+${CMAKE_CURRENT_SOURCE_DIR}/src/parser/SRSTime.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/src/parser/CalibrationFile.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ReaderPcap.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/src/Clusterer.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/src/RootFile.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/src/Configuration.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/src/Statistics.cpp
+${PROJECT_NAME}Dict.cxx
+)
+
+set(INSTALL_HEADERS ${HEADERS})
+list(TRANSFORM INSTALL_HEADERS PREPEND ${CMAKE_CURRENT_SOURCE_DIR}/src/)
+
+ROOT_GENERATE_DICTIONARY(${PROJECT_NAME}Dict ${HEADERS} LINKDEF ${CMAKE_CURRENT_SOURCE_DIR}/src/convertLinkDef.h MODULE ${PROJECT_NAME})
+
+set(ROOT_RESOURCES
+${CMAKE_CURRENT_BINARY_DIR}/lib${PROJECT_NAME}_rdict.pcm
+${CMAKE_CURRENT_BINARY_DIR}/lib${PROJECT_NAME}.rootmap
+)
+
+#---Create a shared library with generated dictionary
+add_library(${PROJECT_NAME} SHARED ${SOURCES})
+target_link_libraries(${PROJECT_NAME} ${ROOT_LIBRARIES} fmt pcap)
+set_target_properties(${PROJECT_NAME} PROPERTIES
+                      PUBLIC_HEADER "${INSTALL_HEADERS}"
+                      RESOURCE "${ROOT_RESOURCES}")
 
 #---Create  a main program using the library
 add_executable(convertFile ${CMAKE_CURRENT_SOURCE_DIR}/src/convertFile.cpp)
@@ -94,11 +110,21 @@ add_executable(accessTree ${CMAKE_CURRENT_SOURCE_DIR}/analysis/examples_read_dat
 add_executable(normalizeHisto ${CMAKE_CURRENT_SOURCE_DIR}/analysis/examples_read_data/normalizeHisto.cpp)
 
 
-target_link_libraries(convertFile vmm-sdat)
-target_link_libraries(accessTree vmm-sdat)
-target_link_libraries(normalizeHisto vmm-sdat)
+target_link_libraries(convertFile ${PROJECT_NAME})
+target_link_libraries(accessTree ${PROJECT_NAME})
+target_link_libraries(normalizeHisto ${PROJECT_NAME})
 
-target_compile_definitions(vmm-sdat PUBLIC __FAVOR_BSD)
+target_compile_definitions(${PROJECT_NAME} PUBLIC __FAVOR_BSD)
+
+install(TARGETS convertFile accessTree normalizeHisto ${PROJECT_NAME}
+        RUNTIME DESTINATION bin
+        RUNTIME PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_WRITE GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+        LIBRARY DESTINATION lib
+        LIBRARY PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ GROUP_WRITE WORLD_READ 
+        RESOURCE DESTINATION lib
+        RESOURCE PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ GROUP_WRITE WORLD_READ
+        PUBLIC_HEADER DESTINATION include
+        PUBLIC_HEADER PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ GROUP_WRITE WORLD_READ)
 
 # Final reporting
 #

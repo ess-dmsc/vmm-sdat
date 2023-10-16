@@ -32,6 +32,9 @@ bool fileNormFound = false;
 bool plotLog = false;
 bool plotPdf = false;
 bool plotJSON = false;
+bool divide = false;
+bool writeTextfile = false;
+double divideFactor = 1;
 int pMap = 56;
 int pRebinFactor = 1;
 double pZmin = 0;
@@ -48,6 +51,7 @@ std::string pXvar = "pos0";
 std::string pYvar = "pos1";
 TString cutIn = "";
 TString cutNorm = "";
+std::ofstream outfile;
 
 int printUsage(std::string errorMessage, char* argv);
 
@@ -58,7 +62,17 @@ int main(int argc, char**argv) {
 		return printUsage("Wrong number of arguments!", argv[argc - 1]);
 	}
 	for (int i = 1; i < argc; i += 2) {
-		if (strncmp(argv[i], "-fin", 3) == 0) {
+		if(strncmp(argv[i], "-div", 4) == 0) {
+			divide = true;
+			divideFactor = atof(argv[i + 1]);
+		}
+		else if(strncmp(argv[i], "-txt", 4) == 0) {
+			writeTextfile = true;
+		}
+		else if(strncmp(argv[i], "-json", 5) == 0) {
+			plotJSON = true;		
+		}
+		else if (strncmp(argv[i], "-fin", 4) == 0) {
 			fileInFound = true;
 			fileInName = argv[i + 1];
 		} else if (strncmp(argv[i], "-fnorm", 6) == 0) {
@@ -74,10 +88,7 @@ int main(int argc, char**argv) {
 		} else if (strncmp(argv[i], "-act", 4) == 0) {
 			pAction = argv[i + 1];
 		} else if (strncmp(argv[i], "-plot", 5) == 0) {
-			pPlot = argv[i + 1];
-			if (pPlot.find("j") != std::string::npos) {
-				plotJSON = true;
-			}
+			pPlot = argv[i + 1];		
 			if (pPlot.find("l") != std::string::npos) {
 				plotLog = true;
 			}
@@ -130,14 +141,19 @@ int main(int argc, char**argv) {
 		}
 	}
 
+
 	if (!fileInFound ||  !fileInName.EndsWith(".root")) {
 		return printUsage("Data file has to be loaded with -fin in.root!", nullptr);
 
 	}
+	
+
 	if (!fileNormFound ||  !fileNormName.EndsWith(".root")) {
 		return printUsage("Data file has to be loaded with -fnorm norm.root!", nullptr);
 
 	}
+
+	
 	if (fileOutName.EndsWith(".root")) {
 		fileOutName.ReplaceAll(".root", "");
 	}	
@@ -145,27 +161,36 @@ int main(int argc, char**argv) {
 	
 	timeStart = std::chrono::system_clock::now();
 	TFile *fIn = new TFile(fileInName, "read");
-	TH2D *hIn = new TH2D("hIn", "hIn",pXbins,pXmin,pXmax,pYbins, pYmin,pYmax);
-	TTree *tIn = (TTree*)fIn->Get("clusters_detector");
-	TString drawChoice = pYvar + ":" + pXvar + ">>hIn";
-
-	tIn->Draw(drawChoice, cutIn);
-	
+	TH2D *hIn = 0;
 	
 	TFile *fNorm = new TFile(fileNormName, "read");
 	TH2D *hNorm = new TH2D("hNorm", "hNorm",pXbins,pXmin,pXmax,pYbins, pYmin,pYmax);
-	TTree *tNorm = (TTree*)fNorm->Get("clusters_detector");
-	drawChoice = pYvar + ":" + pXvar + ">>hNorm";
-	tNorm->Draw(drawChoice, cutNorm);	
 	
-	
+	if(divide == false) {
+	 	hIn = new TH2D("hIn", "hIn",pXbins,pXmin,pXmax,pYbins, pYmin,pYmax);
+		TTree *tIn = (TTree*)fIn->Get("clusters_detector");
+		TString drawChoice = pYvar + ":" + pXvar + ">>hIn";
+		tIn->Draw(drawChoice, cutIn);
+		TTree *tNorm = (TTree*)fNorm->Get("clusters_detector");
+		drawChoice = pYvar + ":" + pXvar + ">>hNorm";
+		tNorm->Draw(drawChoice, cutNorm);	
+	}
+	else {
+		hIn = (TH2D *)fIn->Get("hOut");
+		
+	}
+	if(writeTextfile) {
+		outfile.open(fileOutName+".csv");
+	}
+
 	TFile *fOut = new TFile(fileOutName+".root", "recreate");
 	std::cout << fileOutName+".root" << " opened .." << std::endl;
 	
 	TH2D *hOut = new TH2D("hOut", "hOut",pXbins,pXmin,pXmax,pYbins, pYmin,pYmax);	
-	for (Int_t x = 0; x < pXbins; x++) {
-		for (Int_t y = 0; y < pYbins; y++) {
-			if (pTimeSignal * pTimeBackground > 0) {
+	
+	for (Int_t y = 0; y < pYbins; y++) {
+		for (Int_t x = 0; x < pXbins; x++) {	
+			if (pTimeSignal * pTimeBackground > 0 && divide == false) {
 				double valSignal =  pTimeBackground * hIn->GetBinContent(x + 1, y + 1);
 				double valBackground = pTimeSignal * hNorm->GetBinContent(x + 1, y + 1);
 				if (pAction == "n") {
@@ -184,11 +209,24 @@ int main(int argc, char**argv) {
 				}
 			}
 			else {
-				double val =  hIn->GetBinContent(x + 1, y + 1);
+				double val =  hIn->GetBinContent(x + 1, y + 1)/divideFactor;
 				hOut->SetBinContent(x + 1, y + 1, val);	
+				if(writeTextfile == true) {
+					if(x < pXbins-1) {
+						outfile << val << ",";
+					}
+					else {
+						outfile << val << "\n";
+					}
+					
+				}
 			}
 		}
+		
 	}
+	
+	outfile.close();
+
 	gStyle->SetPalette(pMap);
 	gStyle->SetPadRightMargin(0.13);
 
@@ -198,8 +236,8 @@ int main(int argc, char**argv) {
 	c1->SetBorderMode(0);
 	c1->SetBorderSize(2);
 	c1->SetFrameBorderMode(0);
-	hOut->GetXaxis()->SetTitle("x coordinate [mm]");
-	hOut->GetYaxis()->SetTitle("y coordinate [mm]");
+	hOut->GetXaxis()->SetTitle("x strip [0.4 mm]");
+	hOut->GetYaxis()->SetTitle("y strip [0.4 mm]");
 	gPad->SetRightMargin(0.18);
 	hOut->GetXaxis()->SetTitleOffset(1.4);	
 	hOut->GetYaxis()->SetTitleOffset(1.4);
@@ -244,6 +282,7 @@ int main(int argc, char**argv) {
 	fIn->Close();
 	fNorm->Close();
 	
+	
 	timeEnd = std::chrono::system_clock::now();
 
 	int elapsed_seconds = std::chrono::duration_cast < std::chrono::milliseconds > (timeEnd - timeStart).count();
@@ -264,7 +303,7 @@ int printUsage(std::string errorMessage, char* argv) {
 
 	printf("\nUsages:\n");
 	printf("normalize or substract background:\n\t./normalize -fin Run1.root -fnorm Run2.root -fout Out"
-			" -ns 0 -nb 0 -act normalize\n");
+			" -ns 10 -nb 5 -act n\n");
 
 	return -1;
 }

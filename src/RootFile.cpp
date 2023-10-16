@@ -120,14 +120,26 @@ void RootFile::FillCalibHistos(uint16_t fec, uint8_t vmm, uint8_t ch, float adc,
                                float adc_corrected, float chip_time,
                                float chip_time_corrected) {
 
-  int idx = m_map_calib_TH2D[std::make_tuple(fec, vmm, "adc_without_calib")];
-  m_calib_TH2D[idx]->Fill(ch, adc);
-  idx = m_map_calib_TH2D[std::make_tuple(fec, vmm, "adc_with_calib")];
-  m_calib_TH2D[idx]->Fill(ch, adc_corrected);
-  idx = m_map_calib_TH2D[std::make_tuple(fec, vmm, "time_without_calib")];
-  m_calib_TH2D[idx]->Fill(ch, chip_time);
-  idx = m_map_calib_TH2D[std::make_tuple(fec, vmm, "time_with_calib")];
-  m_calib_TH2D[idx]->Fill(ch, chip_time_corrected);
+  if (m_map_calib_TH2D.find(std::make_tuple(fec, vmm, "adc_without_calib")) !=
+      m_map_calib_TH2D.end()) {
+    int idx = m_map_calib_TH2D[std::make_tuple(fec, vmm, "adc_without_calib")];
+    m_calib_TH2D[idx]->Fill(ch, adc);
+  }
+  if (m_map_calib_TH2D.find(std::make_tuple(fec, vmm, "adc_with_calib")) !=
+      m_map_calib_TH2D.end()) {
+    int idx = m_map_calib_TH2D[std::make_tuple(fec, vmm, "adc_with_calib")];
+    m_calib_TH2D[idx]->Fill(ch, adc_corrected);
+  }
+  if (m_map_calib_TH2D.find(std::make_tuple(fec, vmm, "time_without_calib")) !=
+      m_map_calib_TH2D.end()) {
+    int idx = m_map_calib_TH2D[std::make_tuple(fec, vmm, "time_without_calib")];
+    m_calib_TH2D[idx]->Fill(ch, chip_time);
+  }
+  if (m_map_calib_TH2D.find(std::make_tuple(fec, vmm, "time_with_calib")) !=
+      m_map_calib_TH2D.end()) {
+    int idx = m_map_calib_TH2D[std::make_tuple(fec, vmm, "time_with_calib")];
+    m_calib_TH2D[idx]->Fill(ch, chip_time_corrected);
+  }
 }
 
 RootFile::RootFile(Configuration &config) : m_config(config) {
@@ -162,14 +174,14 @@ RootFile::RootFile(Configuration &config) : m_config(config) {
       cntCal++;
       name = "fec" + std::to_string(fec) + "_vmm" + std::to_string(vmm) +
              "_time_with_calib";
-      h2 = new TH2D(name.c_str(), name.c_str(), 64, 0, 64, 350, 0, 35);
+      h2 = new TH2D(name.c_str(), name.c_str(), 64, 0, 64, 1000, -50, 50);
       m_calib_TH2D.push_back(h2);
       m_map_calib_TH2D.emplace(
           std::make_pair(std::make_tuple(fec, vmm, "time_with_calib"), cntCal));
       cntCal++;
       name = "fec" + std::to_string(fec) + "_vmm" + std::to_string(vmm) +
              "_time_without_calib";
-      h2 = new TH2D(name.c_str(), name.c_str(), 64, 0, 64, 350, 0, 35);
+      h2 = new TH2D(name.c_str(), name.c_str(), 64, 0, 64, 1000, -50, 50);
       m_calib_TH2D.push_back(h2);
       m_map_calib_TH2D.emplace(std::make_pair(
           std::make_tuple(fec, vmm, "time_without_calib"), cntCal));
