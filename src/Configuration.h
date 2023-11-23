@@ -128,6 +128,7 @@ public:
   bool pIsPcap = false;
   bool pShowStats = true;
   bool pTimeZero = false;
+  bool pHighMultiplicity = false;
   bool pIsPads[16];
   std::string pDataFormat = "ESS";
   int pPositions0[NUMFECS][16][64];

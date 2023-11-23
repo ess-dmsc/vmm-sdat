@@ -42,6 +42,7 @@ public:
                      double &timeUTPC, double &positionAlgo, double &timeAlgo);
 
   int MatchClustersDetector(uint8_t det);
+  int MatchClustersDetector_HighMultiplicity(uint8_t det);
 
   void FinishAnalysis();
 

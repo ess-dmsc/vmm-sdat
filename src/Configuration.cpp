@@ -24,7 +24,7 @@ bool Configuration::PrintUsage(const std::string &errorMessage, char *argv) {
          "-51.2, 100]]\" -ro \"[[0,0,45]]\" -tr \"[[S,T,R2]]\" "
       << "-bc 40 -tac 60 -th 0 -cs 1 -ccs 3 -dt 200 -mst 1 -spc 500 "
       << "-dp 200 -coin center-of-mass -crl 0.75 -cru 3.0 -save [[1],[1],[1]] "
-         "-swap 0 -json 0 -n 0 -df SRS -cahi 1"
+         "-swap 0 -json 0 -n 0 -df SRS -cahi 1 -hm 0"
       << std::endl;
 
   std::cout << "\n\nFlags:\n" << std::endl;
@@ -217,11 +217,27 @@ bool Configuration::PrintUsage(const std::string &errorMessage, char *argv) {
                "different, e.g. in a standard GEM strip readout the total "
                "charge is divided 60/40 between plane 0/ plane 1\n"
             << "        With -crl one sets the lower threshold for the "
-               "plane0/plane1 charge ratio. Optional argument (default 0.5).\n"
+               "plane0/plane1 charge ratio. Optional argument (default 0.5)"
             << std::endl;
   std::cout << "-cru:   With -cru one sets the upper threshold for the "
                "plane0/plane1 charge ratio. Optional argument (default 2).\n"
             << std::endl;
+  std::cout
+      << "-hm:    High-multiplicity matching mode (values 0 or 1).\n"
+         "        During the normal matching vmm-sdat searches for each "
+         "cluster in one "
+         "plane the best match in the other plane, based on the minimum time "
+         "difference between the clusters.\n"
+         "        Before considering a cluster in the other plane as match "
+         "candidate, "
+         "conditions like cluster size, and charge sharing are checked.\n"
+         "        In high-multiplicity mode, each combination of clusters in "
+         "the two "
+         "planes that fulfils the conditions is stored as detector_cluster.\n"
+         "        That means each plane cluster can appear several times as "
+         "part of a "
+         "detector_cluster.\n"
+      << std::endl;
   std::cout << "-save:  select which data to store in root file. Input is a "
                "list of lists of detectors, e.g. [[1,2],[1,2],[1,2,3]]."
             << std::endl;
@@ -265,7 +281,8 @@ bool Configuration::PrintUsage(const std::string &errorMessage, char *argv) {
       << "-cahi:    Calibration histograms: If a calibration file is used, "
       << "histograms of the calibrated and uncalibrated adc and time can be "
          "produced.\n"
-      << "With the help of these histograms the effect of the calibration can "
+      << "        With the help of these histograms the effect of the "
+         "calibration can "
          "be checked."
       << "        default: 0" << std::endl;
   std::cout << "-info:  Additional info the user wants to be added to the end "
@@ -709,6 +726,12 @@ bool Configuration::ParseCommandLine(int argc, char **argv) {
       }
     } else if (strncmp(argv[i], "-algo", 5) == 0) {
       pAlgo = atoi(argv[i + 1]);
+    } else if (strncmp(argv[i], "-hm", 3) == 0) {
+      if (atoi(argv[i + 1]) == 1) {
+        pHighMultiplicity = true;
+      } else {
+        pHighMultiplicity = false;
+      }
     } else if (strncmp(argv[i], "-df", 3) == 0) {
       pDataFormat = argv[i + 1];
       std::vector<std::string> v_valid_values = {"ESS", "SRS", "VTC",
