@@ -1061,6 +1061,13 @@ int Clusterer::MatchClustersDetector(uint8_t det) {
         } else if (m_config.pConditionCoincidence == "charge2") {
           delta_t1 = (*c1).time_charge2 - c0.time_charge2;
         }
+        if (std::fabs(delta_t1) <= m_config.pDeltaTimePlanes) {
+          if (isFirstMatch1) {
+            itStartPlane1 = c1;
+            isFirstMatch1 = false;
+          }
+        }
+
         if (chargeRatio1 >= m_config.pChargeRatioLower &&
             chargeRatio1 <= m_config.pChargeRatioUpper &&
             std::fabs(delta_t1) < minDelta1 &&
@@ -1068,12 +1075,9 @@ int Clusterer::MatchClustersDetector(uint8_t det) {
             (c0.size + (*c1).size >= m_config.pCoincidentClusterSize)) {
           minDelta1 = std::fabs(delta_t1);
           bestMatchPlane1 = c1;
-          if (isFirstMatch1) {
-            itStartPlane1 = c1;
-            isFirstMatch1 = false;
-          }
         }
-        if (std::fabs(delta_t1) > std::fabs(lastDelta_t1)) {
+        if (std::fabs(delta_t1) > std::fabs(lastDelta_t1) &&
+            std::fabs(delta_t1) > m_config.pDeltaTimePlanes) {
           break;
         }
       }
@@ -1098,6 +1102,10 @@ int Clusterer::MatchClustersDetector(uint8_t det) {
             } else if (m_config.pConditionCoincidence == "charge2") {
               delta_t2 = (*c2).time_charge2 - c0.time_charge2;
             }
+            if (isFirstMatch2) {
+              itStartPlane2 = c2;
+              isFirstMatch2 = false;
+            }
             if (chargeRatio2 >= m_config.pChargeRatioLower &&
                 chargeRatio2 <= m_config.pChargeRatioUpper &&
                 std::fabs(delta_t2) < minDelta2 &&
@@ -1106,12 +1114,9 @@ int Clusterer::MatchClustersDetector(uint8_t det) {
                  m_config.pCoincidentClusterSize)) {
               minDelta2 = std::fabs(delta_t2);
               bestMatchPlane2 = c2;
-              if (isFirstMatch2) {
-                itStartPlane2 = c2;
-                isFirstMatch2 = false;
-              }
             }
-            if (std::fabs(delta_t2) > std::fabs(lastDelta_t2)) {
+            if (std::fabs(delta_t2) > std::fabs(lastDelta_t2) &&
+                std::fabs(delta_t2) > m_config.pDeltaTimePlanes) {
               break;
             }
           }
