@@ -1102,9 +1102,11 @@ int Clusterer::MatchClustersDetector(uint8_t det) {
             } else if (m_config.pConditionCoincidence == "charge2") {
               delta_t2 = (*c2).time_charge2 - c0.time_charge2;
             }
-            if (isFirstMatch2) {
-              itStartPlane2 = c2;
-              isFirstMatch2 = false;
+            if (std::fabs(delta_t2) <= m_config.pDeltaTimePlanes) {
+              if (isFirstMatch2) {
+                itStartPlane2 = c2;
+                isFirstMatch2 = false;
+              }
             }
             if (chargeRatio2 >= m_config.pChargeRatioLower &&
                 chargeRatio2 <= m_config.pChargeRatioUpper &&
@@ -1388,21 +1390,25 @@ int Clusterer::MatchClustersDetector_HighMultiplicity(uint8_t det) {
     double lastDelta_t1 = std::numeric_limits<double>::max();
     double minDelta1 = std::numeric_limits<double>::max();
     bool isFirstMatch1 = true;
+    ClusterVectorPlane::iterator bestMatchPlane1 = end(m_clusters[dp1]);
+    int bestMatchIdx = -1;
     for (ClusterVectorPlane::iterator c1 = itStartPlane1;
          c1 != end(m_clusters[dp1]); ++c1) {
 
       double chargeRatio1 = (double)(c0).adc / (double)(*c1).adc;
       lastDelta_t1 = delta_t1;
       delta_t1 = (*c1).time - c0.time;
-      if (delta_t1 < minDelta1) {
-        minDelta1 = delta_t1;
-      }
       if (m_config.pConditionCoincidence == "utpc") {
         delta_t1 = (*c1).time_utpc - c0.time_utpc;
       } else if (m_config.pConditionCoincidence == "charge2") {
         delta_t1 = (*c1).time_charge2 - c0.time_charge2;
       }
-
+      if (std::fabs(delta_t1) <= m_config.pDeltaTimePlanes) {
+        if (isFirstMatch1) {
+          itStartPlane1 = c1;
+          isFirstMatch1 = false;
+        }
+      }
       if (std::fabs(delta_t1) > m_config.pDeltaTimePlanes &&
           std::fabs(delta_t1) > std::fabs(lastDelta_t1)) {
         break;
@@ -1411,10 +1417,16 @@ int Clusterer::MatchClustersDetector_HighMultiplicity(uint8_t det) {
           chargeRatio1 <= m_config.pChargeRatioUpper &&
           std::fabs(delta_t1) <= m_config.pDeltaTimePlanes &&
           (c0.size + (*c1).size >= m_config.pCoincidentClusterSize)) {
-        if (isFirstMatch1) {
-          itStartPlane1 = c1;
-          isFirstMatch1 = false;
+
+        if (std::fabs(delta_t1) < minDelta1 &&
+            std::fabs(delta_t1) <= m_config.pDeltaTimePlanes) {
+          if ((*c1).plane_coincidence == false) {
+            minDelta1 = std::fabs(delta_t1);
+            bestMatchIdx = m_clusters_detector[det].size();
+            bestMatchPlane1 = c1;
+          }
         }
+
         m_cluster_detector_id++;
         ClusterDetector clusterDetector;
         clusterDetector.id = m_cluster_detector_id;
@@ -1516,6 +1528,10 @@ int Clusterer::MatchClustersDetector_HighMultiplicity(uint8_t det) {
         m_clusters_detector[det].emplace_back(std::move(clusterDetector));
         clusterCount++;
       }
+    }
+    if (bestMatchIdx != -1) {
+      m_clusters_detector[det][bestMatchIdx].id2 = 1;
+      (*bestMatchPlane1).plane_coincidence = true;
     }
   }
   return clusterCount;
