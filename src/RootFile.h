@@ -7,13 +7,13 @@
 
 #include "Configuration.h"
 #include "DataStructures.h"
-#include "TFile.h"
-#include "TH1F.h"
-#include "TH2F.h"
-#include "TH3F.h"
-#include "TTree.h"
+#include <TFile.h>
+#include <TH1F.h>
+#include <TH2F.h>
+#include <TH3F.h>
 #include <TObject.h>
 #include <TString.h>
+#include <TTree.h>
 
 class RootFile : public TObject {
 

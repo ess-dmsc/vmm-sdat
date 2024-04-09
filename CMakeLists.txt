@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 project(vmm-sdat)
 
 set(CMAKE_BUILD_TYPE RelWithDebInfo)
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -fsanitize=address -O0 -ggdb")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb")
 
@@ -52,7 +52,7 @@ if(ENABLE_DTRACE)
 # You need to tell CMake where to find the ROOT installation. This can be done in a number of ways:
 #   - ROOT built with classic configure/make use the provided $ROOTSYS/etc/cmake/FindROOT.cmake
 #   - ROOT built with CMake. Add in CMAKE_PREFIX_PATH the installation prefix for ROOT
-list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
+#list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
 
 
 #---Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
@@ -67,11 +67,15 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/analysis)
 
 
 ROOT_GENERATE_DICTIONARY(vmm-sdatDict 
-${CMAKE_CURRENT_SOURCE_DIR}/src/RootFile.h 
 ${CMAKE_CURRENT_SOURCE_DIR}/src/DataStructures.h 
-${CMAKE_CURRENT_SOURCE_DIR}/src/Configuration.h 
+${CMAKE_CURRENT_SOURCE_DIR}/src/RootFile.h 
 ${CMAKE_CURRENT_SOURCE_DIR}/src/convertLinkDef.h MODULE vmm-sdat)
 
+#ROOT_GENERATE_DICTIONARY(vmm-sdatDict 
+#${CMAKE_CURRENT_SOURCE_DIR}/src/RootFile.h 
+#${CMAKE_CURRENT_SOURCE_DIR}/src/DataStructures.h 
+#${CMAKE_CURRENT_SOURCE_DIR}/src/Configuration.h 
+#${CMAKE_CURRENT_SOURCE_DIR}/src/convertLinkDef.h MODULE vmm-sdat)
 
 #---Create a shared library with generated dictionary
 add_library(vmm-sdat SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ParserSRS.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/VMM3Parser.cpp

@@ -209,6 +209,7 @@ bool Configuration::PrintUsage(const std::string &errorMessage, char *argv) {
   std::cout << "           channel representing bit 0 = strip 0, channel for "
                "bit 1  = strip 1 and so on."
             << std::endl;
+  std::cout << "        7: time-of-flight (ESS data format)" << std::endl;
 
   std::cout << "-crl:   Valid clusters normally have the same amount of charge "
                "in both detector planes (ratio of charge plane 0/charge plane "

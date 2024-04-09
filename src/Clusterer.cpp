@@ -26,6 +26,9 @@ auto timethis(std::function<void()> thunk)
 Clusterer::Clusterer(Configuration &config, Statistics &stats)
     : m_config(config), m_stats(stats) {
   m_rootFile = RootFile::GetInstance(config);
+  m_pulseTime[0] = 0;
+  m_pulseTime[1] = 0;
+  m_pulseTime[2] = 0;
 }
 
 Clusterer::~Clusterer() { RootFile::Dispose(); }
@@ -34,7 +37,14 @@ Clusterer::~Clusterer() { RootFile::Dispose(); }
 bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
                             uint16_t chNo, uint16_t bcid, uint16_t tdc,
                             uint16_t adc, bool overThresholdFlag,
-                            double chipTime, uint8_t geoId) {
+                            double chipTime, uint8_t geoId, double pulseTime) {
+  if (pulseTime > m_pulseTime[0]) {
+    // std::cout << pulseTime << ", " << m_pulseTime[0] << ","
+    //           << pulseTime - m_pulseTime[0] << std::endl;
+    m_pulseTime[2] = m_pulseTime[1];
+    m_pulseTime[1] = m_pulseTime[0];
+    m_pulseTime[0] = pulseTime;
+  }
 
   int pos0 = m_config.pPositions0[fecId][vmmId][chNo];
   int pos1 = m_config.pPositions1[fecId][vmmId][chNo];
@@ -206,6 +216,21 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
   auto det = m_config.pDetectors[fecId][vmmId];
   auto plane = m_config.pPlanes[fecId][vmmId];
   if (m_config.pSaveWhat % 2 == 1) {
+    double tof = srsTimestamp;
+    double jitter = -1.0E+04;
+    if (m_config.pDataFormat == "ESS") {
+      tof = totalTime - m_pulseTime[0];
+      //  There could be negative TOFs, accept a jitter of up to 10us
+      if (tof < jitter) {
+        tof = totalTime - m_pulseTime[1];
+        if (tof < jitter) {
+          tof = totalTime - m_pulseTime[2];
+        }
+      }
+    }
+    if (tof <= 0) {
+      std::cout << "jitter " << tof << std::endl;
+    }
     if (std::find(m_config.pSaveHits.begin(), m_config.pSaveHits.end(), det) !=
         m_config.pSaveHits.end()) {
 
@@ -217,7 +242,7 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
         theHit0.fec = fecId;
         theHit0.vmm = vmmId;
         theHit0.geo_id = geoId;
-        theHit0.readout_time = srsTimestamp;
+        theHit0.readout_time = tof;
         theHit0.ch = chNo;
         theHit0.pos = (uint16_t)pos0;
         theHit0.bcid = bcid;
@@ -235,7 +260,7 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
         theHit1.fec = fecId;
         theHit1.vmm = vmmId;
         theHit1.geo_id = geoId;
-        theHit1.readout_time = srsTimestamp;
+        theHit1.readout_time = tof;
         theHit1.ch = chNo;
         theHit1.pos = (uint16_t)pos1;
         theHit1.bcid = bcid;
@@ -253,7 +278,7 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
         theHit.fec = fecId;
         theHit.vmm = vmmId;
         theHit.geo_id = geoId;
-        theHit.readout_time = srsTimestamp;
+        theHit.readout_time = tof;
         theHit.ch = chNo;
         theHit.pos = (uint16_t)pos0;
         theHit.bcid = bcid;
@@ -551,7 +576,7 @@ int Clusterer::ClusterByPad(std::pair<uint8_t, uint8_t> dp,
 int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
                               ClusterContainer &cluster, double maxDeltaTime) {
   int maxMissingStrip = 0;
-  uint16_t spanCluster = 0;
+  double spanCluster = 0;
 
   double startTime = 0;
   double largestTime = 0;
@@ -682,12 +707,17 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
       if (stripCount < m_config.pMinClusterSize || totalADC == 0) {
         DTRACE(DEB, "******** INVALID CLUSTER SIZE ********%d\n\n", stripCount);
       } else {
+
         spanCluster = (largestTime - startTime);
         centerOfGravity = (centerOfGravity / totalADC);
         centerOfTime = (centerOfTime / totalADC);
         centerOfGravity2 = (centerOfGravity2 / totalADC2);
         centerOfTime2 = (centerOfTime2 / totalADC2);
 
+        // std::cout << "Type 2 cluster maxDeltaTime " << maxDeltaTime << ",
+        // strip_count " << stripCount << ", spanCluster " << spanCluster << ",
+        // largestTime " << largestTime << ", starttime " << startTime <<
+        // std::endl;
         if (totalADC_ovTh > 0) {
           centerOfGravity_ovTh = (centerOfGravity_ovTh / totalADC_ovTh);
           centerOfTime_ovTh = (centerOfTime_ovTh / totalADC_ovTh);
@@ -743,7 +773,18 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
             }
           }
         }
-
+        // tof
+        else if (m_config.pAlgo == 7) {
+          pos_algo = 0;
+          time_algo = time_utpc - m_pulseTime[0];
+          double jitter = -1.0E+04;
+          if (time_algo < jitter) {
+            time_algo = time_utpc - m_pulseTime[1];
+            if (time_algo < jitter) {
+              time_algo = time_utpc - m_pulseTime[2];
+            }
+          }
+        }
         clusterPlane.time_utpc = time_utpc;
         clusterPlane.pos_utpc = pos_utpc;
         clusterPlane.time_algo = time_algo;
@@ -828,11 +869,17 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
   // At the end of the clustering, check again if there is a last valid
   // cluster
   if (stripCount >= m_config.pMinClusterSize && totalADC > 0) {
+
     spanCluster = (largestTime - startTime);
     centerOfGravity = (centerOfGravity / totalADC);
     centerOfTime = (centerOfTime / totalADC);
     centerOfGravity2 = (centerOfGravity2 / totalADC2);
     centerOfTime2 = (centerOfTime2 / totalADC2);
+
+    // std::cout << "Type 1 cluster maxDeltaTime " << maxDeltaTime << ",
+    // strip_count " << stripCount << ", spanCluster " << spanCluster << ",
+    // largestTime " << largestTime << ", starttime " << startTime << std::endl;
+
     if (m_config.pShowStats) {
       m_stats.SetStatsPlane("DeltaTimeHits", dp, maxDeltaTime);
       m_stats.SetStatsPlane("MissingStripsCluster", dp, maxMissingStrip);
@@ -876,6 +923,18 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
       if (plane == 2) {
         for (int n = 0; n < vStrips.size(); n++) {
           time_algo = time_algo + pow(2.0, vStrips[n]);
+        }
+      }
+    }
+    // tof
+    else if (m_config.pAlgo == 7) {
+      pos_algo = 0;
+      time_algo = time_utpc - m_pulseTime[0];
+      double jitter = -1.0E+04;
+      if (time_algo < jitter) {
+        time_algo = time_utpc - m_pulseTime[1];
+        if (time_algo < jitter) {
+          time_algo = time_utpc - m_pulseTime[2];
         }
       }
     }

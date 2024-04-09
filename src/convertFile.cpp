@@ -432,6 +432,7 @@ int main(int argc, char **argv) {
         int rdsize;
         bool doContinue = true;
         long seqNumError = 0;
+        double pulseTime = 0;
         while (doContinue &&
                (rdsize = pcap.read((char *)&buffer, sizeof(buffer))) != -1) {
           if (rdsize == 0) {
@@ -459,6 +460,19 @@ int main(int argc, char **argv) {
               goodFrames++;
             }
           }
+          if (firstTime > 0) {
+
+            double temp_pulseTime =
+                readoutParser.Packet.HeaderPtr->PulseHigh * 1.0E+09 -
+                firstTime +
+                readoutParser.Packet.HeaderPtr->PulseLow * m_config.pBCTime_ns *
+                    0.5;
+            // Filter out pulse times that come directly after a valid pulse
+            // time due to jitter
+            if (temp_pulseTime - pulseTime > 1.0E+06) {
+              pulseTime = temp_pulseTime;
+            }
+          }
 
           int hits = parser->parse(readoutParser.Packet.DataPtr,
                                    readoutParser.Packet.DataLength);
@@ -470,11 +484,17 @@ int main(int argc, char **argv) {
             if (firstTime == 0) {
               firstTime = hit.TimeHigh * 1.0E+09;
             }
-            // ESS time format use 64bit timestamp in nanoseconds
-            // To be able to use double as type for timestamp calculation,
-            // we have to subtract the first timestamp of the run
+
+            //  ESS time format use 64bit timestamp in nanoseconds
+            //  To be able to use double as type for timestamp calculation,
+            //  we have to subtract the first timestamp of the run
             double complete_timestamp = hit.TimeHigh * 1.0E+09 - firstTime +
                                         hit.TimeLow * m_config.pBCTime_ns * 0.5;
+
+            // if (complete_timestamp < 8000000) {
+            //   continue;
+            // }
+            // std::cout << complete_timestamp << std::endl;
             uint16_t adc = hit.OTADC & 0x03ff;
             bool overThreshold = hit.OTADC & 0x8000;
 
@@ -539,7 +559,7 @@ int main(int argc, char **argv) {
             bool result = m_Clusterer->AnalyzeHits(
                 complete_timestamp, assisterId, hit.VMM, hit.Channel, hit.BC,
                 hit.TDC, static_cast<uint16_t>(corrected_adc),
-                overThreshold != 0, corrected_time, hit.GEO);
+                overThreshold != 0, corrected_time, hit.GEO, pulseTime);
             if (result == false ||
                 (total_hits >= m_config.nHits && m_config.nHits > 0)) {
               doContinue = false;
