@@ -16,6 +16,7 @@
 
 int main(int argc, char **argv) {
   uint64_t total_hits = 0;
+  uint64_t triggerSignals = 0;
   std::chrono::time_point<std::chrono::system_clock> timeEnd, timeStart;
 
   Configuration m_config;
@@ -209,7 +210,8 @@ int main(int argc, char **argv) {
             nmxstats.ParserGoodFrames = 0;
           }
         }
-        m_Clusterer->SaveDate(pcap.firstPacketSeconds, pcap.firstPacketDate);
+        m_Clusterer->SaveDate(pcap.firstPacketSeconds, pcap.firstPacketDate,
+                              pcap.lastPacketSeconds, pcap.lastPacketDate, 0);
         delete parser;
       } else if (m_config.pDataFormat == "SRS") {
         double firstTime = 0;
@@ -406,7 +408,8 @@ int main(int argc, char **argv) {
             nmxstats.ParserGoodFrames = 0;
           }
         }
-        m_Clusterer->SaveDate(pcap.firstPacketSeconds, pcap.firstPacketDate);
+        m_Clusterer->SaveDate(pcap.firstPacketSeconds, pcap.firstPacketDate,
+                              pcap.lastPacketSeconds, pcap.lastPacketDate, 0);
         delete parser;
       } else if (m_config.pDataFormat == "ESS") {
         double firstTime = 0;
@@ -433,12 +436,20 @@ int main(int argc, char **argv) {
         bool doContinue = true;
         long seqNumError = 0;
         double pulseTime = 0;
+
+        double t0_correction = 0;
+        std::pair<uint8_t, uint8_t> fec_vmm = std::make_pair(0, 0);
+        auto searchMap = m_config.pFecVMM_time0.find(fec_vmm);
+        if (searchMap != m_config.pFecVMM_time0.end()) {
+          std::string t0 = m_config.pFecVMM_time0[fec_vmm];
+          t0_correction = std::stod(t0);
+        }
+
         while (doContinue &&
                (rdsize = pcap.read((char *)&buffer, sizeof(buffer))) != -1) {
           if (rdsize == 0) {
             continue; // non udp data
           }
-
           // Freia 0x48
           // NMX 0x44
           // Loki4Amp 0x30
@@ -460,17 +471,20 @@ int main(int argc, char **argv) {
               goodFrames++;
             }
           }
-          if (firstTime > 0) {
 
-            double temp_pulseTime =
-                readoutParser.Packet.HeaderPtr->PulseHigh * 1.0E+09 -
-                firstTime +
+          double temp_pulseTime = 0;
+          if (t0_correction > 0) {
+            temp_pulseTime =
+                (readoutParser.Packet.HeaderPtr->PulseHigh - t0_correction) *
+                    1.0E+09 +
                 readoutParser.Packet.HeaderPtr->PulseLow * m_config.pBCTime_ns *
                     0.5;
+
             // Filter out pulse times that come directly after a valid pulse
             // time due to jitter
             if (temp_pulseTime - pulseTime > 1.0E+06) {
               pulseTime = temp_pulseTime;
+              triggerSignals++;
             }
           }
 
@@ -485,16 +499,22 @@ int main(int argc, char **argv) {
               firstTime = hit.TimeHigh * 1.0E+09;
             }
 
-            //  ESS time format use 64bit timestamp in nanoseconds
-            //  To be able to use double as type for timestamp calculation,
-            //  we have to subtract the first timestamp of the run
-            double complete_timestamp = hit.TimeHigh * 1.0E+09 - firstTime +
-                                        hit.TimeLow * m_config.pBCTime_ns * 0.5;
+            double complete_timestamp = 0;
+            if (t0_correction == 0) {
+              //  ESS time format use 64bit timestamp in nanoseconds
+              //  To be able to use double as type for timestamp calculation,
+              //  the timestamp has to be truncated to 52 bit
+              //  The easiest to have a relative timestamp with respect to the
+              //  start of the run
+              complete_timestamp = (0 + hit.TimeHigh) * 1.0E+09 - firstTime +
+                                   hit.TimeLow * m_config.pBCTime_ns * 0.5;
+            } else {
+              // If several files will be joined later, it is recommended to
+              // just remove the most significant bits of the 64 bit timestamp
+              complete_timestamp = (hit.TimeHigh - t0_correction) * 1.0E+09 +
+                                   hit.TimeLow * m_config.pBCTime_ns * 0.5;
+            }
 
-            // if (complete_timestamp < 8000000) {
-            //   continue;
-            // }
-            // std::cout << complete_timestamp << std::endl;
             uint16_t adc = hit.OTADC & 0x03ff;
             bool overThreshold = hit.OTADC & 0x8000;
 
@@ -567,7 +587,9 @@ int main(int argc, char **argv) {
             }
           }
         }
-        m_Clusterer->SaveDate(pcap.firstPacketSeconds, pcap.firstPacketDate);
+        m_Clusterer->SaveDate(pcap.firstPacketSeconds, pcap.firstPacketDate,
+                              pcap.lastPacketSeconds, pcap.lastPacketDate,
+                              triggerSignals);
         m_stats.IncrementCounter("ErrorBuffer", 384,
                                  readoutParser.Stats.ErrorBuffer);
         m_stats.IncrementCounter("ErrorSize", 384,
@@ -642,6 +664,10 @@ int main(int argc, char **argv) {
               << static_cast<double>(1000 * total_hits * hit_size /
                                      elapsed_seconds)
               << " bit/s" << std::endl;
+    std::cout << "Trigger rate: " << std::scientific
+              << static_cast<double>(triggerSignals / elapsed_seconds)
+              << " trigger/s (total triggers: " << triggerSignals << ")"
+              << std::endl;
     std::cout << "****************************************" << std::endl;
   }
   return 0;

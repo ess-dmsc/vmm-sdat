@@ -53,6 +53,8 @@ public:
 
   double firstPacketSeconds;
   std::string firstPacketDate;
+  double lastPacketSeconds;
+  std::string lastPacketDate;
 
 private:
   const char *FilterUdp = "ip and udp";

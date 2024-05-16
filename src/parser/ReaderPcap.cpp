@@ -117,6 +117,10 @@ int ReaderPcap::read(char *Buffer, size_t BufferSize) {
     firstPacketDate = s.str();
     firstPacketSeconds = static_cast<double>(Header->ts.tv_sec);
   }
+  std::stringstream s;
+  s << std::put_time(std::localtime(&Header->ts.tv_sec), "%c %Z");
+  lastPacketDate = s.str();
+  lastPacketSeconds = static_cast<double>(Header->ts.tv_sec);
 
   int UdpDataLength;
   if ((UdpDataLength = validatePacket(Header, Data)) <= 0) {

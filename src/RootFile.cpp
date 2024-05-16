@@ -35,18 +35,46 @@ void RootFile::WriteRootFile() {
   m_file->Close();
 }
 
-void RootFile::SaveDate(double the_seconds, std::string the_date) {
-  TString str_date = the_date;
-  TString str_time = Form("%f", the_seconds);
+void RootFile::SaveDate(double the_seconds_start, std::string the_date_start,
+                        double the_seconds_end, std::string the_date_end,
+                        uint64_t num_triggers) {
+  TString str_date_start = the_date_start;
+  TString str_time_start = Form("%f", the_seconds_start);
   TNamed unixtime;
   unixtime.SetName("unixtime");
-  unixtime.SetTitle(str_time);
+  unixtime.SetTitle(str_time_start);
   unixtime.Write();
 
   TNamed datetime;
   datetime.SetName("date");
-  datetime.SetTitle(str_date);
+  datetime.SetTitle(str_date_start);
   datetime.Write();
+
+  TString str_date_end = the_date_end;
+  TString str_time_end = Form("%f", the_seconds_end);
+  double seconds_duration = the_seconds_end - the_seconds_start;
+
+  TString str_duration = Form("%f", seconds_duration);
+  TString str_triggers = Form("%llu", num_triggers);
+  TNamed unixtime_end;
+  unixtime_end.SetName("unixtime_end");
+  unixtime_end.SetTitle(str_time_end);
+  unixtime_end.Write();
+
+  TNamed datetime_end;
+  datetime_end.SetName("date_end");
+  datetime_end.SetTitle(str_date_end);
+  datetime_end.Write();
+
+  TNamed duration;
+  duration.SetName("duration");
+  duration.SetTitle(str_duration);
+  duration.Write();
+
+  TNamed triggers;
+  triggers.SetName("triggers");
+  triggers.SetTitle(str_triggers);
+  triggers.Write();
 
   TNamed channelMapping;
   channelMapping.SetName("channel mapping");

@@ -28,7 +28,9 @@ public:
   void SaveHits();
   void SaveClustersPlane(ClusterVectorPlane &&clusters_plane);
   void SaveClustersDetector(ClusterVectorDetector &&clusters_detector);
-  void SaveDate(double the_seconds, std::string the_date);
+  void SaveDate(double the_seconds_start, std::string the_date_start,
+                double the_seconds_end, std::string the_date_end,
+                uint64_t seconds_duration);
   void FillCalibHistos(uint16_t fec, uint8_t vmm, uint8_t ch, float adc,
                        float adc_corrected, float chip_time,
                        float chip_time_corrected);

@@ -46,7 +46,9 @@ public:
 
   void FinishAnalysis();
 
-  void SaveDate(double the_seconds, std::string the_date);
+  void SaveDate(double the_seconds_start, std::string the_date_start,
+                double the_seconds_end, std::string the_date_end,
+                uint64_t triggers);
 
   void FillCalibHistos(uint16_t fec, uint8_t vmm, uint8_t ch, float adc,
                        float adc_corrected, float chip_time,

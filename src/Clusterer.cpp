@@ -38,9 +38,9 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
                             uint16_t chNo, uint16_t bcid, uint16_t tdc,
                             uint16_t adc, bool overThresholdFlag,
                             double chipTime, uint8_t geoId, double pulseTime) {
+
   if (pulseTime > m_pulseTime[0]) {
-    // std::cout << pulseTime << ", " << m_pulseTime[0] << ","
-    //           << pulseTime - m_pulseTime[0] << std::endl;
+
     m_pulseTime[2] = m_pulseTime[1];
     m_pulseTime[1] = m_pulseTime[0];
     m_pulseTime[0] = pulseTime;
@@ -221,15 +221,20 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
     if (m_config.pDataFormat == "ESS") {
       tof = totalTime - m_pulseTime[0];
       //  There could be negative TOFs, accept a jitter of up to 10us
-      if (tof < jitter) {
+      if (tof < jitter && m_pulseTime[1] > 0) {
         tof = totalTime - m_pulseTime[1];
-        if (tof < jitter) {
+        if (tof < jitter && m_pulseTime[2] > 0) {
           tof = totalTime - m_pulseTime[2];
         }
       }
     }
+
+    if (tof < jitter) {
+      return true;
+    }
     if (tof <= 0) {
-      std::cout << "jitter " << tof << std::endl;
+      std::cout.precision(20);
+      std::cout << "jitter [ns]: " << tof << std::endl;
     }
     if (std::find(m_config.pSaveHits.begin(), m_config.pSaveHits.end(), det) !=
         m_config.pSaveHits.end()) {
@@ -1896,12 +1901,15 @@ void Clusterer::FinishAnalysis() {
   }
 }
 
-void Clusterer::SaveDate(double the_seconds, std::string the_date) {
+void Clusterer::SaveDate(double the_seconds_start, std::string the_date_start,
+                         double the_seconds_end, std::string the_date_end,
+                         uint64_t triggers) {
   std::cout << "\nXXXXXXXXXXXXXXXXXXXXXXXXXXX Date and time of first pcapng "
                "packet XXXXXXXXXXXXXXXXXXXXXXXXXXX"
             << std::endl;
-  std::cout << the_date << std::endl;
-  m_rootFile->SaveDate(the_seconds, the_date);
+  std::cout << the_date_start << std::endl;
+  m_rootFile->SaveDate(the_seconds_start, the_date_start, the_seconds_end,
+                       the_date_end, triggers);
 }
 
 void Clusterer::FillCalibHistos(uint16_t fec, uint8_t vmm, uint8_t ch,
