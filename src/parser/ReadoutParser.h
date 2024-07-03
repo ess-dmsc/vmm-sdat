@@ -11,9 +11,9 @@
 
 //#define OMITCHECKS 1
 #ifdef OMITCHECKS
-  #pragma message("Some checks disabled for ReadoutParser")
-  #define OMITTYPECHECK 1
-  #define OMITSIZECHECK 1
+#pragma message("Some checks disabled for ReadoutParser")
+#define OMITTYPECHECK 1
+#define OMITSIZECHECK 1
 #endif
 
 #include <cinttypes>
@@ -40,10 +40,12 @@ const unsigned int MinDataSize{5}; // just pad, cookie and version
 class ReadoutParser {
 public:
   enum error { OK = 0, EBUFFER, ESIZE, EHEADER };
-  enum DetectorType { Reserved = 0x00,
-                      Loki4Amp = 0x30,
-                      FREIA    = 0x48,
-                      DREAM    = 0x60};
+  enum DetectorType {
+    Reserved = 0x00,
+    Loki4Amp = 0x30,
+    FREIA = 0x48,
+    DREAM = 0x60
+  };
 
   uint64_t NextSeqNum[MaxOutputQueues];
 
@@ -67,12 +69,31 @@ public:
   static_assert(sizeof(ReadoutParser::PacketHeaderV0) == (30),
                 "Wrong header size (update assert or check packing)");
 
+  struct PacketHeaderV1 {
+    uint8_t Padding0;
+    uint8_t Version;
+    uint32_t CookieAndType;
+    uint16_t TotalLength;
+    uint8_t OutputQueue;
+    uint8_t TimeSource;
+    uint32_t PulseHigh;
+    uint32_t PulseLow;
+    uint32_t PrevPulseHigh;
+    uint32_t PrevPulseLow;
+    uint32_t SeqNum;
+    uint16_t Padding1;
+  } __attribute__((packed));
+
+  static_assert(sizeof(ReadoutParser::PacketHeaderV1) == (32),
+                "Wrong header size (update assert or check packing)");
 
   // Holds data relevant for processing of the current packet
   struct {
-    PacketHeaderV0 * HeaderPtr;
+    PacketHeaderV0 *HeaderPtr0;
+    PacketHeaderV1 *HeaderPtr1;
     uint16_t DataLength;
-    char * DataPtr;
+    char *DataPtr;
+    uint8_t version;
   } Packet;
 
   // Header for each data block
@@ -81,7 +102,6 @@ public:
     uint8_t FENId;
     uint16_t DataLength;
   } __attribute__((packed));
-
 
   ReadoutParser();
 

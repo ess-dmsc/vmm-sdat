@@ -680,6 +680,8 @@ bool Configuration::ParseCommandLine(int argc, char **argv) {
       pSaveClustersPlane.clear();
       pSaveClustersDetector.clear();
       n = 0;
+      pHighMultiplicity = false;
+
       for (auto &s : vTokens) {
         std::vector<std::string> v;
         std::string token;
@@ -730,8 +732,6 @@ bool Configuration::ParseCommandLine(int argc, char **argv) {
     } else if (strncmp(argv[i], "-hm", 3) == 0) {
       if (atoi(argv[i + 1]) == 1) {
         pHighMultiplicity = true;
-      } else {
-        pHighMultiplicity = false;
       }
     } else if (strncmp(argv[i], "-df", 3) == 0) {
       pDataFormat = argv[i + 1];
