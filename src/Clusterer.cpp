@@ -300,7 +300,7 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
     // keep the overThresholdFlag as bit 15 of the ADC
     adc = adc + 32768;
   }
-  if (m_config.pADCThreshold < 0) {
+  if (m_config.pADCThreshold[det] < 0) {
     if (overThresholdFlag) {
       if (m_config.pIsPads[det]) {
         m_hits_new[std::make_pair(det, 0)].emplace_back(
@@ -313,7 +313,7 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
       }
     }
   } else {
-    if ((adc >= m_config.pADCThreshold)) {
+    if ((adc >= m_config.pADCThreshold[det])) {
       if (m_config.pIsPads[det]) {
         m_hits_new[std::make_pair(det, 0)].emplace_back(
             totalTime, (uint16_t)pos0, adc, (uint16_t)pos1);
@@ -369,7 +369,8 @@ int Clusterer::ClusterByTime(std::pair<uint8_t, uint8_t> dp) {
     adc1 = std::get<2>(itHits);
     strip2 = std::get<3>(itHits);
     if (!cluster.empty()) {
-      if (std::fabs(time1 - time2) > m_config.pDeltaTimeHits) {
+      if (std::fabs(time1 - time2) >
+          m_config.pDeltaTimeHits[m_config.pDets[dp.first]]) {
         if (m_config.pIsPads[dp.first]) {
           clusterCount += ClusterByPad(dp, cluster, maxDeltaTime);
         } else {
@@ -483,10 +484,14 @@ int Clusterer::ClusterByPad(std::pair<uint8_t, uint8_t> dp,
         adc2 = adc2 & 0x3FF;
         idY2 = std::get<3>(*itCluster);
         // Pad in vector belongs to cluster
-        if (std::fabs(idX1 - idX2) - 1 <= m_config.pMissingStripsClusterX &&
-            std::fabs(idY1 - idY2) - 1 <= m_config.pMissingStripsClusterY &&
-            time2 - smallestTime <= m_config.pSpanClusterTime &&
-            largestTime - time2 <= m_config.pSpanClusterTime) {
+        if (std::fabs(idX1 - idX2) - 1 <=
+                m_config.pMissingStripsClusterX[m_config.pDets[dp.first]] &&
+            std::fabs(idY1 - idY2) - 1 <=
+                m_config.pMissingStripsClusterY[m_config.pDets[dp.first]] &&
+            time2 - smallestTime <=
+                m_config.pSpanClusterTime[m_config.pDets[dp.first]] &&
+            largestTime - time2 <=
+                m_config.pSpanClusterTime[m_config.pDets[dp.first]]) {
           clusterFound.emplace_back(idX2, time2, adc2, idY2);
           stripCount++;
           if (time1 < smallestTime) {
@@ -517,7 +522,8 @@ int Clusterer::ClusterByPad(std::pair<uint8_t, uint8_t> dp,
       }
     }
 
-    if (clusterFound.size() >= m_config.pMinClusterSize) {
+    if (clusterFound.size() >=
+        m_config.pMinClusterSize[m_config.pDets[dp.first]]) {
       clusterCount++;
       spanCluster = (largestTime - smallestTime);
       if (m_config.pShowStats) {
@@ -650,12 +656,14 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
 
     // Add members of a cluster, if it is either the beginning of a cluster,
     // or if strip gap and time span is correct
-    if (stripCount == 0 || (((plane == 2 && m_config.pAlgo == 5) ||
-                             (std::fabs(strip1 - strip2) - 1 <=
-                              m_config.pMissingStripsClusterX)) &&
-                            time1 - startTime <= m_config.pSpanClusterTime &&
-                            largestTime - time1 <= m_config.pSpanClusterTime)) {
-
+    if (stripCount == 0 ||
+        (((plane == 2 && m_config.pAlgo == 5) ||
+          (std::fabs(strip1 - strip2) - 1 <=
+           m_config.pMissingStripsClusterX[m_config.pDets[dp.first]])) &&
+         time1 - startTime <=
+             m_config.pSpanClusterTime[m_config.pDets[dp.first]] &&
+         largestTime - time1 <=
+             m_config.pSpanClusterTime[m_config.pDets[dp.first]])) {
       DTRACE(DEB, "\tstrip %d, time %llu, adc %d:\n", strip1,
              static_cast<unsigned long long>(time1), adc1);
 
@@ -704,12 +712,14 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
     // long
     else if ((!(plane == 2 && m_config.pAlgo == 5) &&
               (std::fabs(strip1 - strip2) - 1 >
-               m_config.pMissingStripsClusterX)) ||
-             time1 - startTime > m_config.pSpanClusterTime ||
-             largestTime - time1 > m_config.pSpanClusterTime) {
-
+               m_config.pMissingStripsClusterX[m_config.pDets[dp.first]])) ||
+             time1 - startTime >
+                 m_config.pSpanClusterTime[m_config.pDets[dp.first]] ||
+             largestTime - time1 >
+                 m_config.pSpanClusterTime[m_config.pDets[dp.first]]) {
       // Valid cluster
-      if (stripCount < m_config.pMinClusterSize || totalADC == 0) {
+      if (stripCount < m_config.pMinClusterSize[m_config.pDets[dp.first]] ||
+          totalADC == 0) {
         DTRACE(DEB, "******** INVALID CLUSTER SIZE ********%d\n\n", stripCount);
       } else {
 
@@ -790,6 +800,7 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
             }
           }
         }
+
         clusterPlane.time_utpc = time_utpc;
         clusterPlane.pos_utpc = pos_utpc;
         clusterPlane.time_algo = time_algo;
@@ -873,7 +884,8 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
 
   // At the end of the clustering, check again if there is a last valid
   // cluster
-  if (stripCount >= m_config.pMinClusterSize && totalADC > 0) {
+  if (stripCount >= m_config.pMinClusterSize[m_config.pDets[dp.first]] &&
+      totalADC > 0) {
 
     spanCluster = (largestTime - startTime);
     centerOfGravity = (centerOfGravity / totalADC);
@@ -1125,23 +1137,27 @@ int Clusterer::MatchClustersDetector(uint8_t det) {
         } else if (m_config.pConditionCoincidence == "charge2") {
           delta_t1 = (*c1).time_charge2 - c0.time_charge2;
         }
-        if (std::fabs(delta_t1) <= m_config.pDeltaTimePlanes) {
+        if (std::fabs(delta_t1) <=
+            m_config.pDeltaTimePlanes[m_config.pDets[det]]) {
           if (isFirstMatch1) {
             itStartPlane1 = c1;
             isFirstMatch1 = false;
           }
         }
 
-        if (chargeRatio1 >= m_config.pChargeRatioLower &&
-            chargeRatio1 <= m_config.pChargeRatioUpper &&
+        if (chargeRatio1 >= m_config.pChargeRatioLower[m_config.pDets[det]] &&
+            chargeRatio1 <= m_config.pChargeRatioUpper[m_config.pDets[det]] &&
             std::fabs(delta_t1) < minDelta1 &&
-            std::fabs(delta_t1) <= m_config.pDeltaTimePlanes &&
-            (c0.size + (*c1).size >= m_config.pCoincidentClusterSize)) {
+            std::fabs(delta_t1) <=
+                m_config.pDeltaTimePlanes[m_config.pDets[det]] &&
+            (c0.size + (*c1).size >=
+             m_config.pCoincidentClusterSize[m_config.pDets[det]])) {
           minDelta1 = std::fabs(delta_t1);
           bestMatchPlane1 = c1;
         }
         if (std::fabs(delta_t1) > std::fabs(lastDelta_t1) &&
-            std::fabs(delta_t1) > m_config.pDeltaTimePlanes) {
+            std::fabs(delta_t1) >
+                m_config.pDeltaTimePlanes[m_config.pDets[det]]) {
           break;
         }
       }
@@ -1166,23 +1182,28 @@ int Clusterer::MatchClustersDetector(uint8_t det) {
             } else if (m_config.pConditionCoincidence == "charge2") {
               delta_t2 = (*c2).time_charge2 - c0.time_charge2;
             }
-            if (std::fabs(delta_t2) <= m_config.pDeltaTimePlanes) {
+            if (std::fabs(delta_t2) <=
+                m_config.pDeltaTimePlanes[m_config.pDets[det]]) {
               if (isFirstMatch2) {
                 itStartPlane2 = c2;
                 isFirstMatch2 = false;
               }
             }
-            if (chargeRatio2 >= m_config.pChargeRatioLower &&
-                chargeRatio2 <= m_config.pChargeRatioUpper &&
+            if (chargeRatio2 >=
+                    m_config.pChargeRatioLower[m_config.pDets[det]] &&
+                chargeRatio2 <=
+                    m_config.pChargeRatioUpper[m_config.pDets[det]] &&
                 std::fabs(delta_t2) < minDelta2 &&
-                std::fabs(delta_t2) <= m_config.pDeltaTimePlanes &&
+                std::fabs(delta_t2) <=
+                    m_config.pDeltaTimePlanes[m_config.pDets[det]] &&
                 (c0.size + (*bestMatchPlane1).size + (*c2).size >=
-                 m_config.pCoincidentClusterSize)) {
+                 m_config.pCoincidentClusterSize[m_config.pDets[det]])) {
               minDelta2 = std::fabs(delta_t2);
               bestMatchPlane2 = c2;
             }
             if (std::fabs(delta_t2) > std::fabs(lastDelta_t2) &&
-                std::fabs(delta_t2) > m_config.pDeltaTimePlanes) {
+                std::fabs(delta_t2) >
+                    m_config.pDeltaTimePlanes[m_config.pDets[det]]) {
               break;
             }
           }
@@ -1467,23 +1488,28 @@ int Clusterer::MatchClustersDetector_HighMultiplicity(uint8_t det) {
       } else if (m_config.pConditionCoincidence == "charge2") {
         delta_t1 = (*c1).time_charge2 - c0.time_charge2;
       }
-      if (std::fabs(delta_t1) <= m_config.pDeltaTimePlanes) {
+      if (std::fabs(delta_t1) <=
+          m_config.pDeltaTimePlanes[m_config.pDets[det]]) {
         if (isFirstMatch1) {
           itStartPlane1 = c1;
           isFirstMatch1 = false;
         }
       }
-      if (std::fabs(delta_t1) > m_config.pDeltaTimePlanes &&
+      if (std::fabs(delta_t1) >
+              m_config.pDeltaTimePlanes[m_config.pDets[det]] &&
           std::fabs(delta_t1) > std::fabs(lastDelta_t1)) {
         break;
       }
-      if (chargeRatio1 >= m_config.pChargeRatioLower &&
-          chargeRatio1 <= m_config.pChargeRatioUpper &&
-          std::fabs(delta_t1) <= m_config.pDeltaTimePlanes &&
-          (c0.size + (*c1).size >= m_config.pCoincidentClusterSize)) {
+      if (chargeRatio1 >= m_config.pChargeRatioLower[m_config.pDets[det]] &&
+          chargeRatio1 <= m_config.pChargeRatioUpper[m_config.pDets[det]] &&
+          std::fabs(delta_t1) <=
+              m_config.pDeltaTimePlanes[m_config.pDets[det]] &&
+          (c0.size + (*c1).size >=
+           m_config.pCoincidentClusterSize[m_config.pDets[det]])) {
 
         if (std::fabs(delta_t1) < minDelta1 &&
-            std::fabs(delta_t1) <= m_config.pDeltaTimePlanes) {
+            std::fabs(delta_t1) <=
+                m_config.pDeltaTimePlanes[m_config.pDets[det]]) {
           if ((*c1).plane_coincidence == false) {
             minDelta1 = std::fabs(delta_t1);
             bestMatchIdx = m_clusters_detector[det].size();
@@ -1695,7 +1721,8 @@ bool Clusterer::ChooseHitsToBeClustered(std::pair<uint8_t, uint8_t> dp) {
   // since they are close in time to
   // m_stats.GetLowestCommonTriggerTimestampPlane(dp)
   while (it != m_hits_new[dp].end()) {
-    if (std::get<0>(*it) - timeReadyToCluster > m_config.pDeltaTimeHits) {
+    if (std::get<0>(*it) - timeReadyToCluster >
+        m_config.pDeltaTimeHits[m_config.pDets[dp.first]]) {
       break;
     }
     timeReadyToCluster = std::get<0>(*it);
@@ -1755,7 +1782,8 @@ bool Clusterer::ChooseClustersToBeMatched(std::pair<uint8_t, uint8_t> dp) {
     // Find elements in vector that could still be matched with another
     // cluster since they are close in time to timeReadyToMatch
     while (it != m_clusters_new[dp].end()) {
-      if ((*it).time_utpc - timeReadyToMatch > m_config.pDeltaTimeHits) {
+      if ((*it).time_utpc - timeReadyToMatch >
+          m_config.pDeltaTimeHits[m_config.pDets[dp.first]]) {
         break;
       }
       timeReadyToMatch = (*it).time_utpc;
@@ -1796,7 +1824,8 @@ bool Clusterer::ChooseClustersToBeMatched(std::pair<uint8_t, uint8_t> dp) {
     // Find elements in vector that could still be matched with another
     // cluster since they are close in time to timeReadyToMatch
     while (it != m_clusters_new[dp].end()) {
-      if ((*it).time_charge2 - timeReadyToMatch > m_config.pDeltaTimeHits) {
+      if ((*it).time_charge2 - timeReadyToMatch >
+          m_config.pDeltaTimeHits[m_config.pDets[dp.first]]) {
         break;
       }
       timeReadyToMatch = (*it).time_charge2;
@@ -1836,7 +1865,8 @@ bool Clusterer::ChooseClustersToBeMatched(std::pair<uint8_t, uint8_t> dp) {
     // Find elements in vector that could still be matched with another
     // cluster since they are close in time to timeReadyToMatch
     while (it != m_clusters_new[dp].end()) {
-      if ((*it).time - timeReadyToMatch > m_config.pDeltaTimeHits) {
+      if ((*it).time - timeReadyToMatch >
+          m_config.pDeltaTimeHits[m_config.pDets[dp.first]]) {
         break;
       }
       timeReadyToMatch = (*it).time;

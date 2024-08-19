@@ -81,16 +81,22 @@ void RootFile::SaveDate(double the_seconds_start, std::string the_date_start,
   channelMapping.SetTitle(m_config.pChannelMapping.c_str());
   channelMapping.Write();
 
+  std::stringstream s;
+
   TNamed chargeRatioLower;
   chargeRatioLower.SetName("charge_ratio_lower");
-  std::string sChargeRatioLower = std::to_string(m_config.pChargeRatioLower);
-  chargeRatioLower.SetTitle(sChargeRatioLower.c_str());
+  std::copy(m_config.pChargeRatioLower.begin(),
+            m_config.pChargeRatioLower.end(),
+            std::ostream_iterator<double>(s, ", "));
+  chargeRatioLower.SetTitle(s.str().c_str());
   chargeRatioLower.Write();
 
   TNamed chargeRatioUpper;
   chargeRatioUpper.SetName("charge_ratio_lower");
-  std::string sChargeRatioUpper = std::to_string(m_config.pChargeRatioUpper);
-  chargeRatioUpper.SetTitle(sChargeRatioUpper.c_str());
+  std::copy(m_config.pChargeRatioLower.begin(),
+            m_config.pChargeRatioLower.end(),
+            std::ostream_iterator<double>(s, ", "));
+  chargeRatioUpper.SetTitle(s.str().c_str());
   chargeRatioUpper.Write();
 
   TNamed bc;
@@ -107,40 +113,50 @@ void RootFile::SaveDate(double the_seconds_start, std::string the_date_start,
 
   TNamed minClusterSize;
   minClusterSize.SetName("min_cluster_size");
-  std::string sMinClusterSize = std::to_string(m_config.pMinClusterSize);
-  minClusterSize.SetTitle(sMinClusterSize.c_str());
+  std::copy(m_config.pChargeRatioLower.begin(),
+            m_config.pChargeRatioLower.end(),
+            std::ostream_iterator<int>(s, ", "));
+  minClusterSize.SetTitle(s.str().c_str());
   minClusterSize.Write();
 
   TNamed coincidentClusterSize;
   coincidentClusterSize.SetName("coincident_cluster_size");
-  std::string sCoincidentClusterSize =
-      std::to_string(m_config.pCoincidentClusterSize);
-  coincidentClusterSize.SetTitle(sCoincidentClusterSize.c_str());
+  std::copy(m_config.pChargeRatioLower.begin(),
+            m_config.pChargeRatioLower.end(),
+            std::ostream_iterator<int>(s, ", "));
+  coincidentClusterSize.SetTitle(s.str().c_str());
   coincidentClusterSize.Write();
 
   TNamed deltaTimeHits;
   deltaTimeHits.SetName("delta_time_hits");
-  std::string sDeltaTimeHits = std::to_string(m_config.pDeltaTimeHits);
-  deltaTimeHits.SetTitle(sDeltaTimeHits.c_str());
+  std::copy(m_config.pChargeRatioLower.begin(),
+            m_config.pChargeRatioLower.end(),
+            std::ostream_iterator<double>(s, ", "));
+  deltaTimeHits.SetTitle(s.str().c_str());
   deltaTimeHits.Write();
 
   TNamed missingStripsClusterX;
   missingStripsClusterX.SetName("missing_strips");
-  std::string sMissingStripsClusterX =
-      std::to_string(m_config.pMissingStripsClusterX);
-  missingStripsClusterX.SetTitle(sMissingStripsClusterX.c_str());
+  std::copy(m_config.pChargeRatioLower.begin(),
+            m_config.pChargeRatioLower.end(),
+            std::ostream_iterator<int>(s, ", "));
+  missingStripsClusterX.SetTitle(s.str().c_str());
   missingStripsClusterX.Write();
 
   TNamed spanClusterTime;
   spanClusterTime.SetName("span_cluster_time");
-  std::string sSpanClusterTime = std::to_string(m_config.pSpanClusterTime);
-  spanClusterTime.SetTitle(sSpanClusterTime.c_str());
+  std::copy(m_config.pChargeRatioLower.begin(),
+            m_config.pChargeRatioLower.end(),
+            std::ostream_iterator<double>(s, ", "));
+  spanClusterTime.SetTitle(s.str().c_str());
   spanClusterTime.Write();
 
   TNamed deltaTimePlanes;
   deltaTimePlanes.SetName("delta_time_planes");
-  std::string sDeltaTimePlanes = std::to_string(m_config.pDeltaTimePlanes);
-  deltaTimePlanes.SetTitle(sDeltaTimePlanes.c_str());
+  std::copy(m_config.pChargeRatioLower.begin(),
+            m_config.pChargeRatioLower.end(),
+            std::ostream_iterator<double>(s, ", "));
+  deltaTimePlanes.SetTitle(s.str().c_str());
   deltaTimePlanes.Write();
 }
 

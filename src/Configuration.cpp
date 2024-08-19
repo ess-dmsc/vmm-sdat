@@ -18,12 +18,14 @@ bool Configuration::PrintUsage(const std::string &errorMessage, char *argv) {
   std::cout
       << "./convertFile -f ../../FAN0_gdgem_readouts_20190528-165706_00000.h5 "
       << "-vmm "
-         "\"[[1,0,2,0],[1,0,2,1],[1,0,2,2],[1,0,2,3],[1,1,2,6],[1,1,2,7],[1,1,"
-         "2,8],[1,1,2,9]]\" "
+         "\"[[1,0,2,0],[1,0,2,1],[2,0,2,2],[2,0,2,3],[1,1,2,6],[1,1,2,7],[2,1,"
+         "2,8],[2,1,2,9]]\" "
       << "-axis \"[[1,0],0],[[1,1],0]\" -sc \"[[0.4,0.4,1]]\" -tl \"[[-51.2, "
          "-51.2, 100]]\" -ro \"[[0,0,45]]\" -tr \"[[S,T,R2]]\" "
-      << "-bc 40 -tac 60 -th 0 -cs 1 -ccs 3 -dt 200 -mst 1 -spc 500 "
-      << "-dp 200 -coin center-of-mass -crl 0.75 -cru 3.0 -save [[1],[1],[1]] "
+      << "-bc 40 -tac 60 -th [0,20] -cs [1,2] -ccs [3,4] -dt [200,300] -mst "
+         "[1,0] -spc [500,400] "
+      << "-dp [200,250] -coin center-of-mass -crl [0.75,0.5] -cru [3.0,5] "
+         "-save [[1],[1,2],[1,2]] "
          "-swap 0 -json 0 -n 0 -df SRS -cahi 1 -hm 0"
       << std::endl;
 
@@ -153,32 +155,37 @@ bool Configuration::PrintUsage(const std::string &errorMessage, char *argv) {
       << std::endl;
   std::cout
       << "-th:    threshold value in ADC counts. Optional argument (default 0, "
-         "if -1, only hits with over threshold flag 1 are expected).\n"
+         "if -1, only hits with over threshold flag 1 are expected, one value "
+         "per detector).\n"
       << std::endl;
   std::cout << "-cs:    minimum cluster size per plane. Optional argument "
-               "(default 1).\n"
+               "(default 1), one value per detector.\n"
             << std::endl;
   std::cout << "-ccs:   minimum cluster size in plane 0 and plane 1 together. "
-               "Optional argument (default 2).\n"
-            << std::endl;
-  std::cout << "-dt:    maximum time difference between strips in time sorted "
-               "vector. Optional argument (default 200).\n"
-            << std::endl;
-  std::cout << "-mst:   maximum missing strips in strip sorted vector. "
-               "Optional argument (default 2).\n"
-            << std::endl;
-  std::cout << "-mp0:   maximum missing pads in dimension 0 in pad sorted "
-               "vector. Optional argument (default 0).\n"
-            << std::endl;
-  std::cout << "-mp1:   maximum missing pads in dimension 1 in pad sorted "
-               "vector. Optional argument (default 0).\n"
+               "Optional argument (default 2), one value per detector.\n"
             << std::endl;
   std::cout
+      << "-dt:    maximum time difference between strips in time sorted "
+         "vector. Optional argument (default 200), one value per detector.\n"
+      << std::endl;
+  std::cout << "-mst:   maximum missing strips in strip sorted vector. "
+               "Optional argument (default 0), one value per detector.\n"
+            << std::endl;
+  std::cout
+      << "-mp0:   maximum missing pads in dimension 0 in pad sorted "
+         "vector. Optional argument (default 0), one value per detector.\n"
+      << std::endl;
+  std::cout
+      << "-mp1:   maximum missing pads in dimension 1 in pad sorted "
+         "vector. Optional argument (default 0), one value per detector.\n"
+      << std::endl;
+  std::cout
       << "-spc:   maximum time span of cluster in one dimension (determined by "
-         "drift size and speed). Optional argument (default 500).\n"
+         "drift size and speed). Optional argument (default 500), one value "
+         "per detector.\n"
       << std::endl;
   std::cout << "-dp:    maximum time between matched clusters in x and y. "
-               "Optional argument (default 200).\n"
+               "Optional argument (default 200), one value per detector.\n"
             << std::endl;
   std::cout << "-coin:  Valid clusters normally occur at the same time in "
                "plane 0 and plane 1 of a detctor. The parameter -dp determines "
@@ -213,7 +220,7 @@ bool Configuration::PrintUsage(const std::string &errorMessage, char *argv) {
 
   std::cout << "-crl:   Valid clusters normally have the same amount of charge "
                "in both detector planes (ratio of charge plane 0/charge plane "
-               "1 is 100\% or 1.\n"
+               "1 is 100\% or 1, one value per detector.\n"
             << "        Depending on the readout, the charge sharing can be "
                "different, e.g. in a standard GEM strip readout the total "
                "charge is divided 60/40 between plane 0/ plane 1\n"
@@ -221,7 +228,8 @@ bool Configuration::PrintUsage(const std::string &errorMessage, char *argv) {
                "plane0/plane1 charge ratio. Optional argument (default 0.5)"
             << std::endl;
   std::cout << "-cru:   With -cru one sets the upper threshold for the "
-               "plane0/plane1 charge ratio. Optional argument (default 2).\n"
+               "plane0/plane1 charge ratio. Optional argument (default 2), one "
+               "value per detector.\n"
             << std::endl;
   std::cout
       << "-hm:    High-multiplicity matching mode (values 0 or 1).\n"
@@ -611,22 +619,26 @@ bool Configuration::ParseCommandLine(int argc, char **argv) {
     } else if (strncmp(argv[i], "-tac", 4) == 0) {
       pTAC = atof(argv[i + 1]);
     } else if (strncmp(argv[i], "-th", 3) == 0) {
-      pADCThreshold = atof(argv[i + 1]);
+      GetDetectorParameters(argv[i + 1], pADCThreshold);
     } else if (strncmp(argv[i], "-cs", 3) == 0) {
-      pMinClusterSize = atoi(argv[i + 1]);
+      GetDetectorParameters(argv[i + 1], pMinClusterSize);
     } else if (strncmp(argv[i], "-ccs", 4) == 0) {
-      pCoincidentClusterSize = atoi(argv[i + 1]);
+      GetDetectorParameters(argv[i + 1], pCoincidentClusterSize);
     } else if (strncmp(argv[i], "-dt", 3) == 0) {
-      pDeltaTimeHits = atof(argv[i + 1]);
+      GetDetectorParameters(argv[i + 1], pDeltaTimeHits);
     } else if (strncmp(argv[i], "-mst", 4) == 0 ||
                strncmp(argv[i], "-mp0", 4) == 0) {
-      pMissingStripsClusterX = atoi(argv[i + 1]);
+      GetDetectorParameters(argv[i + 1], pMissingStripsClusterX);
     } else if (strncmp(argv[i], "-mp1", 4) == 0) {
-      pMissingStripsClusterY = atoi(argv[i + 1]);
+      GetDetectorParameters(argv[i + 1], pMissingStripsClusterY);
     } else if (strncmp(argv[i], "-spc", 4) == 0) {
-      pSpanClusterTime = atof(argv[i + 1]);
+      GetDetectorParameters(argv[i + 1], pSpanClusterTime);
     } else if (strncmp(argv[i], "-dp", 3) == 0) {
-      pDeltaTimePlanes = atof(argv[i + 1]);
+      GetDetectorParameters(argv[i + 1], pDeltaTimePlanes);
+    } else if (strncmp(argv[i], "-crl", 4) == 0) {
+      GetDetectorParameters(argv[i + 1], pChargeRatioLower);
+    } else if (strncmp(argv[i], "-cru", 4) == 0) {
+      GetDetectorParameters(argv[i + 1], pChargeRatioUpper);
     } else if (strncmp(argv[i], "-cahi", 5) == 0) {
       if (atoi(argv[i + 1]) == 1) {
         calibrationHistogram = true;
@@ -717,10 +729,6 @@ bool Configuration::ParseCommandLine(int argc, char **argv) {
       useCalibration = true;
     } else if (strncmp(argv[i], "-json", 5) == 0) {
       createJSON = atoi(argv[i + 1]);
-    } else if (strncmp(argv[i], "-crl", 4) == 0) {
-      pChargeRatioLower = atof(argv[i + 1]);
-    } else if (strncmp(argv[i], "-cru", 4) == 0) {
-      pChargeRatioUpper = atof(argv[i + 1]);
     } else if (strncmp(argv[i], "-coin", 5) == 0) {
       pConditionCoincidence = "center-of-mass";
       if (strncmp(argv[i + 1], "utpc", 4) == 0 ||
@@ -1230,6 +1238,93 @@ bool Configuration::CreateMapping() {
   // Dummy fec number for parser errors
   if (pDataFormat == "ESS") {
     pFecs.push_back(384);
+  }
+  bool ret = CheckDetectorParameters("pMinClusterSize", pMinClusterSize);
+  if (ret == false) {
+    return false;
+  }
+
+  ret =
+      CheckDetectorParameters("pCoincidentClusterSize", pCoincidentClusterSize);
+  if (ret == false) {
+    return false;
+  }
+
+  ret = CheckDetectorParameters("pDeltaTimeHits", pDeltaTimeHits);
+  if (ret == false) {
+    return false;
+  }
+
+  ret =
+      CheckDetectorParameters("pMissingStripsClusterX", pMissingStripsClusterX);
+  if (ret == false) {
+    return false;
+  }
+
+  ret =
+      CheckDetectorParameters("pMissingStripsClusterY", pMissingStripsClusterY);
+  if (ret == false) {
+    return false;
+  }
+
+  ret = CheckDetectorParameters("pSpanClusterTime", pSpanClusterTime);
+  if (ret == false) {
+    return false;
+  }
+
+  ret = CheckDetectorParameters("pDeltaTimePlanes", pDeltaTimePlanes);
+  if (ret == false) {
+    return false;
+  }
+
+  ret = CheckDetectorParameters("pChargeRatioLower", pChargeRatioLower);
+  if (ret == false) {
+    return false;
+  }
+
+  ret = CheckDetectorParameters("pChargeRatioUpper", pChargeRatioUpper);
+  if (ret == false) {
+    return false;
+  }
+
+  ret = CheckDetectorParameters("pADCThreshold", pADCThreshold);
+  if (ret == false) {
+    return false;
+  }
+
+  return true;
+}
+
+void Configuration::GetDetectorParameters(std::string input,
+                                          std::vector<double> &v) {
+  v.clear();
+  std::string parameterString = input;
+  char removeChars[] = "[ ]";
+  for (unsigned int i = 0; i < strlen(removeChars); ++i) {
+    parameterString.erase(std::remove(parameterString.begin(),
+                                      parameterString.end(), removeChars[i]),
+                          parameterString.end());
+  }
+  std::string token;
+  std::istringstream tokenStream(parameterString);
+  while (std::getline(tokenStream, token, ',')) {
+    v.push_back(std::stof(token));
+  }
+}
+
+bool Configuration::CheckDetectorParameters(std::string name,
+                                            std::vector<double> &v) {
+  if (v.size() == 1) {
+    float val = v[0];
+    for (int n = 1; n < pDets.size(); n++) {
+      v.push_back(val);
+    }
+  } else {
+    if (v.size() != pDets.size()) {
+      return PrintUsage(
+          "Wrong number of parameters, one per detector or one for all!",
+          (char *)name.c_str());
+    }
   }
   return true;
 }

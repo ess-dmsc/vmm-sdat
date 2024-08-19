@@ -161,21 +161,21 @@ void Statistics::CreateClusterStats(Configuration &config) {
       m_units.emplace(std::make_pair("DeltaTimeHits", "ns"));
       m_factors.emplace(std::make_pair("DeltaTimeHits", 0.02));
       m_limits.emplace(
-          std::make_pair("DeltaTimeHits", 1 + config.pDeltaTimeHits *
+          std::make_pair("DeltaTimeHits", 1 + config.pDeltaTimeHits[det.first] *
                                                   m_factors["DeltaTimeHits"]));
       m_stats_plane_names.push_back("DeltaTimeHits");
 
       m_units.emplace(std::make_pair("MissingStripsCluster", "strips"));
       m_factors.emplace(std::make_pair("MissingStripsCluster", 1));
       m_limits.emplace(std::make_pair(
-          "MissingStripsCluster", 1 + config.pMissingStripsClusterX *
+          "MissingStripsCluster", 1 + config.pMissingStripsClusterX[det.first] *
                                           m_factors["MissingStripsCluster"]));
       m_stats_plane_names.push_back("MissingStripsCluster");
 
       m_units.emplace(std::make_pair("SpanClusterTime", "ns"));
       m_factors.emplace(std::make_pair("SpanClusterTime", 0.02));
       m_limits.emplace(std::make_pair("SpanClusterTime",
-                                      1 + config.pSpanClusterTime *
+                                      1 + config.pSpanClusterTime[det.first] *
                                               m_factors["SpanClusterTime"]));
       m_stats_plane_names.push_back("SpanClusterTime");
 
@@ -193,22 +193,22 @@ void Statistics::CreateClusterStats(Configuration &config) {
       m_units.emplace(std::make_pair("DeltaTimePlanes_0_1", "ns"));
       m_factors.emplace(std::make_pair("DeltaTimePlanes_0_1", 0.02));
       m_limits.emplace(std::make_pair(
-          "DeltaTimePlanes_0_1",
-          1 + config.pDeltaTimePlanes * m_factors["DeltaTimePlanes_0_1"]));
+          "DeltaTimePlanes_0_1", 1 + config.pDeltaTimePlanes[det.first] *
+                                         m_factors["DeltaTimePlanes_0_1"]));
       m_stats_detector_names.push_back("DeltaTimePlanes_0_1");
 
       m_units.emplace(std::make_pair("DeltaTimePlanes_1_2", "ns"));
       m_factors.emplace(std::make_pair("DeltaTimePlanes_1_2", 0.02));
       m_limits.emplace(std::make_pair(
-          "DeltaTimePlanes_1_2",
-          1 + config.pDeltaTimePlanes * m_factors["DeltaTimePlanes_1_2"]));
+          "DeltaTimePlanes_1_2", 1 + config.pDeltaTimePlanes[det.first] *
+                                         m_factors["DeltaTimePlanes_1_2"]));
       m_stats_detector_names.push_back("DeltaTimePlanes_1_2");
 
       m_units.emplace(std::make_pair("DeltaTimePlanes_0_2", "ns"));
       m_factors.emplace(std::make_pair("DeltaTimePlanes_0_2", 0.02));
       m_limits.emplace(std::make_pair(
-          "DeltaTimePlanes_0_2",
-          1 + config.pDeltaTimePlanes * m_factors["DeltaTimePlanes_0_2"]));
+          "DeltaTimePlanes_0_2", 1 + config.pDeltaTimePlanes[det.first] *
+                                         m_factors["DeltaTimePlanes_0_2"]));
       m_stats_detector_names.push_back("DeltaTimePlanes_0_2");
 
       m_units.emplace(std::make_pair("ChargeRatio_0_1", "%"));

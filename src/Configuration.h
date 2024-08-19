@@ -9,6 +9,10 @@
 #define NUMFECS 385
 
 class Configuration {
+private:
+  void GetDetectorParameters(std::string input, std::vector<double> &v);
+  bool CheckDetectorParameters(std::string name, std::vector<double> &v);
+
 public:
   Configuration() = default;
   ~Configuration() = default;
@@ -58,33 +62,31 @@ public:
                                                        {{1, 1}, 0}};
 
   std::vector<std::tuple<double, double, double>> pTranslation;
-
   std::vector<std::tuple<double, double, double>> pScale;
-
   std::vector<std::tuple<double, double, double>> pRotation;
-
   std::vector<std::vector<std::string>> pTransform;
-
   std::vector<std::tuple<double, double, double, double>> pTransformX;
   std::vector<std::tuple<double, double, double, double>> pTransformY;
   std::vector<std::tuple<double, double, double, double>> pTransformZ;
 
-  std::string pFileName = "";
+  std::vector<double> pMinClusterSize = {1.0};
+  std::vector<double> pCoincidentClusterSize = {1.0};
+  // Maximum time difference between strips in time sorted cluster (x or y)
+  std::vector<double> pDeltaTimeHits = {200.0};
+  // Number of missing strips in strip sorted cluster (x or y)
+  std::vector<double> pMissingStripsClusterX = {1.0};
+  std::vector<double> pMissingStripsClusterY = {1.0};
+  // Maximum time span for total cluster (x or y)
+  std::vector<double> pSpanClusterTime = {500.0};
+  // Maximum cluster time difference between matching clusters in two planes
+  std::vector<double> pDeltaTimePlanes = {200.0};
+  std::vector<double> pChargeRatioLower = {0.5};
+  std::vector<double> pChargeRatioUpper = {2.0};
+  std::vector<double> pADCThreshold = {0};
 
+  std::string pFileName = "";
   double pTAC = 60.0;
   double pBC = 40.0;
-  double pADCThreshold = 0;
-  uint16_t pMinClusterSize = 1;
-  uint16_t pCoincidentClusterSize = 1;
-  // Maximum time difference between strips in time sorted cluster (x or y)
-  double pDeltaTimeHits = 200.0;
-  // Number of missing strips in strip sorted cluster (x or y)
-  uint16_t pMissingStripsClusterX = 1;
-  uint16_t pMissingStripsClusterY = 1;
-  // Maximum time span for total cluster (x or y)
-  double pSpanClusterTime = 500.0;
-  // Maximum cluster time difference between matching clusters in two planes
-  double pDeltaTimePlanes = 200.0;
   std::string pChannelMapping = "gem";
   std::string pGeometryFile = "";
   bool createJSON = false;
@@ -92,8 +94,7 @@ public:
   bool calibrationHistogram = false;
   int pSaveWhat = 111;
   std::string pConditionCoincidence = "center-of-mass";
-  double pChargeRatioLower = 0.5;
-  double pChargeRatioUpper = 2;
+
   uint64_t nHits = 0;
   //**************************************************************
   // END PARAMETERS
