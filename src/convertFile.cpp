@@ -473,29 +473,32 @@ int main(int argc, char **argv) {
           }
 
           double temp_pulseTime = 0;
-          if (t0_correction > 0) {
-            if (readoutParser.Packet.version == 0) {
 
-              temp_pulseTime =
-                  (readoutParser.Packet.HeaderPtr0->PulseHigh - t0_correction) *
-                      1.0E+09 +
-                  readoutParser.Packet.HeaderPtr0->PulseLow *
-                      m_config.pBCTime_ns * 0.5;
-            } else {
-
-              temp_pulseTime =
-                  (readoutParser.Packet.HeaderPtr1->PulseHigh - t0_correction) *
-                      1.0E+09 +
-                  readoutParser.Packet.HeaderPtr1->PulseLow *
-                      m_config.pBCTime_ns * 0.5;
+          if (readoutParser.Packet.version == 0) {
+            if (t0_correction == 0) {
+              t0_correction = readoutParser.Packet.HeaderPtr0->PulseHigh;
             }
-
-            // Filter out pulse times that come directly after a valid pulse
-            // time due to jitter
-            if (temp_pulseTime - pulseTime > 1.0E+06) {
-              pulseTime = temp_pulseTime;
-              triggerSignals++;
+            temp_pulseTime =
+                (readoutParser.Packet.HeaderPtr0->PulseHigh - t0_correction) *
+                    1.0E+09 +
+                readoutParser.Packet.HeaderPtr0->PulseLow *
+                    m_config.pBCTime_ns * 0.5;
+          } else {
+            if (t0_correction == 0) {
+              t0_correction = readoutParser.Packet.HeaderPtr1->PulseHigh;
             }
+            temp_pulseTime =
+                (readoutParser.Packet.HeaderPtr1->PulseHigh - t0_correction) *
+                    1.0E+09 +
+                readoutParser.Packet.HeaderPtr1->PulseLow *
+                    m_config.pBCTime_ns * 0.5;
+          }
+
+          // Filter out pulse times that come directly after a valid pulse
+          // time due to jitter
+          if (temp_pulseTime - pulseTime > 1.0E+06) {
+            pulseTime = temp_pulseTime;
+            triggerSignals++;
           }
 
           int hits = parser->parse(readoutParser.Packet.DataPtr,
