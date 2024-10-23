@@ -10,7 +10,7 @@ from timeit import default_timer as timer
 import time as t
 import numpy as np
 from matplotlib.colors import LogNorm
-
+from matplotlib import cm, ticker
 
 #########################
 #Edit the paramters below
@@ -280,14 +280,15 @@ try:
 				ax[1, 1].set_xlabel('Wavelength [A]')
 				ax[1, 1].set_ylabel('counts')
 
-				h_temp = plt.hist2d(cl_thermal['pos0'], cl_thermal['pos1'],bins =[channels_x, channels_y],cmap=plt.cm.viridis,range=np.array([(0, channels_x), (0, channels_y)]))
+				h_temp = plt.hist2d(cl_thermal['pos0'], cl_thermal['pos1'],bins =[channels_x, channels_y], cmap=plt.cm.magma_r,range=np.array([(0, channels_x), (0, channels_y)]))
+				
 				h_thermal_image = h_thermal_image + h_temp[0]
-				im = ax[1, 2].imshow(h_thermal_image.transpose(), cmap=plt.cm.viridis,origin='lower')
+				im = ax[1, 2].imshow(h_thermal_image.transpose(), cmap=plt.cm.magma_r,origin='lower', norm=LogNorm())
 				plt.colorbar(im, ax=ax[1, 2], orientation='vertical')
 				ax[1, 2].title.set_text("thermal image")
 				ax[1, 2].set_xlabel('x [0.4 mm]')
 				ax[1, 2].set_ylabel('y [0.4 mm]')
-
+				
 				fig.set_size_inches(fig_w, fig_h)
 				fig.tight_layout()
 				fig.savefig("det_tof_" + str(detector_id) + ".png", format="png")
@@ -407,7 +408,7 @@ try:
 				h6_total = h6_total + h6[0]
 				h7 = ax[1, 2].hist(cl['adc0']+cl['adc1'], bins = 1000, range = [0.0, max_charge],  color=color_xy)
 				h7_total = h7_total + h7[0]
-				h8 = ax[1, 3].hist2d(cl['pos0'], cl['pos1'],bins =[channels_x, channels_y],cmap=plt.cm.viridis,range=np.array([(0, channels_x), (0, channels_y)]))
+				h8 = ax[1, 3].hist2d(cl['pos0'], cl['pos1'],bins =[channels_x, channels_y],cmap=plt.cm.magma_r,range=np.array([(0, channels_x), (0, channels_y)]))
 				plt.colorbar(h8[3], ax=ax[1, 3], orientation='vertical')
 				h8_total = h8_total + h8[0]
 	
@@ -464,7 +465,7 @@ try:
 				ax[1, 0].step(np.arange(0,channels_x,1),h5_total, color=color_x)
 				ax[1, 1].step(np.arange(0,channels_y,1),h6_total, color=color_y)
 				ax[1, 2].step(np.arange(0,max_charge,10),h7_total, color=color_xy)
-				im = ax[1, 3].imshow(h8_total.transpose(), cmap=plt.cm.viridis,origin='lower')
+				im = ax[1, 3].imshow(h8_total.transpose(), cmap=plt.cm.magma_r,origin='lower')
 				plt.colorbar(im, ax=ax[1, 3], orientation='vertical')
 
 				ax[0, 0].title.set_text("hits pos0")
