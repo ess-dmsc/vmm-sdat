@@ -743,8 +743,8 @@ bool Configuration::ParseCommandLine(int argc, char **argv) {
       }
     } else if (strncmp(argv[i], "-df", 3) == 0) {
       pDataFormat = argv[i + 1];
-      std::vector<std::string> v_valid_values = {"ESS", "SRS", "VTC",
-                                                 "ess", "srs", "vtc"};
+      std::vector<std::string> v_valid_values = {"SRS", "TRG", "VTC",
+                                                 "srs", "trg", "vtc"};
       auto searchValid =
           std::find(v_valid_values.begin(), v_valid_values.end(), pDataFormat);
       if (searchValid == v_valid_values.end()) {

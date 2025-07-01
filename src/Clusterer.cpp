@@ -26,9 +26,6 @@ auto timethis(std::function<void()> thunk)
 Clusterer::Clusterer(Configuration &config, Statistics &stats)
     : m_config(config), m_stats(stats) {
   m_rootFile = RootFile::GetInstance(config);
-  m_pulseTime[0] = 0;
-  m_pulseTime[1] = 0;
-  m_pulseTime[2] = 0;
 }
 
 Clusterer::~Clusterer() { RootFile::Dispose(); }
@@ -37,14 +34,8 @@ Clusterer::~Clusterer() { RootFile::Dispose(); }
 bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
                             uint16_t chNo, uint16_t bcid, uint16_t tdc,
                             uint16_t adc, bool overThresholdFlag,
-                            double chipTime, uint8_t geoId, double pulseTime) {
+                            double chipTime, uint8_t geoId, int event_counter) {
 
-  if (pulseTime > m_pulseTime[0]) {
-
-    m_pulseTime[2] = m_pulseTime[1];
-    m_pulseTime[1] = m_pulseTime[0];
-    m_pulseTime[0] = pulseTime;
-  }
 
   int pos0 = m_config.pPositions0[fecId][vmmId][chNo];
   int pos1 = m_config.pPositions1[fecId][vmmId][chNo];
@@ -215,27 +206,7 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
   double totalTime = srsTimestamp + chipTime;
   auto det = m_config.pDetectors[fecId][vmmId];
   auto plane = m_config.pPlanes[fecId][vmmId];
-  if (m_config.pSaveWhat % 2 == 1) {
-    double tof = srsTimestamp;
-    double jitter = -1.0E+04;
-    if (m_config.pDataFormat == "ESS") {
-      tof = totalTime - m_pulseTime[0];
-      //  There could be negative TOFs, accept a jitter of up to 10us
-      if (tof < jitter && m_pulseTime[1] > 0) {
-        tof = totalTime - m_pulseTime[1];
-        if (tof < jitter && m_pulseTime[2] > 0) {
-          tof = totalTime - m_pulseTime[2];
-        }
-      }
-    }
-
-    if (tof < jitter) {
-      return true;
-    }
-    if (tof <= 0) {
-      std::cout.precision(20);
-      std::cout << "jitter [ns]: " << tof << std::endl;
-    }
+  
     if (std::find(m_config.pSaveHits.begin(), m_config.pSaveHits.end(), det) !=
         m_config.pSaveHits.end()) {
 
@@ -247,7 +218,7 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
         theHit0.fec = fecId;
         theHit0.vmm = vmmId;
         theHit0.geo_id = geoId;
-        theHit0.readout_time = tof;
+        theHit0.readout_time = srsTimestamp;
         theHit0.ch = chNo;
         theHit0.pos = (uint16_t)pos0;
         theHit0.bcid = bcid;
@@ -256,6 +227,7 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
         theHit0.over_threshold = overThresholdFlag;
         theHit0.chip_time = chipTime;
         theHit0.time = totalTime;
+        theHit0.event_counter = event_counter;
         m_rootFile->AddHits(std::move(theHit0));
 
         Hit theHit1;
@@ -265,7 +237,7 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
         theHit1.fec = fecId;
         theHit1.vmm = vmmId;
         theHit1.geo_id = geoId;
-        theHit1.readout_time = tof;
+        theHit1.readout_time = srsTimestamp;
         theHit1.ch = chNo;
         theHit1.pos = (uint16_t)pos1;
         theHit1.bcid = bcid;
@@ -274,6 +246,7 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
         theHit1.over_threshold = overThresholdFlag;
         theHit1.chip_time = chipTime;
         theHit1.time = totalTime;
+        theHit1.event_counter = event_counter;
         m_rootFile->AddHits(std::move(theHit1));
       } else {
         Hit theHit;
@@ -283,7 +256,7 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
         theHit.fec = fecId;
         theHit.vmm = vmmId;
         theHit.geo_id = geoId;
-        theHit.readout_time = tof;
+        theHit.readout_time = srsTimestamp;
         theHit.ch = chNo;
         theHit.pos = (uint16_t)pos0;
         theHit.bcid = bcid;
@@ -292,10 +265,11 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
         theHit.over_threshold = overThresholdFlag;
         theHit.chip_time = chipTime;
         theHit.time = totalTime;
+        theHit.event_counter = event_counter;
         m_rootFile->AddHits(std::move(theHit));
       }
     }
-  }
+
   if (overThresholdFlag) {
     // keep the overThresholdFlag as bit 15 of the ADC
     adc = adc + 32768;
@@ -304,24 +278,24 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
     if (overThresholdFlag) {
       if (m_config.pIsPads[det]) {
         m_hits_new[std::make_pair(det, 0)].emplace_back(
-            totalTime, (uint16_t)pos0, adc, (uint16_t)pos1);
+            totalTime, (uint16_t)pos0, adc, (uint16_t)pos1,event_counter);
         m_hits_new[std::make_pair(det, 1)].emplace_back(
-            totalTime, (uint16_t)pos0, adc, (uint16_t)pos1);
+            totalTime, (uint16_t)pos0, adc, (uint16_t)pos1,event_counter);
       } else {
         m_hits_new[std::make_pair(det, plane)].emplace_back(
-            totalTime, (uint16_t)pos0, adc, (uint16_t)pos1);
+            totalTime, (uint16_t)pos0, adc, (uint16_t)pos1,event_counter);
       }
     }
   } else {
     if ((adc >= m_config.pADCThreshold[det])) {
       if (m_config.pIsPads[det]) {
         m_hits_new[std::make_pair(det, 0)].emplace_back(
-            totalTime, (uint16_t)pos0, adc, (uint16_t)pos1);
+            totalTime, (uint16_t)pos0, adc, (uint16_t)pos1,event_counter);
         m_hits_new[std::make_pair(det, 1)].emplace_back(
-            totalTime, (uint16_t)pos0, adc, (uint16_t)pos1);
+            totalTime, (uint16_t)pos0, adc, (uint16_t)pos1,event_counter);
       } else {
         m_hits_new[std::make_pair(det, plane)].emplace_back(
-            totalTime, (uint16_t)pos0, adc, (uint16_t)pos1);
+            totalTime, (uint16_t)pos0, adc, (uint16_t)pos1,event_counter);
       }
     }
   }
@@ -360,6 +334,7 @@ int Clusterer::ClusterByTime(std::pair<uint8_t, uint8_t> dp) {
   uint32_t adc1 = 0;
   uint16_t strip1 = 0;
   uint16_t strip2 = 0;
+  uint16_t event_counter;
 
   for (auto &itHits : m_hits[dp]) {
     time2 = time1;
@@ -368,6 +343,7 @@ int Clusterer::ClusterByTime(std::pair<uint8_t, uint8_t> dp) {
     strip1 = std::get<1>(itHits);
     adc1 = std::get<2>(itHits);
     strip2 = std::get<3>(itHits);
+    event_counter = std::get<4>(itHits);
     if (!cluster.empty()) {
       if (std::fabs(time1 - time2) >
           m_config.pDeltaTimeHits[m_config.pDets[dp.first]]) {
@@ -384,7 +360,7 @@ int Clusterer::ClusterByTime(std::pair<uint8_t, uint8_t> dp) {
         }
       }
     }
-    cluster.emplace_back(strip1, time1, adc1, strip2);
+    cluster.emplace_back(strip1, time1, adc1, strip2,event_counter);
   }
 
   if (!cluster.empty()) {
@@ -421,7 +397,9 @@ int Clusterer::ClusterByPad(std::pair<uint8_t, uint8_t> dp,
   int idX2 = 0;
   int idY1 = 0;
   int idY2 = 0;
-
+  uint16_t event_counter1;
+  uint16_t event_counter2;
+  
   std::vector<double> vADC;
   std::vector<double> vIdx;
   std::vector<double> vIdy;
@@ -446,9 +424,10 @@ int Clusterer::ClusterByPad(std::pair<uint8_t, uint8_t> dp,
     adc1 = std::get<2>(*it);
     adc1 = adc1 & 0x3FF;
     idY1 = std::get<3>(*it);
+    event_counter1 = std::get<4>(*it);
     // Start of new cluster
     ClusterContainer clusterFound;
-    clusterFound.emplace_back(idX1, time1, adc1, idY1);
+    clusterFound.emplace_back(idX1, time1, adc1, idY1, event_counter1);
     vIdx.clear();
     vIdy.clear();
     vTimes.clear();
@@ -474,6 +453,7 @@ int Clusterer::ClusterByPad(std::pair<uint8_t, uint8_t> dp,
       adc1 = std::get<2>(clusterFound[n]);
       adc1 = adc1 & 0x3FF;
       idY1 = std::get<3>(clusterFound[n]);
+      event_counter1 = std::get<4>(clusterFound[n]);
 
       ClusterContainer::iterator itCluster = cluster.begin();
       // Loop over all pads to check whether they belong to cluster
@@ -483,8 +463,9 @@ int Clusterer::ClusterByPad(std::pair<uint8_t, uint8_t> dp,
         adc2 = std::get<2>(*itCluster);
         adc2 = adc2 & 0x3FF;
         idY2 = std::get<3>(*itCluster);
+        event_counter2 = std::get<4>(*itCluster);
         // Pad in vector belongs to cluster
-        if (std::fabs(idX1 - idX2) - 1 <=
+        if (event_counter1 == event_counter2 && std::fabs(idX1 - idX2) - 1 <=
                 m_config.pMissingStripsClusterX[m_config.pDets[dp.first]] &&
             std::fabs(idY1 - idY2) - 1 <=
                 m_config.pMissingStripsClusterY[m_config.pDets[dp.first]] &&
@@ -492,7 +473,7 @@ int Clusterer::ClusterByPad(std::pair<uint8_t, uint8_t> dp,
                 m_config.pSpanClusterTime[m_config.pDets[dp.first]] &&
             largestTime - time2 <=
                 m_config.pSpanClusterTime[m_config.pDets[dp.first]]) {
-          clusterFound.emplace_back(idX2, time2, adc2, idY2);
+          clusterFound.emplace_back(idX2, time2, adc2, idY2,event_counter2);
           stripCount++;
           if (time1 < smallestTime) {
             smallestTime = time1;
@@ -535,6 +516,7 @@ int Clusterer::ClusterByPad(std::pair<uint8_t, uint8_t> dp,
       ClusterPlane clusterPlane;
       clusterPlane.id = m_cluster_detector_id;
       clusterPlane.det = det;
+      clusterPlane.event_counter = event_counter2;
       clusterPlane.plane = plane;
       clusterPlane.size = stripCount;
       clusterPlane.adc = adcTotal;
@@ -616,6 +598,7 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
   int strip2 = 0;
   int stripCount = 0;
   int clusterCount = 0;
+  uint16_t event_counter1 = 0;
   std::vector<double> vADC;
   std::vector<double> vStrips;
   std::vector<double> vTimes;
@@ -634,7 +617,7 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
     strip1 = std::get<0>(itCluster);
     time1 = std::get<1>(itCluster);
     adc1 = std::get<2>(itCluster);
-
+    event_counter1 = std::get<4>(itCluster);
     if (adc1 > 1024) {
       ovTh = true;
     } else {
@@ -749,6 +732,7 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
         }
 
         ClusterPlane clusterPlane;
+        clusterPlane.event_counter = event_counter1;
         clusterPlane.size = stripCount;
         clusterPlane.adc = totalADC;
         clusterPlane.time = centerOfTime;
@@ -788,18 +772,7 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
             }
           }
         }
-        // tof
-        else if (m_config.pAlgo == 7) {
-          pos_algo = 0;
-          time_algo = time_utpc - m_pulseTime[0];
-          double jitter = -1.0E+04;
-          if (time_algo < jitter) {
-            time_algo = time_utpc - m_pulseTime[1];
-            if (time_algo < jitter) {
-              time_algo = time_utpc - m_pulseTime[2];
-            }
-          }
-        }
+        
 
         clusterPlane.time_utpc = time_utpc;
         clusterPlane.pos_utpc = pos_utpc;
@@ -904,6 +877,7 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
       m_stats.SetStatsPlane("ClusterSize", dp, stripCount);
     }
     ClusterPlane clusterPlane;
+    clusterPlane.event_counter = event_counter1;
     clusterPlane.size = stripCount;
     clusterPlane.adc = totalADC;
     clusterPlane.time = centerOfTime;
@@ -943,18 +917,7 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
         }
       }
     }
-    // tof
-    else if (m_config.pAlgo == 7) {
-      pos_algo = 0;
-      time_algo = time_utpc - m_pulseTime[0];
-      double jitter = -1.0E+04;
-      if (time_algo < jitter) {
-        time_algo = time_utpc - m_pulseTime[1];
-        if (time_algo < jitter) {
-          time_algo = time_utpc - m_pulseTime[2];
-        }
-      }
-    }
+   
     clusterPlane.time_utpc = time_utpc;
     clusterPlane.pos_utpc = pos_utpc;
     clusterPlane.time_algo = time_algo;
@@ -1219,6 +1182,7 @@ int Clusterer::MatchClustersDetector(uint8_t det) {
         (*bestMatchPlane1).plane_coincidence = true;
         clusterDetector.id = m_cluster_detector_id;
         clusterDetector.det = det;
+        clusterDetector.event_counter = (*bestMatchPlane1).event_counter;
         clusterDetector.id0 = c0.id;
         clusterDetector.id1 = (*bestMatchPlane1).id;
         clusterDetector.id2 = 0;
@@ -1521,6 +1485,7 @@ int Clusterer::MatchClustersDetector_HighMultiplicity(uint8_t det) {
         ClusterDetector clusterDetector;
         clusterDetector.id = m_cluster_detector_id;
         clusterDetector.det = det;
+        clusterDetector.event_counter = (*c1).event_counter;
         clusterDetector.id0 = c0.id;
         clusterDetector.id1 = (*c1).id;
         clusterDetector.id2 = 0;
@@ -1712,7 +1677,7 @@ bool Clusterer::ChooseHitsToBeClustered(std::pair<uint8_t, uint8_t> dp) {
   auto it = std::upper_bound(
       m_hits_new[dp].begin(), m_hits_new[dp].end(),
       std::make_tuple(m_stats.GetLowestCommonTriggerTimestampPlane(dp), 0, 0,
-                      0),
+                      0,0),
       [](const HitTuple &t1, const HitTuple &t2) {
         return std::get<0>(t1) < std::get<0>(t2);
       });

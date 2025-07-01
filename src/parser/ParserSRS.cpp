@@ -14,12 +14,13 @@
 #include <string.h>
 #include <parser/ParserSRS.h>
 #include <parser/Trace.h>
+#include <iostream>
 
 // #undef TRC_LEVEL
 // #define TRC_LEVEL TRC_L_DEB
 namespace Gem {
 
-int ParserSRS::parse(uint32_t data1, uint16_t data2, struct VMM3Data *vd) {
+int ParserSRS::parse(uint32_t data1, uint16_t data2, struct VMM3Data *vmm3Data) {
   XTRACE(PROCESS, DEB, "data1: 0x%08x, data2: 0x%04x", data1, data2);
   int dataflag = (data2 >> 15) & 0x1;
 
@@ -27,63 +28,74 @@ int ParserSRS::parse(uint32_t data1, uint16_t data2, struct VMM3Data *vd) {
     /// Data
     XTRACE(PROCESS, DEB, "SRS Data");
 
-    vd->overThreshold = (data2 >> 14) & 0x01;
-    stats.ParserOverThreshold += vd->overThreshold;
-    vd->chno = (data2 >> 8) & 0x3f;
-    vd->tdc = data2 & 0xff;
-    vd->vmmid = (data1 >> 22) & 0x1F;
-    vd->triggerOffset = (data1 >> 27) & 0x1F;
-    uint16_t idx = (pd.fecId - 1) * MaxVMMs + vd->vmmid;
-    if(vd->triggerOffset < markers[idx].lastTriggerOffset) {
-      if(markers[idx].calcTimeStamp != 0) {
-        markers[idx].calcTimeStamp +=32*srsTime.trigger_period_ns()/SRSTime::internal_SRS_clock_period_ns;
-      }
-      if(markers[idx].fecTimeStamp != markers[idx].calcTimeStamp){
-        stats.ParserTimestampLostErrors++;
-        XTRACE(PROCESS, WAR, "ParserTimestampLostErrors: fc %d vmm %d: fec ts %llu, calc ts %llu, diff %f",
-          pd.nextFrameCounter-1, vd->vmmid, markers[idx].fecTimeStamp,
-          markers[idx].calcTimeStamp, (double)markers[idx].fecTimeStamp-
-          (double)markers[idx].calcTimeStamp);
-      }
+    vmm3Data->overThreshold = (data2 >> 14) & 0x01;
+    stats.ParserOverThreshold += vmm3Data->overThreshold;
+    vmm3Data->chno = (data2 >> 8) & 0x3f;
+    vmm3Data->tdc = data2 & 0xff;
+    vmm3Data->vmmid = (data1 >> 22) & 0x1F;
+    vmm3Data->timestampOffset = (data1 >> 27) & 0x1F;
+    vmm3Data->adc = (data1 >> 12) & 0x3FF;
+    vmm3Data->bcid = BitMath::gray2bin32(data1 & 0xFFF);
+    uint16_t idx = (pd.fecId - 1) * MaxVMMs + vmm3Data->vmmid;
+    if(markers[idx].fecTimeStamp > 0)  {
+      vmm3Data->fecTimeStamp = markers[idx].fecTimeStamp;
+      vmm3Data->triggerTime = markers[idx].triggerTime;
+      vmm3Data->triggerCounter = markers[idx].triggerCounter + 1;
+      //std::cout << "vmm3Data->fecTimeStamp  " <<  idx << " " << vmm3Data->fecTimeStamp  << std::endl;
+      //std::cout << "vmm3Data->triggerTime " <<  idx << " " <<  vmm3Data->triggerTime << std::endl;
+      //std::cout << "vmm3Data->triggerCounter " <<  idx << " " <<  vmm3Data->triggerCounter << std::endl;
+ 
     }
-    markers[idx].lastTriggerOffset = vd->triggerOffset;
-    vd->adc = (data1 >> 12) & 0x3FF;
-    vd->bcid = BitMath::gray2bin32(data1 & 0xFFF);
-    /// \todo Maybe here use the calculated timestamp instead
-    /// vd->fecTimeStamp = markers[idx].calcTimeStamp;
-    vd->fecTimeStamp = markers[idx].fecTimeStamp;
-    if(vd->fecTimeStamp > 0) {
-      markers[idx].hasDataMarker = true;
-      vd->hasDataMarker = true;
-    }
+   
     XTRACE(PROCESS, DEB, "SRS Data: vmm: %d, channel: %d. adc: %d",
-      vd->vmmid, vd->chno, vd->adc);
+      vmm3Data->vmmid, vmm3Data->chno, vmm3Data->adc);
     return 1;
   } else {
     /// Marker
     uint8_t vmmid = (data2 >> 10) & 0x1F;
-    uint16_t idx = (pd.fecId - 1) * MaxVMMs + vmmid;
-    uint64_t timestamp_lower_10bit = data2 & 0x03FF;
-    uint64_t timestamp_upper_32bit = data1;
-
-    uint64_t timestamp_42bit = (timestamp_upper_32bit << 10)
+    uint16_t idx = (pd.fecId - 1) * MaxVMMs + (vmmid%16);
+    
+    if(vmmid >= 16) {
+      if(dataFormat == "TRG") {
+        int triggerFlag = (data1 >> 28) & 0x0F;
+        if(triggerFlag == 0xF) {
+          uint64_t event_counter_high = data1 & 0x03F;
+          uint64_t event_counter_low = data2 & 0x3FF;
+          markers[idx].triggerCounter = event_counter_high*1024+event_counter_low;
+        } 
+        else {
+          uint64_t timestamp_lower_10bit = data2 & 0x03FF;
+          uint64_t timestamp_upper_32bit = data1;
+          uint64_t timestamp_42bit = (timestamp_upper_32bit << 10);
+          markers[idx].triggerTime = timestamp_42bit;   
+        }
+      }
+    }
+    else {
+      uint64_t timestamp_lower_10bit = data2 & 0x03FF;
+      uint64_t timestamp_upper_32bit = data1;
+      uint64_t timestamp_42bit = (timestamp_upper_32bit << 10)
         + timestamp_lower_10bit;
-    XTRACE(PROCESS, DEB, "SRS Marker vmmid %d: timestamp lower 10bit %llu, timestamp upper 32 bit %llu, 42 bit timestamp %"
-        PRIu64"", vmmid, timestamp_lower_10bit, timestamp_upper_32bit, timestamp_42bit);
+      //normal data marker  
+      if(dataFormat == "SRS") {
+         if(markers[idx].fecTimeStamp > timestamp_42bit) {
+            if (markers[idx].fecTimeStamp < 0x1FFFFFFF + timestamp_42bit) {
+              stats.ParserTimestampSeqErrors++;
+              XTRACE(PROCESS, DEB, "ParserTimestampSeqErrors:  ts %llu, marker ts %llu", timestamp_42bit, markers[idx].fecTimeStamp);
+            }
+            else {
+              stats.ParserTimestampOverflows++;
+            }
+        }
+        markers[idx].fecTimeStamp = timestamp_42bit;
 
-    if(markers[idx].fecTimeStamp > timestamp_42bit) {
-      if (markers[idx].fecTimeStamp < 0x1FFFFFFF + timestamp_42bit) {
-        stats.ParserTimestampSeqErrors++;
-        XTRACE(PROCESS, DEB, "ParserTimestampSeqErrors:  ts %llu, marker ts %llu", timestamp_42bit, markers[idx].fecTimeStamp);
+   
       }
-      else {
-        stats.ParserTimestampOverflows++;
+      // relative trigger time stamp
+      else if(timestamp_42bit < 4096) {
+        markers[idx].fecTimeStamp = timestamp_42bit;   
       }
     }
-    if(markers[idx].calcTimeStamp == 0) {
-      markers[idx].calcTimeStamp = timestamp_42bit;
-    }
-    markers[idx].fecTimeStamp = timestamp_42bit;
     return 0;
   }
 }

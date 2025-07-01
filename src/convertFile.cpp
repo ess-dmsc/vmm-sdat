@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
     uint64_t last_time = 0;
 
     Clusterer *m_Clusterer = new Clusterer(m_config, m_stats);
-    if (m_config.pDataFormat == "SRS") {
+    if (m_config.pDataFormat == "SRS" || m_config.pDataFormat == "TRG") {
       m_stats.CreateFECStats(m_config);
     }
     if (m_config.pShowStats) {
@@ -213,7 +213,7 @@ int main(int argc, char **argv) {
         m_Clusterer->SaveDate(pcap.firstPacketSeconds, pcap.firstPacketDate,
                               pcap.lastPacketSeconds, pcap.lastPacketDate, 0);
         delete parser;
-      } else if (m_config.pDataFormat == "SRS") {
+      } else if (m_config.pDataFormat == "SRS" || m_config.pDataFormat == "TRG") {
         double firstTime = 0;
         char buffer[10000];
         Gem::SRSTime srs_time;
@@ -221,7 +221,7 @@ int main(int argc, char **argv) {
         srs_time.tac_slope_ns(m_config.pTAC);
 
         Gem::NMXStats nmxstats;
-        Gem::ParserSRS *parser = new Gem::ParserSRS(2000, nmxstats, srs_time);
+        Gem::ParserSRS *parser = new Gem::ParserSRS(2000, nmxstats, srs_time, m_config.pDataFormat);
         Gem::CalibrationFile calfile(m_config.pCalFilename);
         ReaderPcap pcap(m_config.pFileName);
         int ret = pcap.open();
@@ -245,26 +245,38 @@ int main(int argc, char **argv) {
           for (int i = 0; i < hits; i++) {
             auto &d = parser->data[i];
 
-            double triggerOffset = -1.0;
+            double timestampOffset = -1.0;
 
             // triggerOffset goes from -1 to 15
             // but presented as uint8_t
             // latency violation
-            if (d.triggerOffset <= 15.0) {
-              triggerOffset = static_cast<double>(d.triggerOffset);
-            } else if (d.triggerOffset == 31) {
-              triggerOffset = -1.0;
-            } else if (d.triggerOffset == 16) {
-              triggerOffset = -99.0;
+            if (d.timestampOffset <= 15.0) {
+              timestampOffset = static_cast<double>(d.timestampOffset);
+            } else if (d.timestampOffset == 31) {
+              timestampOffset = -1.0;
+            } else if (d.timestampOffset == 16) {
+              timestampOffset = -99.0;
             }
-            if (d.hasDataMarker && d.fecTimeStamp > 0 && triggerOffset != -99) {
-
-              double srs_timestamp =
+            if(timestampOffset == -99) {
+              continue;
+            }
+            double srs_timestamp = 0;
+            int event_counter = d.triggerCounter;
+            //std::cout << d.triggerCounter << " " << event_counter << std::endl;
+            if (m_config.pDataFormat == "SRS") {
+              srs_timestamp =
                   (static_cast<double>(d.fecTimeStamp) * m_config.pBCTime_ns +
-                   m_config.pOffsetPeriod * triggerOffset);
-              if (firstTime == 0) {
-                firstTime = srs_timestamp;
-              }
+                   m_config.pOffsetPeriod * timestampOffset);
+            }
+            else {
+              srs_timestamp =
+                  (static_cast<double>(d.triggerTime) * m_config.pBCTime_ns +
+                   m_config.pOffsetPeriod * timestampOffset 
+                   - static_cast<double>(d.fecTimeStamp) * m_config.pBCTime_ns);
+            }
+            if (firstTime == 0) {
+              firstTime = srs_timestamp;
+            }
               double t0_correction = 0;
               std::pair<uint8_t, uint8_t> fec_vmm =
                   std::make_pair(parser->pd.fecId, d.vmmid);
@@ -333,10 +345,10 @@ int main(int argc, char **argv) {
                        pow(corrected_adc / calib.timewalk_c, calib.timewalk_b));
 
               double corrected_time = chiptime_corrected - timewalk_correction;
-
-              bool result = m_Clusterer->AnalyzeHits(
+			  
+			        bool result = m_Clusterer->AnalyzeHits(
                   srs_timestamp, parser->pd.fecId, d.vmmid, d.chno, d.bcid,
-                  d.tdc, corrected_adc, d.overThreshold != 0, corrected_time);
+                  d.tdc, corrected_adc, d.overThreshold != 0, corrected_time,0, event_counter);
               if (result == false ||
                   (total_hits >= m_config.nHits && m_config.nHits > 0)) {
                 doContinue = false;
@@ -407,249 +419,11 @@ int main(int argc, char **argv) {
             nmxstats.ParserBadFrames = 0;
             nmxstats.ParserGoodFrames = 0;
           }
-        }
+       
         m_Clusterer->SaveDate(pcap.firstPacketSeconds, pcap.firstPacketDate,
                               pcap.lastPacketSeconds, pcap.lastPacketDate, 0);
         delete parser;
-      } else if (m_config.pDataFormat == "ESS") {
-        double firstTime = 0;
-        char buffer[10000];
-        Gem::SRSTime srs_time;
-        srs_time.bc_clock_MHz(m_config.pBC);
-        srs_time.tac_slope_ns(m_config.pTAC);
-
-        VMM3Parser *parser = new VMM3Parser();
-        ReadoutParser readoutParser;
-        Gem::CalibrationFile calfile(m_config.pCalFilename);
-        ReaderPcap pcap(m_config.pFileName);
-        int ret = pcap.open();
-        if (ret < 0) {
-          std::cout << "Error opening file: " << m_config.pFileName
-                    << ": return value " << ret << std::endl;
-          return -1;
-        }
-        uint64_t pcappackets = 0;
-        uint64_t goodFrames = 0;
-        uint64_t badFrames = 0;
-
-        int rdsize;
-        bool doContinue = true;
-        long seqNumError = 0;
-        double pulseTime = 0;
-
-        double t0_correction = 0;
-        std::pair<uint8_t, uint8_t> fec_vmm = std::make_pair(0, 0);
-        auto searchMap = m_config.pFecVMM_time0.find(fec_vmm);
-        if (searchMap != m_config.pFecVMM_time0.end()) {
-          std::string t0 = m_config.pFecVMM_time0[fec_vmm];
-          t0_correction = std::stod(t0);
-        }
-
-        while (doContinue &&
-               (rdsize = pcap.read((char *)&buffer, sizeof(buffer))) != -1) {
-          if (rdsize == 0) {
-            continue; // non udp data
-          }
-          // Freia 0x48
-          // NMX 0x44
-          // Loki4Amp 0x30
-          int ret = readoutParser.validate((char *)&buffer, rdsize,
-                                           ReadoutParser::Loki4Amp);
-
-          if (seqNumError != readoutParser.Stats.ErrorSeqNum) {
-            printf("Sequence number error at packet %" PRIu64 "\n",
-                   pcappackets);
-          }
-          seqNumError = readoutParser.Stats.ErrorSeqNum;
-
-          if (m_config.pShowStats) {
-            pcappackets++;
-            if (ret != ReadoutParser::OK) {
-              badFrames++;
-              continue;
-            } else {
-              goodFrames++;
-            }
-          }
-
-          double temp_pulseTime = 0;
-
-          if (readoutParser.Packet.version == 0) {
-            if (t0_correction == 0) {
-              t0_correction = readoutParser.Packet.HeaderPtr0->PulseHigh;
-            }
-            temp_pulseTime =
-                (readoutParser.Packet.HeaderPtr0->PulseHigh - t0_correction) *
-                    1.0E+09 +
-                readoutParser.Packet.HeaderPtr0->PulseLow *
-                    m_config.pBCTime_ns * 0.5;
-          } else {
-            if (t0_correction == 0) {
-              t0_correction = readoutParser.Packet.HeaderPtr1->PulseHigh;
-            }
-            temp_pulseTime =
-                (readoutParser.Packet.HeaderPtr1->PulseHigh - t0_correction) *
-                    1.0E+09 +
-                readoutParser.Packet.HeaderPtr1->PulseLow *
-                    m_config.pBCTime_ns * 0.5;
-          }
-
-          // Filter out pulse times that come directly after a valid pulse
-          // time due to jitter
-          if (temp_pulseTime - pulseTime > 1.0E+06) {
-            pulseTime = temp_pulseTime;
-            triggerSignals++;
-          }
-
-          int hits = parser->parse(readoutParser.Packet.DataPtr,
-                                   readoutParser.Packet.DataLength);
-          total_hits += hits;
-          for (int i = 0; i < hits; i++) {
-            auto &hit = parser->Result[i];
-            uint16_t assisterId =
-                static_cast<uint8_t>(hit.RingId / 2) * 32 + hit.FENId;
-            if (firstTime == 0) {
-              firstTime = hit.TimeHigh * 1.0E+09;
-            }
-
-            double complete_timestamp = 0;
-            if (t0_correction == 0) {
-              //  ESS time format use 64bit timestamp in nanoseconds
-              //  To be able to use double as type for timestamp calculation,
-              //  the timestamp has to be truncated to 52 bit
-              //  The easiest to have a relative timestamp with respect to the
-              //  start of the run
-              complete_timestamp = (0 + hit.TimeHigh) * 1.0E+09 - firstTime +
-                                   hit.TimeLow * m_config.pBCTime_ns * 0.5;
-            } else {
-              // If several files will be joined later, it is recommended to
-              // just remove the most significant bits of the 64 bit timestamp
-              complete_timestamp = (hit.TimeHigh - t0_correction) * 1.0E+09 +
-                                   hit.TimeLow * m_config.pBCTime_ns * 0.5;
-            }
-
-            uint16_t adc = hit.OTADC & 0x03ff;
-            bool overThreshold = hit.OTADC & 0x8000;
-
-            m_stats.IncrementCounter("ParserDataReadouts", assisterId, 1);
-            auto calib =
-                calfile.getCalibration(assisterId, hit.VMM, hit.Channel);
-            double chiptime_corrected =
-                (1.5 * m_config.pBCTime_ns -
-                 static_cast<double>(hit.TDC) *
-                     static_cast<double>(m_config.pTAC) / 255 -
-                 calib.time_offset) *
-                calib.time_slope;
-
-            if (calib.adc_slope == 0) {
-              std::cout << "Error in calibration file: adc_slope correction "
-                           "for assister "
-                        << (int)assisterId << ", chip " << (int)hit.VMM
-                        << ", channel " << (int)hit.Channel
-                        << " is 0!\nIs that intentional?" << std::endl;
-            }
-            int corrected_adc = (adc - calib.adc_offset) * calib.adc_slope;
-
-            if (corrected_adc > 1023) {
-              DTRACE(DEB,
-                     "After correction, ADC value larger than 1023 "
-                     "(10bit)!\nUncorrected ADC value %d, uncorrected ADC "
-                     "value %d\n",
-                     adc, corrected_adc);
-              corrected_adc = 1023;
-            } else if (corrected_adc < 0) {
-              DTRACE(DEB,
-                     "After correction, ADC value smaller than 0!"
-                     "\nUncorrected ADC value %d, uncorrected ADC "
-                     "value %d\n",
-                     adc, corrected_adc);
-              corrected_adc = 0;
-            }
-            double timewalk_correction =
-                calib.timewalk_d +
-                (calib.timewalk_a - calib.timewalk_d) /
-                    (1 +
-                     pow(corrected_adc / calib.timewalk_c, calib.timewalk_b));
-
-            double corrected_time = chiptime_corrected - timewalk_correction;
-
-            double time_without_calib =
-                (1.5 * m_config.pBCTime_ns -
-                 static_cast<double>(hit.TDC) *
-                     static_cast<double>(m_config.pTAC) / 255.0);
-
-            double time_with_calib =
-                (1.5 * m_config.pBCTime_ns -
-                 static_cast<double>(hit.TDC) *
-                     static_cast<double>(m_config.pTAC) / 255.0 -
-                 calib.time_offset) *
-                calib.time_slope;
-
-            m_Clusterer->FillCalibHistos(assisterId, hit.VMM, hit.Channel, adc,
-                                         corrected_adc, time_without_calib,
-                                         time_with_calib);
-
-            bool result = m_Clusterer->AnalyzeHits(
-                complete_timestamp, assisterId, hit.VMM, hit.Channel, hit.BC,
-                hit.TDC, static_cast<uint16_t>(corrected_adc),
-                overThreshold != 0, corrected_time, hit.GEO, pulseTime);
-            if (result == false ||
-                (total_hits >= m_config.nHits && m_config.nHits > 0)) {
-              doContinue = false;
-              break;
-            }
-          }
-        }
-        m_Clusterer->SaveDate(pcap.firstPacketSeconds, pcap.firstPacketDate,
-                              pcap.lastPacketSeconds, pcap.lastPacketDate,
-                              triggerSignals);
-        m_stats.IncrementCounter("ErrorBuffer", 384,
-                                 readoutParser.Stats.ErrorBuffer);
-        m_stats.IncrementCounter("ErrorSize", 384,
-                                 readoutParser.Stats.ErrorSize);
-        m_stats.IncrementCounter("ErrorVersion", 384,
-                                 readoutParser.Stats.ErrorVersion);
-        m_stats.IncrementCounter("ErrorCookie", 384,
-                                 readoutParser.Stats.ErrorCookie);
-        m_stats.IncrementCounter("ErrorPad", 384, readoutParser.Stats.ErrorPad);
-        m_stats.IncrementCounter("ErrorOutputQueue", 384,
-                                 readoutParser.Stats.ErrorOutputQueue);
-        m_stats.IncrementCounter("ErrorTypeSubType", 384,
-                                 readoutParser.Stats.ErrorTypeSubType);
-        m_stats.IncrementCounter("ErrorSeqNum", 384,
-                                 readoutParser.Stats.ErrorSeqNum);
-        m_stats.IncrementCounter("ErrorTimeHigh", 384,
-                                 readoutParser.Stats.ErrorTimeHigh);
-        m_stats.IncrementCounter("ErrorTimeFrac", 384,
-                                 readoutParser.Stats.ErrorTimeFrac);
-        m_stats.IncrementCounter("HeartBeats", 384,
-                                 readoutParser.Stats.HeartBeats);
-        m_stats.IncrementCounter("GoodFrames", 384, goodFrames);
-        m_stats.IncrementCounter("BadFrames", 384, badFrames);
-        m_stats.IncrementCounter("TotalFrames", 384, pcappackets);
-
-        m_stats.IncrementCounter("ParserErrorSize", 384,
-                                 parser->Stats.ErrorSize);
-        m_stats.IncrementCounter("ParserErrorRing", 384,
-                                 parser->Stats.ErrorRing);
-        m_stats.IncrementCounter("ParserErrorFEN", 384, parser->Stats.ErrorFEN);
-        m_stats.IncrementCounter("ParserErrorDataLength", 384,
-                                 parser->Stats.ErrorDataLength);
-        m_stats.IncrementCounter("ParserErrorTimeFrac", 384,
-                                 parser->Stats.ErrorTimeFrac);
-        m_stats.IncrementCounter("ParserErrorBC", 384, parser->Stats.ErrorBC);
-        m_stats.IncrementCounter("ParserErrorADC", 384, parser->Stats.ErrorADC);
-        m_stats.IncrementCounter("ParserErrorVMM", 384, parser->Stats.ErrorVMM);
-        m_stats.IncrementCounter("ParserErrorChannel", 384,
-                                 parser->Stats.ErrorChannel);
-        m_stats.IncrementCounter("ParserReadouts", 384, parser->Stats.Readouts);
-        m_stats.IncrementCounter("ParserCalibReadouts", 384,
-                                 parser->Stats.CalibReadouts);
-        m_stats.IncrementCounter("ParserDataReadouts", 384,
-                                 parser->Stats.DataReadouts);
-        m_stats.IncrementCounter("ParserOverThreshold", 384,
-                                 parser->Stats.OverThreshold);
-      }
+      } 
     }
     m_Clusterer->FinishAnalysis();
 
@@ -662,7 +436,7 @@ int main(int argc, char **argv) {
     int hit_size = 160;
     if (m_config.pDataFormat == "VTC") {
       hit_size = 64;
-    } else if (m_config.pDataFormat == "SRS") {
+    } else if (m_config.pDataFormat == "SRS" || m_config.pDataFormat == "TRG") {
       hit_size = 48;
     }
     std::cout << "\n****************************************" << std::endl;

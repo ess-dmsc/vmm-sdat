@@ -1,5 +1,5 @@
 # CMakeLists.txt for vmm-sdat program. It creates a library with dictionary and a main program
-cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 4.0 FATAL_ERROR)
 project(vmm-sdat)
 
 set(CMAKE_BUILD_TYPE RelWithDebInfo)

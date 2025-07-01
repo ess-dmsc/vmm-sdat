@@ -16,6 +16,7 @@ struct Hit {
   uint16_t adc;
   bool over_threshold;
   double chip_time;
+  uint16_t event_counter;
 };
 
 struct ClusterPlane {
@@ -36,6 +37,7 @@ struct ClusterPlane {
   uint16_t max_delta_time;
   uint16_t max_missing_strip;
   uint16_t span_cluster;
+  uint16_t event_counter;
   std::vector<double> strips;
   std::vector<double> times;
   std::vector<double> adcs;
@@ -101,12 +103,13 @@ struct ClusterDetector {
   std::vector<double> strips2;
   std::vector<double> times2;
   std::vector<double> adcs2;
+  uint16_t event_counter;
 };
 
 using std::string;
 
-using HitTuple = std::tuple<double, uint16_t, uint16_t, uint16_t>;
-using ClusterTuple = std::tuple<uint16_t, double, uint16_t, uint16_t>;
+using HitTuple = std::tuple<double, uint16_t, uint16_t, uint16_t,uint16_t>;
+using ClusterTuple = std::tuple<uint16_t, double, uint16_t, uint16_t,uint16_t>;
 using HitContainer = std::vector<HitTuple>;
 using ClusterContainer = std::vector<ClusterTuple>;
 

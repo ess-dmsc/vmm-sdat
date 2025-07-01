@@ -36,12 +36,11 @@ public:
     uint32_t offsetOverflow; /// indicates if marker for vmm was sent in last frame
   };
 
-  // \todo no need for this struct
+  /// 
   struct VMM3Marker {
-    uint64_t fecTimeStamp{0};   /// 42 bit
-    uint64_t calcTimeStamp{0};   /// 42 bit
-    uint16_t lastTriggerOffset{0}; 
-    bool hasDataMarker{false};
+    uint64_t fecTimeStamp{0};   /// 42 bit or 12 bit if it is relative trigger time
+    uint64_t triggerTime{0};   /// 42 bit
+    uint64_t triggerCounter{0};   /// 42 bit
   };
 
   /// Data common to all hits and markers, or other parser related data
@@ -59,14 +58,15 @@ public:
     uint8_t chno;          ///  6 bit - channel number from readout
     uint8_t overThreshold; ///  1 bit - over threshold flag for channel from readout
     uint8_t vmmid;         ///  5 bit - asic identifier - unique id per fec 0 - 15
-    uint8_t triggerOffset; ///  5 bit
-    bool hasDataMarker;    ///
+    uint8_t timestampOffset; ///  5 bit
+    uint64_t triggerTime; /// Time of the occurence of the FEC trigger signa
+    uint64_t triggerCounter; /// Trigger number
   };
 
   /// \brief create a data handler for VMM3 SRS data of fixed size Capacity
   /// \param maxelements The maximum number of readout elements
-  ParserSRS(int maxelements, NMXStats & stats, SRSTime time_intepreter) : maxHits(maxelements), 
-  stats(stats), srsTime(time_intepreter) {
+  ParserSRS(int maxelements, NMXStats & stats, SRSTime time_intepreter, std::string format) : maxHits(maxelements), 
+  stats(stats), srsTime(time_intepreter), dataFormat(format) {
     markers = new struct VMM3Marker[MaxFECs * MaxVMMs];
     data = new struct VMM3Data[maxHits];
   }
@@ -87,8 +87,8 @@ public:
   /// \brief parse the readouts into a data array
   /// \param data1 the raw (unbitreversed) data1 field of a SRS packet
   /// \param data2 the raw (unbitreversed) data2 field of a SRS packet
-  /// \param vmd VMM2Data structure holding the parsed data (tdc, bcid, adc, ...)
-  int parse(uint32_t data1, uint16_t data2, struct VMM3Data *vmd);
+  /// \param vmm3Data VMM3Data structure holding the parsed data (tdc, bcid, adc, ...)
+  int parse(uint32_t data1, uint16_t data2, struct VMM3Data *vmm3Data);
 
   /// Holds data common to all readouts in a packet
   struct SRSHeader hdr;
@@ -106,6 +106,7 @@ public:
 
   NMXStats & stats;
   SRSTime srsTime;
+  std::string dataFormat;
 
  };
 }
