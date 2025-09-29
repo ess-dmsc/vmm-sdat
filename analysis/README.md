@@ -63,3 +63,4 @@ For the RD51 Beam Telescope (see [https://doi.org/10.1088/1748-0221/18/05/C05017
 Anamicom takes the root tree from vmm-sdat and performs the event building and the track reconstruction for the charged particle tracks recorded with the beam telescope.
 It saves the information in another root tree (not the one from vmm-sdat).
 The information from the anamicom root tree are taken in the provided macro and used to calculate the spatial resolution and efficiency of a detector under test, following the method described [here](https://cds.cern.ch/record/2860765).
+
