@@ -1,6 +1,8 @@
 # EventLoaderVMMSDAT
 
 **Maintainer:** [dorothea.pfeiffer@cern.ch](mailto:dorothea.pfeiffer@cern.ch)  
+**Based on:** `EventLoaderMPGD` by Maryna Borysova [maryna.borysova@weizmann.ac.il](mailto:maryna.borysova@weizmann.ac.il)
+
 **Module Type:** *GLOBAL*  
 **Status:** *Immature*  
 
@@ -31,9 +33,15 @@ This module uses the **`clusters_detector`** tree, which contains clusters alrea
 
 ---
 
+## Prerequisites
+The user needs to install [Corryvreckan](https://gitlab.cern.ch/corryvreckan/corryvreckan) first. Then the folder `EventLoaderVMMSDAT` has to be copied into the `src/modules` folder of Corryvreckan. After this, run again `cmake` and `make` to build the new module `EventLoaderVMMSDAT`. 
+
+---
+
+
 ## Configuration Parameters
 
-Add the following section to your Corryvreckan steering file:
+Add the following section to your Corryvreckan configuration file:
 
 ```toml
 [EventLoaderVMMSDAT]
