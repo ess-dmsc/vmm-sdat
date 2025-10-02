@@ -7,13 +7,13 @@
 ///
 /// Using the Wireshark API https://www.tcpdump.org/manpages/pcap.3pcap.html
 //===----------------------------------------------------------------------===//
-
+#define FMT_HEADER_ONLY
+#include <fmt/format.h>
 #include <algorithm>
 #include <arpa/inet.h>
 #include <cassert>
 #include <cinttypes>
 #include <cstring>
-#include <fmt/format.h>
 #include <iomanip>
 #include <iostream>
 #include <netinet/ip.h>

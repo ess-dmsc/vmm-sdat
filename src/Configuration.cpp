@@ -216,7 +216,8 @@ bool Configuration::PrintUsage(const std::string &errorMessage, char *argv) {
   std::cout << "           channel representing bit 0 = strip 0, channel for "
                "bit 1  = strip 1 and so on."
             << std::endl;
-  std::cout << "        7: time-of-flight (ESS data format)" << std::endl;
+  std::cout << "        6: utpc with COG of st" << std::endl;
+  std::cout << "        7: utpc with COG2" << std::endl;
 
   std::cout << "-crl:   Valid clusters normally have the same amount of charge "
                "in both detector planes (ratio of charge plane 0/charge plane "
@@ -743,8 +744,7 @@ bool Configuration::ParseCommandLine(int argc, char **argv) {
       }
     } else if (strncmp(argv[i], "-df", 3) == 0) {
       pDataFormat = argv[i + 1];
-      std::vector<std::string> v_valid_values = {"SRS", "TRG", "VTC",
-                                                 "srs", "trg", "vtc"};
+      std::vector<std::string> v_valid_values = {"SRS", "TRG", "srs", "trg"};
       auto searchValid =
           std::find(v_valid_values.begin(), v_valid_values.end(), pDataFormat);
       if (searchValid == v_valid_values.end()) {
@@ -760,14 +760,15 @@ bool Configuration::ParseCommandLine(int argc, char **argv) {
     return PrintUsage("Data file has to be loaded with -f data.h5!", nullptr);
   }
 
-  if (fFound && pFileName.find(".h5") == std::string::npos) {
+
     if (pFileName.find(".pcapng") != std::string::npos) {
       pIsPcap = true;
-    } else
+    } else {
       return PrintUsage(
-          "Wrong extension: .h5 or .pcap file required for data files!",
+          "Wrong extension: .pcapng file required for data files!",
           nullptr);
-  }
+    }
+
   if (useCalibration && pCalFilename.find(".json") == std::string::npos) {
     return PrintUsage("Wrong extension: .json file required for calibration!",
                       nullptr);
@@ -779,9 +780,7 @@ bool Configuration::ParseCommandLine(int argc, char **argv) {
   }
   std::cout << "Analyzing " << pFileName << " ..." << std::endl;
   pRootFilename = pFileName;
-  if (pRootFilename.find(".h5") != std::string::npos) {
-    pRootFilename.replace(pRootFilename.size() - 3, pRootFilename.size(), "");
-  } else if (pRootFilename.find(".pcapng") != std::string::npos) {
+  if (pRootFilename.find(".pcapng") != std::string::npos) {
     pRootFilename.replace(pRootFilename.size() - 7, pRootFilename.size(), "");
   }
 

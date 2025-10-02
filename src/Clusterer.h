@@ -36,11 +36,8 @@ public:
   int ClusterByPad(std::pair<uint8_t, uint8_t> dp, ClusterContainer &cluster,
                    double maxDeltaTime);
 
-  void AlgorithmUTPC(int idx_min_largest_time, int idx_max_largest_time,
-                     std::vector<double> &vADC, std::vector<double> &vStrips,
-                     std::vector<double> &vTimes, double &positionUTPC,
-                     double &timeUTPC, double &positionAlgo, double &timeAlgo);
 
+  
   int MatchClustersDetector(uint8_t det);
   int MatchClustersDetector_HighMultiplicity(uint8_t det);
 
@@ -57,6 +54,13 @@ public:
   void createRootFile(string fileName);
 #endif
 private:
+  void AlgorithmUTPC(int idx_min_largest_time, int idx_max_largest_time,
+                     std::vector<double> &vADC, std::vector<double> &vStrips,
+                     std::vector<double> &vTimes, double &positionUTPC,
+                     double &timeUTPC, double &positionAlgo, double &timeAlgo);
+
+  double FitGaussianWeights(const std::vector<double> &x, const std::vector<double> &y);
+
   Configuration &m_config;
   Statistics &m_stats;
 

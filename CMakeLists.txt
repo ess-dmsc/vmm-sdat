@@ -71,17 +71,10 @@ ${CMAKE_CURRENT_SOURCE_DIR}/src/DataStructures.h
 ${CMAKE_CURRENT_SOURCE_DIR}/src/RootFile.h 
 ${CMAKE_CURRENT_SOURCE_DIR}/src/convertLinkDef.h MODULE vmm-sdat)
 
-#ROOT_GENERATE_DICTIONARY(vmm-sdatDict 
-#${CMAKE_CURRENT_SOURCE_DIR}/src/RootFile.h 
-#${CMAKE_CURRENT_SOURCE_DIR}/src/DataStructures.h 
-#${CMAKE_CURRENT_SOURCE_DIR}/src/Configuration.h 
-#${CMAKE_CURRENT_SOURCE_DIR}/src/convertLinkDef.h MODULE vmm-sdat)
 
 #---Create a shared library with generated dictionary
-add_library(vmm-sdat SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ParserSRS.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/VMM3Parser.cpp
-${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ReadoutParser.cpp
-${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ParserVTC.cpp
-${CMAKE_CURRENT_SOURCE_DIR}/src/parser/SRSTime.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/CalibrationFile.cpp 
+add_library(vmm-sdat SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ParserSRS.cpp 
+${CMAKE_CURRENT_SOURCE_DIR}/src/parser/CalibrationFile.cpp 
 ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/ReaderPcap.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Clusterer.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/RootFile.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Configuration.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Statistics.cpp vmm-sdatDict.cxx)
 target_link_libraries(vmm-sdat ${ROOT_LIBRARIES} fmt pcap)
 message(${ROOT_LIBRARIES})

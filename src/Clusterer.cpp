@@ -8,6 +8,13 @@
 #include <future>
 #include <iomanip>
 #include <thread>
+
+#include <TF1.h>
+#include <TGraph.h>
+#include <TGraphErrors.h>
+#include <Math/MinimizerOptions.h>
+#include <limits>
+
 #define UNUSED __attribute__((unused))
 
 //#undef TRC_LEVEL
@@ -46,16 +53,6 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
     return true;
   }
   if (tdc == 0 || (overThresholdFlag == 1 && adc < 16) || adc == 0) {
-    DTRACE(DEB,
-           "\t\tInvalid data FEC %d, vmmId %d, adc %d, tdc %d, ovThr %d, time "
-           "%f!\n",
-           (int)fecId, (int)vmmId, adc, tdc, overThresholdFlag, srsTimestamp);
-    return true;
-  }
-
-  if (m_config.pDataFormat == "VTC" &&
-      (vmmId == 1 && chNo == 63 && bcid == 4095 && tdc == 255 && adc == 1023 &&
-       srsTimestamp == 6871947571200.000000)) {
     DTRACE(DEB,
            "\t\tInvalid data FEC %d, vmmId %d, adc %d, tdc %d, ovThr %d, time "
            "%f!\n",
@@ -104,61 +101,15 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
                    m_stats.GetMaxTriggerTimestamp(fecId)));
       }
     }
-
-  } else if (m_config.pShowStats && m_config.pDataFormat == "VTC") {
-    // Biggest possible time should be:
-    // from VTC: 2^26-1 = 0x3FFFFFF overflow period
-    // converted to ns: 0x3FFFFFF * overflow period = 6871947571200 ns
-    if (srsTimestamp > 6871947571200.0) {
-      m_stats.IncrementCounter("TimestampTooLarge", fecId);
-      DTRACE(
-          DEB,
-          "\t\tTimestamp %llu larger than 26 bit multiplied by overflow period "
-          "for FEC %d and vmmId %d!\n",
-          static_cast<unsigned long long>(srsTimestamp), (int)fecId,
-          (int)vmmId);
-    }
-
-    if (srsTimestamp < m_stats.GetMaxTriggerTimestamp(fecId)) {
-      if (m_stats.GetMaxTriggerTimestamp(fecId) >
-          6000000000000.0 + srsTimestamp) {
-        m_stats.IncrementCounter("TimestampOverflow", fecId);
-        DTRACE(DEB,
-               "\n*********************************** OVERFLOW  fecId %d, "
-               "m_hitNr %d, "
-               "srsTimestamp %llu, old srsTimestamp %llu\n",
-               fecId, m_hitNr, static_cast<unsigned long long>(srsTimestamp),
-               static_cast<unsigned long long>(
-                   m_stats.GetMaxTriggerTimestamp(fecId)));
-
-      } else {
-        m_stats.IncrementCounter("TimestampOrderError", fecId);
-        DTRACE(DEB,
-               "\n*********************************** TIME ERROR  fecId %d, "
-               "m_hitNr %d, "
-               "srsTimestamp %llu, old srsTimestamp %llu\n",
-               fecId, m_hitNr, static_cast<unsigned long long>(srsTimestamp),
-               static_cast<unsigned long long>(
-                   m_stats.GetMaxTriggerTimestamp(fecId)));
-      }
-    }
   }
 
   bool newData = false;
-
-  if (m_config.pDataFormat == "SRS") {
-    double factor = 16.0;
-    if (srsTimestamp >= m_stats.GetOldTriggerTimestamp(fecId) +
-                            factor * m_config.pOffsetPeriod) {
-      newData = true;
-    }
-  } else if (m_config.pDataFormat == "ESS" || m_config.pDataFormat == "VTC") {
-    double buffer_interval_ns = 10000000.0;
-    if (srsTimestamp >=
-        m_stats.GetOldTriggerTimestamp(fecId) + buffer_interval_ns) {
-      newData = true;
-    }
+  double factor = 16.0;
+  if (srsTimestamp >= m_stats.GetOldTriggerTimestamp(fecId) +
+                          factor * m_config.pOffsetPeriod) {
+    newData = true;
   }
+
 
   if (newData) {
     if (m_config.pSaveWhat % 2 == 1) {
@@ -184,14 +135,6 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId,
           m_stats.SetLowestCommonTriggerTimestampPlane(dp1, ts);
           m_stats.SetLowestCommonTriggerTimestampPlane(dp2, ts);
           m_stats.SetLowestCommonTriggerTimestampDet(det.first, ts);
-          /*
-          std::thread t1(&Clusterer::AnalyzeClustersPlane, this, dp0);
-          std::thread t2(&Clusterer::AnalyzeClustersPlane, this, dp1);
-          std::thread t3(&Clusterer::AnalyzeClustersPlane, this, dp2);
-          t1.join();
-          t2.join();
-          t3.join();
-          */
           AnalyzeClustersPlane(dp0);
           AnalyzeClustersPlane(dp1);
           AnalyzeClustersPlane(dp2);
@@ -406,16 +349,7 @@ int Clusterer::ClusterByPad(std::pair<uint8_t, uint8_t> dp,
   std::vector<double> vTimes;
   auto det = std::get<0>(dp);
   auto plane = std::get<1>(dp);
-  /*std::sort(begin(cluster), end(cluster),
-            [](const ClusterTuple &t1, const ClusterTuple &t2) {
-              return std::get<0>(t1) < std::get<0>(t2) ||
-                     (std::get<0>(t1) == std::get<0>(t2) &&
-                      std::get<3>(t1) < std::get<3>(t2)) ||
-                     (std::get<0>(t1) == std::get<0>(t2) &&
-                      std::get<3>(t1) == std::get<3>(t2) &&
-                      std::get<1>(t1) > std::get<1>(t2));
-            });
-  */
+
   while (cluster.size() > 0) {
     ClusterContainer::const_iterator it = cluster.end();
     it--;
@@ -747,32 +681,44 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
         double pos_algo = 0;
         AlgorithmUTPC(idx_left, idx_right, vADC, vStrips, vTimes, pos_utpc,
                       time_utpc, pos_algo, time_algo);
-        // COT only over Threshold
-        if (m_config.pAlgo == 2) {
-          pos_algo = centerOfGravity_ovTh;
-          time_algo = centerOfTime_ovTh;
+ 
+      if(m_config.pAlgo == 0) { 
+        pos_algo=0;
+        time_algo=0;
+      }
+      else if(m_config.pAlgo == 1) { 
+        pos_algo=FitGaussianWeights(vStrips,vADC);
+        time_algo=centerOfTime;
+        if(pos_algo < 0.0) {
+        pos_algo = centerOfGravity;
         }
-        // COT2 only over Threshold
-        else if (m_config.pAlgo == 3) {
-          pos_algo = centerOfGravity2_ovTh;
-          time_algo = centerOfTime2_ovTh;
-        }
-        // time of highest ADC
-        else if (m_config.pAlgo == 4) {
-          pos_algo = largestADCPos;
-          time_algo = largestADCTime;
-        }
-        // trigger pattern
-        else if (m_config.pAlgo == 5) {
-          pos_algo = 0;
-          time_algo = 0;
-          if (plane == 2) {
-            for (int n = 0; n < vStrips.size(); n++) {
-              time_algo = time_algo + pow(2.0, vStrips[n]);
-            }
+      }
+      // COG over Threshold only
+      else if (m_config.pAlgo == 2) {
+        pos_algo = centerOfGravity_ovTh;
+        time_algo = centerOfTime_ovTh;
+      }
+      // COG2 over Threshold only
+      else if (m_config.pAlgo == 3) {
+        pos_algo = centerOfGravity2_ovTh;
+        time_algo = centerOfTime2_ovTh;
+      }
+      // time of highest ADC
+      else if (m_config.pAlgo == 4) {
+        pos_algo = largestADCPos;
+        time_algo = largestADCTime;
+      }
+      // trigger pattern
+      else if (m_config.pAlgo == 5) {
+        pos_algo = 0;
+        time_algo = 0;
+        if (plane == 2) {
+          for (int n = 0; n < vStrips.size(); n++) {
+            time_algo = time_algo + pow(2.0, vStrips[n]);
           }
         }
-        
+      }
+
 
         clusterPlane.time_utpc = time_utpc;
         clusterPlane.pos_utpc = pos_utpc;
@@ -889,15 +835,28 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
     double pos_utpc = 0;
     double time_algo = 0;
     double pos_algo = 0;
+    //Functions calculates uTPC position and time independent of the algo
+    //for algo 6 and 7 it calculates uTPC with COG and COG2
     AlgorithmUTPC(idx_left, idx_right, vADC, vStrips, vTimes, pos_utpc,
                   time_utpc, pos_algo, time_algo);
 
-    // COT only over Threshold
-    if (m_config.pAlgo == 2) {
+    if(m_config.pAlgo == 0) { 
+      pos_algo=0;
+      time_algo=0;
+    }
+    else if(m_config.pAlgo == 1) { 
+      pos_algo=FitGaussianWeights(vStrips,vADC);
+      time_algo=centerOfTime;
+      if(pos_algo < 0.0) {
+       pos_algo = centerOfGravity;
+      }
+    }
+    // COG over Threshold only
+    else if (m_config.pAlgo == 2) {
       pos_algo = centerOfGravity_ovTh;
       time_algo = centerOfTime_ovTh;
     }
-    // COT2 only over Threshold
+    // COG2 over Threshold only
     else if (m_config.pAlgo == 3) {
       pos_algo = centerOfGravity2_ovTh;
       time_algo = centerOfTime2_ovTh;
@@ -917,6 +876,7 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
         }
       }
     }
+
    
     clusterPlane.time_utpc = time_utpc;
     clusterPlane.pos_utpc = pos_utpc;
@@ -1016,57 +976,80 @@ void Clusterer::AlgorithmUTPC(int idx_min_largest_time,
     a3 = vADC[idx_largest_time + 1];
     t3 = vTimes[idx_largest_time + 1];
   }
-  if (m_config.pAlgo == 1) {
+  if (m_config.pAlgo == 6) {
     positionAlgo = (p1 * a1 * a1 + p2 * a2 * a2 + p3 * a3 * a3) /
                    (a1 * a1 + a2 * a2 + a3 * a3);
     timeAlgo = (t1 * a1 * a1 + t2 * a2 * a2 + t3 * a3 * a3) /
                (a1 * a1 + a2 * a2 + a3 * a3);
-  } else if (m_config.pAlgo == 0) {
+  } else if (m_config.pAlgo == 7) {
     positionAlgo = (p1 * a1 + p2 * a2 + p3 * a3) / (a1 + a2 + a3);
     timeAlgo = (t1 * a1 + t2 * a2 + t3 * a3) / (a1 + a2 + a3);
 
-  } else if (m_config.pAlgo == 6) {
-    double slope = -99999.0;
-    double offset = -99999.0;
-    double sum_dev = 0;
-    double sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
-    size_t nPoints = vStrips.size();
-
-    auto min_time = *std::min_element(vTimes.begin(), vTimes.end());
-    if (nPoints >= 2) {
-      for (int n = 0; n < nPoints; n++) {
-        double theMean = 0;
-        double theXValue = 0;
-        sumX += vStrips[n];
-        sumY += vTimes[n] - min_time;
-        sumXY += vStrips[n] * (vTimes[n] - min_time);
-        sumX2 += vStrips[n] * vStrips[n];
-      }
-
-      double xMean = sumX / static_cast<double>(nPoints);
-      double yMean = sumY / static_cast<double>(nPoints);
-      double denominator = sumX2 - sumX * xMean;
-      if (std::fabs(denominator) > 1e-7) {
-        slope = (sumXY - sumX * yMean) / denominator;
-        offset = yMean - slope * xMean;
-      }
-      slope = 0.009 * slope;
-      offset = 0.009 * offset;
-
-      for (int n = 0; n < nPoints; n++) {
-        double y_fit = slope * vStrips[n] + offset;
-        double y_meas = 0.009 * (vTimes[n] - min_time);
-        double delta_y = y_fit - y_meas;
-        double delta_fit = delta_y * std::cos(std::atan(slope));
-        sum_dev += std::abs(delta_fit);
-      }
-      sum_dev = sum_dev / nPoints;
-    }
-    positionAlgo = slope;
-    timeAlgo = offset;
-    positionUTPC = sum_dev;
-  }
+  } 
 }
+
+
+double Clusterer::FitGaussianWeights(const std::vector<double>& x,
+                                     const std::vector<double>& y)
+{
+    const size_t n = x.size();
+    if (n == 0 || y.size() != n) return -1.0;
+
+    if(n <= 2) {
+      return -1.0;
+    }
+    // x-range (works even if x is unsorted)
+    auto [xmin_it, xmax_it] = std::minmax_element(x.begin(), x.end());
+    const double xmin = *xmin_it, xmax = *xmax_it;
+    const double spanX = std::max(1e-9, xmax - xmin);
+
+    // Initial guesses from y-peak
+    auto itmaxY    = std::max_element(y.begin(), y.end());
+    const int iMax = int(std::distance(y.begin(), itmaxY));
+    const double A0     = std::min(1023.0, std::max(1e-12, *itmaxY));
+    const double mu0    = x[iMax];
+    const double sigma0 = std::clamp(spanX/6.0, 0.1, 10.0);
+
+   
+    // ----- build weighted graph (with optional soft zeros) -----
+    TGraphErrors gr;
+    gr.Set((int)n);
+
+    // Real points: use Poisson-like errors (sqrt(y)) with floor = 1
+    int k = 0;
+    double ymax = 0.0;
+    for (size_t i = 0; i < n; ++i) {
+        gr.SetPoint(k, x[i], y[i]);
+        double ey = std::sqrt(std::max(1.0, y[i]));
+        gr.SetPointError(k, 0.0, ey);
+        ++k;
+        if (y[i] > ymax) ymax = y[i];
+    }
+
+    // ----- model & bounds -----
+    TF1 f("f_mu_err", "gaus(0)", xmin, xmax);
+    f.SetParNames("A","mu","sigma");
+    f.SetParameters(A0, mu0, sigma0);
+
+    f.SetParLimits(0, 0.0, 5.0 * 1023.0);
+    f.SetParLimits(1, xmin, xmax);
+    // Reasonable σ band; tighten/loosen to taste
+    f.SetParLimits(2, 0.3, 10.0);
+
+    // Minimizer settings
+    ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2");
+    ROOT::Math::MinimizerOptions::SetDefaultStrategy(2);
+    ROOT::Math::MinimizerOptions::SetDefaultTolerance(1e-6);
+
+    // Store + use weights ("W"); 'Q' if you want quiet logs
+    TFitResultPtr r = gr.Fit(&f, "RSWQ");
+    if (r.Get() == nullptr) return -1.0; // only total failure returns -1
+
+    return f.GetParameter(1); // μ (lenient policy)
+}
+
+
+
 //====================================================================================================================
 int Clusterer::MatchClustersDetector(uint8_t det) {
   int clusterCount = 0;
@@ -1342,6 +1325,14 @@ int Clusterer::MatchClustersDetector(uint8_t det) {
               clusterDetector.time2_charge2 - clusterDetector.time1_charge2;
           clusterDetector.delta_plane_0_2 =
               clusterDetector.time2_charge2 - clusterDetector.time0_charge2;
+        }
+        else if (m_config.pConditionCoincidence == "algo") {
+          clusterDetector.delta_plane_0_1 =
+              clusterDetector.time1_algo - clusterDetector.time0_algo;
+          clusterDetector.delta_plane_1_2 =
+              clusterDetector.time2_algo - clusterDetector.time1_algo;
+          clusterDetector.delta_plane_0_2 =
+              clusterDetector.time2_algo - clusterDetector.time0_algo;
         }
 
         if (m_config.pShowStats) {
@@ -1869,14 +1860,6 @@ void Clusterer::FinishAnalysis() {
     m_stats.SetLowestCommonTriggerTimestampPlane(dp1, ts);
     m_stats.SetLowestCommonTriggerTimestampPlane(dp2, ts);
     m_stats.SetLowestCommonTriggerTimestampDet(det.first, ts);
-    /*
-        std::thread t1(&Clusterer::AnalyzeClustersPlane, this, dp0);
-        std::thread t2(&Clusterer::AnalyzeClustersPlane, this, dp1);
-        std::thread t3(&Clusterer::AnalyzeClustersPlane, this, dp2);
-        t1.join();
-        t2.join();
-        t3.join();
-    */
 
     AnalyzeClustersPlane(dp0);
     AnalyzeClustersPlane(dp1);

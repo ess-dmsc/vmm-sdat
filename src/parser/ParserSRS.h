@@ -11,15 +11,42 @@
 #pragma once
 
 #include <cinttypes>
-#include <string.h>
+#include <string>
 #include <parser/BitMath.h>
-#include <parser/NMXStats.h>
-#include <parser/SRSTime.h>
+
 
 static const int MaxVMMs{16}; ///Maximum number of VMMs per FEC card
 static const int MaxFECs{16}; ///Maximum number of FECs per EFU
 
 namespace Gem {
+
+  struct ParserStats {
+  // Input thread
+  int64_t RxPackets{0};
+  int64_t RxBytes{0};
+  int64_t RxIdle{0};
+  int64_t FifoPushErrors{0};
+  int64_t PaddingFor64ByteAlignment[4]; // cppcheck-suppress unusedStructMember
+
+  // Processing thread
+  int64_t ProcessingIdle {0};
+  int64_t FifoSeqErrors{0};
+
+  // Parser stats
+  int64_t ParserFrameSeqErrors{0};
+  int64_t ParserFrameMissingErrors{0};
+  int64_t ParserFramecounterOverflows{0};
+  int64_t ParserTimestampLostErrors{0};
+  int64_t ParserTimestampSeqErrors{0};
+  int64_t ParserTimestampOverflows{0};
+  int64_t ParserBadFrames{0};
+  int64_t ParserGoodFrames{0};
+  int64_t ParserErrorBytes{0};
+  int64_t ParserMarkers{0};
+  int64_t ParserData{0};
+  int64_t ParserReadouts{0};
+  int64_t ParserOverThreshold{0};
+  };
 
 class ParserSRS {
 public:
@@ -65,8 +92,8 @@ public:
 
   /// \brief create a data handler for VMM3 SRS data of fixed size Capacity
   /// \param maxelements The maximum number of readout elements
-  ParserSRS(int maxelements, NMXStats & stats, SRSTime time_intepreter, std::string format) : maxHits(maxelements), 
-  stats(stats), srsTime(time_intepreter), dataFormat(format) {
+  ParserSRS(int maxelements, ParserStats & stats, std::string format) : maxHits(maxelements), 
+  stats(stats),  dataFormat(format) {
     markers = new struct VMM3Marker[MaxFECs * MaxVMMs];
     data = new struct VMM3Data[maxHits];
   }
@@ -104,8 +131,7 @@ public:
 
   int maxHits{0};       /// Maximum capacity of data array
 
-  NMXStats & stats;
-  SRSTime srsTime;
+  ParserStats & stats;
   std::string dataFormat;
 
  };
