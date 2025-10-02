@@ -8,7 +8,8 @@ More information: [Corryvreckan on GitLab](https://gitlab.cern.ch/corryvreckan/c
 ## Use of vmm-sdat Data in Corryvreckan
 
 With the modules provided in **EventLoaderVMMSDAT**, data clustered in [vmm-sdat](https://github.com/ess-dmsc/vmm-sdat) can be read into Corryvreckan.  
-For more details, please refer to the README file in the `EventLoaderVMMSDAT` subfolder.
+For more details, please refer to the README file in the `EventLoaderVMMSDAT` subfolder. The module is based on the EventLoaderMPGD module by Maryna Borysova (maryna.borysova@weizmann.ac.il), who is the Corryvreckan expert.
+
 
 ---
 
