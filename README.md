@@ -228,14 +228,15 @@ plane clusters also in the detector cluster tree. The entries of the missing pla
         center-of-mass2 (charge squared as weight),
         utpc (latest time)
         An additional algorithm can be chosen in pos_algo and time_algo field in clusters
-        0: utpc with COG
-        1: utpc with COG2
+        0: No algorithm
+        1: Gaussian fit of position (for cluster sizes >= 3, otherwise COG)
         2: COG including only over Threshold hits
         3: COG2 including only over Threshold hits
         4: position and time of largest ADC
         5: trigger pattern (NIP box), the trigger pattern is stored as integer in time_algo2
             The vmm that is connected to the NIP box has to be defined as plane 2 of the detector. The channels of the VMM have to be mapped to the strips in the form channel representing bit 0 = strip 0, bit 1 channel = strip 1 and so on.
-
+		6: utp with COG of strips with largest time
+        7: utpc with COG2 of strips with largest time
     -crl: Valid clusters normally have the same amount of charge in both detector planes 
     	(ratio of charge plane 0 / charge plane 1 is 100% or 1). Depending on the readout, 
     	the charge sharing can be different, e.g. in a standard GEM strip readout the total 

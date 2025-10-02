@@ -16,7 +16,7 @@ using json = nlohmann::json;
 bool Configuration::PrintUsage(const std::string &errorMessage, char *argv) {
   std::cout << "\nUsage:" << std::endl;
   std::cout
-      << "./convertFile -f ../../FAN0_gdgem_readouts_20190528-165706_00000.h5 "
+      << "./convertFile -f ../../FAN0_gdgem_readouts_20190528-165706_00000.pcapng "
       << "-vmm "
          "\"[[1,0,2,0],[1,0,2,1],[2,0,2,2],[2,0,2,3],[1,1,2,6],[1,1,2,7],[2,1,"
          "2,8],[2,1,2,9]]\" "
@@ -198,8 +198,8 @@ bool Configuration::PrintUsage(const std::string &errorMessage, char *argv) {
   std::cout << "-algo:  Select with algorithm is used in pos_algo and "
                "time_algo field in clusters"
             << std::endl;
-  std::cout << "        0: utpc with COG" << std::endl;
-  std::cout << "        1: utpc with COG2" << std::endl;
+  std::cout << "        0: no algorithm" << std::endl;
+  std::cout << "        1: Gaussian fit" << std::endl;
   std::cout << "        2: COG including only over Threshold hits" << std::endl;
   std::cout << "        3: COG2 including only over Threshold hits"
             << std::endl;
@@ -216,7 +216,7 @@ bool Configuration::PrintUsage(const std::string &errorMessage, char *argv) {
   std::cout << "           channel representing bit 0 = strip 0, channel for "
                "bit 1  = strip 1 and so on."
             << std::endl;
-  std::cout << "        6: utpc with COG of st" << std::endl;
+  std::cout << "        6: utpc with COG" << std::endl;
   std::cout << "        7: utpc with COG2" << std::endl;
 
   std::cout << "-crl:   Valid clusters normally have the same amount of charge "
@@ -280,12 +280,11 @@ bool Configuration::PrintUsage(const std::string &errorMessage, char *argv) {
             << std::endl;
   std::cout
       << "-df:    Data format: The pcap files can have different data formats, "
-      << "depending on the firmware on the FEC or assister card.\n"
+      << "depending on the firmware on the FEC.\n"
       << "        SRS (default): FEC card, and time stamps and offsets are "
          "sent in markers, offset is interpreted as signed number and valid "
          "offsets goes from -1 to 15\n"
-      << "        ESS: used for assister cards, no markers, timestamps are "
-         "part of the data"
+      << "        TRIG: Triggered firmware, event_counter in hit tree"
       << std::endl;
   std::cout
       << "-cahi:    Calibration histograms: If a calibration file is used, "
