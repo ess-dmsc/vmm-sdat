@@ -12,6 +12,7 @@
 #include <TF1.h>
 #include <TGraph.h>
 #include <TGraphErrors.h>
+#include <TFitResult.h>
 #include <Math/MinimizerOptions.h>
 #include <limits>
 
@@ -687,11 +688,8 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
         time_algo=0;
       }
       else if(m_config.pAlgo == 1) { 
-        pos_algo=FitGaussianWeights(vStrips,vADC);
+        pos_algo=FitGaussianWeights(vStrips,vADC,centerOfGravity);
         time_algo=centerOfTime;
-        if(pos_algo < 0.0) {
-        pos_algo = centerOfGravity;
-        }
       }
       // COG over Threshold only
       else if (m_config.pAlgo == 2) {
@@ -845,11 +843,8 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp,
       time_algo=0;
     }
     else if(m_config.pAlgo == 1) { 
-      pos_algo=FitGaussianWeights(vStrips,vADC);
+      pos_algo=FitGaussianWeights(vStrips,vADC,centerOfGravity);
       time_algo=centerOfTime;
-      if(pos_algo < 0.0) {
-       pos_algo = centerOfGravity;
-      }
     }
     // COG over Threshold only
     else if (m_config.pAlgo == 2) {
@@ -990,32 +985,28 @@ void Clusterer::AlgorithmUTPC(int idx_min_largest_time,
 
 
 double Clusterer::FitGaussianWeights(const std::vector<double>& x,
-                                     const std::vector<double>& y)
+                                     const std::vector<double>& y, double cog)
 {
     const size_t n = x.size();
-    if (n == 0 || y.size() != n) return -1.0;
-
-    if(n <= 2) {
-      return -1.0;
-    }
-    // x-range (works even if x is unsorted)
+    if (n <= 2 || y.size() != n) return cog;
+   
     auto [xmin_it, xmax_it] = std::minmax_element(x.begin(), x.end());
     const double xmin = *xmin_it, xmax = *xmax_it;
     const double spanX = std::max(1e-9, xmax - xmin);
 
-    // Initial guesses from y-peak
     auto itmaxY    = std::max_element(y.begin(), y.end());
     const int iMax = int(std::distance(y.begin(), itmaxY));
     const double A0     = std::min(1023.0, std::max(1e-12, *itmaxY));
-    const double mu0    = x[iMax];
-    const double sigma0 = std::clamp(spanX/6.0, 0.1, 10.0);
+    const double mu0    = cog;
 
+    const double sigma0 = std::clamp(spanX/6.0, 0.3, 10.0);
+    const double sigma_lo = std::max(0.2, spanX/20.0);
+    const double sigma_hi = std::max(1.0,  1.0*spanX);
    
-    // ----- build weighted graph (with optional soft zeros) -----
+  
     TGraphErrors gr;
     gr.Set((int)n);
 
-    // Real points: use Poisson-like errors (sqrt(y)) with floor = 1
     int k = 0;
     double ymax = 0.0;
     for (size_t i = 0; i < n; ++i) {
@@ -1033,19 +1024,19 @@ double Clusterer::FitGaussianWeights(const std::vector<double>& x,
 
     f.SetParLimits(0, 0.0, 5.0 * 1023.0);
     f.SetParLimits(1, xmin, xmax);
-    // Reasonable σ band; tighten/loosen to taste
     f.SetParLimits(2, 0.3, 10.0);
 
-    // Minimizer settings
     ROOT::Math::MinimizerOptions::SetDefaultMinimizer("Minuit2");
     ROOT::Math::MinimizerOptions::SetDefaultStrategy(2);
     ROOT::Math::MinimizerOptions::SetDefaultTolerance(1e-6);
 
-    // Store + use weights ("W"); 'Q' if you want quiet logs
     TFitResultPtr r = gr.Fit(&f, "RSWQ");
-    if (r.Get() == nullptr) return -1.0; // only total failure returns -1
-
-    return f.GetParameter(1); // μ (lenient policy)
+    if (r.Get() == nullptr) return cog;
+    const bool ok = (r->Status() == 0) && (f.GetNDF() >= 0 && (r->CovMatrixStatus()>=2));
+    if(!ok) {
+       return cog;
+    }
+    return f.GetParameter(1);
 }
 
 

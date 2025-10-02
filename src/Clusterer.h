@@ -59,7 +59,7 @@ private:
                      std::vector<double> &vTimes, double &positionUTPC,
                      double &timeUTPC, double &positionAlgo, double &timeAlgo);
 
-  double FitGaussianWeights(const std::vector<double> &x, const std::vector<double> &y);
+  double FitGaussianWeights(const std::vector<double> &x, const std::vector<double> &y, double cog);
 
   Configuration &m_config;
   Statistics &m_stats;
