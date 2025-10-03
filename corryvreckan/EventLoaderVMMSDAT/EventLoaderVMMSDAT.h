@@ -54,11 +54,10 @@ namespace corryvreckan {
 
     private:
         void loop();
-
+		bool triggered(std::string name, double pos0, double pos1, double charge);
+      
     private:
-        int m_eventNumber;
-
-    private:
+        int eventNumber_;
         std::map<std::string, TH2D*>  hitmap_;
         std::map<int, std::string>    detector_map_;
 
@@ -71,6 +70,9 @@ namespace corryvreckan {
         std::string input_file_name_;
         std::string tree_name_;
         std::string detector_trigger_;
+        double channel_trigger_;
+        double charge_trigger_;
+        
         std::vector<std::string> detector_required_;
         std::unique_ptr<TFile> input_file_;
         TTree       *event_tree_;
@@ -79,28 +81,28 @@ namespace corryvreckan {
         double time_window_;
         size_t currentCluster_;
 
-        double time0;
-        double time1;
-        double time0_charge2;
-        double time1_charge2;
-        double time0_utpc;
-        double time1_utpc;
-        double time0_algo;
-        double time1_algo;
+        double time0_;
+        double time1_;
+        double time0_charge2_;
+        double time1_charge2_;
+        double time0_utpc_;
+        double time1_utpc_;
+        double time0_algo_;
+        double time1_algo_;
 
-        unsigned char det;
-        unsigned short adc0;
-        unsigned short adc1;
-        unsigned short size0;
-        unsigned short size1;
-        double pos0;
-        double pos1;
-        double pos0_charge2;
-        double pos1_charge2;
-        double pos0_utpc;
-        double pos1_utpc;
-        double pos0_algo;
-        double pos1_algo;
+        unsigned char det_;
+        unsigned short adc0_;
+        unsigned short adc1_;
+        unsigned short size0_;
+        unsigned short size1_;
+        double pos0_;
+        double pos1_;
+        double pos0_charge2_;
+        double pos1_charge2_;
+        double pos0_utpc_;
+        double pos1_utpc_;
+        double pos0_algo_;
+        double pos1_algo_;
 
         std::string position_algorithm_;
         std::string time_algorithm_;

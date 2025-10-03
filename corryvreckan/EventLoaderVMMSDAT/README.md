@@ -62,16 +62,22 @@ sort_clusters = true           # Sort clusters by time (recommended)
 # Detector mapping
 detector_map = [[1, "GEMXY1"], [2, "GEMXY2"], [3, "GEMXY3"], [4, "GEMXY4"]]
 
-# Detector geometry corrections (pitch, offsets)
+# Optional: Detector geometry corrections (pitch, offsets)
 detector_position_scale_map   = [["GEMXY1", 0.4], ["GEMXY2", 0.4], ["GEMXY3", 0.4], ["GEMXY4", 0.4]]
 detector_position_shift_x_map = [["GEMXY1", 0.0], ["GEMXY2", 0.0], ["GEMXY3", 0.0], ["GEMXY4", 0.0]]
 detector_position_shift_y_map = [["GEMXY1", 0.0], ["GEMXY2", 0.0], ["GEMXY3", 0.0], ["GEMXY4", 0.0]]
 
-# Trigger and required detectors
+# Optional: Trigger (default: TRIGGER)
 detector_trigger   = "GEMXY3"
+# Optional: position/channel of the trigger cluster
+channel_trigger=-1.0
+# Optional: charge of the trigger cluster
+charge_trigger=-1.0
+
+#Mandatory
 detector_required  = ["GEMXY1", "GEMXY2", "GEMXY3"]
 
-# Algorithms for position/time/charge/size
+# Optional: Algorithms for position/time/charge/size
 position_algorithm = "cog"     # [cog | charge2 | utpc | algo]
 time_algorithm     = "cog"     # [cog | charge2 | utpc | algo]
 time_choice        = "plane0"  # [plane0 | plane1 | both]
