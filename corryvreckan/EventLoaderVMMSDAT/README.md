@@ -47,8 +47,10 @@ Add the following section to your Corryvreckan configuration file:
 [EventLoaderVMMSDAT]
 
 # General settings
-log_level = "STATUS"
+#log_level = "INFO"
 input_file = "/path/to/sorted_by_time0_100events.root"
+
+#optional: clusters_detector is default 
 tree_name = "clusters_detector"
 
 # Number of clusters to skip/read
@@ -105,8 +107,14 @@ Minimal steering file:
 ```toml
 [EventLoaderVMMSDAT]
 input_file = "/data/vmm-sdat/sorted_by_time0_100events.root"
-tree_name  = "clusters_detector"
-log_level  = "STATUS"
+
+# Event building
+time_window = 2000             # Time window (ns) to group clusters into events
+
+# Detector mapping
+detector_map = [[1, "GEMXY1"], [2, "GEMXY2"], [3, "GEMXY3"], [4, "GEMXY4"]]
+#default is "TRIGGER"
+detector_trigger = "GEMXY1"
 ```
 
 Run Corryvreckan with:
