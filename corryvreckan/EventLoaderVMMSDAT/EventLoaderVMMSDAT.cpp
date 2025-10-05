@@ -145,28 +145,57 @@ void EventLoaderVMMSDAT::initialize() {
   event_tree_->SetBranchAddress("time0", &time0_, &b_time0);
   event_tree_->SetBranchAddress("det", &det_, &b_det);
   event_tree_->SetBranchAddress("adc0", &adc0_, &b_adc0);
-
   event_tree_->SetBranchAddress("size0", &size0_, &b_size0);
-
   event_tree_->SetBranchAddress("pos0", &pos0_, &b_pos0);
   event_tree_->SetBranchAddress("pos1", &pos1_, &b_pos1);
-  /*
-   event_tree_->SetBranchAddress("size1", &size1_, &b_size1);
-   event_tree_->SetBranchAddress("adc1", &adc1_, &b_adc1);
-   event_tree_->SetBranchAddress("time1", &time1_, &b_time1);
-   event_tree_->SetBranchAddress("time0_charge2", &time0_charge2_, &b_time0_charge2);
-   event_tree_->SetBranchAddress("time1_charge2", &time1_charge2_, &b_time1_charge2);
-   event_tree_->SetBranchAddress("time0_utpc", &time0_utpc_, &b_time0_utpc);
-   event_tree_->SetBranchAddress("time1_utpc", &time1_utpc_, &b_time1_utpc);
-   event_tree_->SetBranchAddress("time0_algo", &time0_algo_, &b_time0_algo);
-   event_tree_->SetBranchAddress("time1_algo", &time1_algo_, &b_time1_algo);
-   event_tree_->SetBranchAddress("pos0_charge2", &pos0_charge2_, &b_pos0_charge2);
-   event_tree_->SetBranchAddress("pos1_charge2", &pos1_charge2_, &b_pos1_charge2);
-   event_tree_->SetBranchAddress("pos0_utpc", &pos0_utpc_, &b_pos0_utpc);
-   event_tree_->SetBranchAddress("pos1_utpc", &pos1_utpc_, &b_pos1_utpc);
-   event_tree_->SetBranchAddress("pos0_algo", &pos0_algo_, &b_pos0_algo);
-   event_tree_->SetBranchAddress("pos1_algo", &pos1_algo_, &b_pos1_algo);
-*/
+  
+  //Check first existence of these branches for extended functionality
+  if (event_tree_->GetBranch("size1")) {
+    event_tree_->SetBranchAddress("size1", &size1_, &b_size1);
+  } 
+  if (event_tree_->GetBranch("adc1")) {
+    event_tree_->SetBranchAddress("adc1", &adc1_, &b_adc1);
+  } 
+  if (event_tree_->GetBranch("time1")) {
+    event_tree_->SetBranchAddress("time1", &time1_, &b_time1);
+  }
+  if (event_tree_->GetBranch("time0_charge2")) {
+    event_tree_->SetBranchAddress("time0_charge2", &time0_charge2_, &b_time0_charge2);
+  } 
+  if (event_tree_->GetBranch("time1_charge2")) {
+    event_tree_->SetBranchAddress("time1_charge2", &time1_charge2_, &b_time1_charge2);
+  } 
+  if (event_tree_->GetBranch("time0_utpc")) {
+    event_tree_->SetBranchAddress("time0_utpc", &time0_utpc_, &b_time0_utpc);
+  } 
+  if (event_tree_->GetBranch("time1_utpc")) {
+    event_tree_->SetBranchAddress("time1_utpc", &time1_utpc_, &b_time1_utpc);
+  }
+  if (event_tree_->GetBranch("time0_algo")) {
+    event_tree_->SetBranchAddress("time0_algo", &time0_algo_, &b_time0_algo);
+  } 
+  if (event_tree_->GetBranch("time1_algo")) {
+    event_tree_->SetBranchAddress("time1_algo", &time1_algo_, &b_time1_algo);
+  } 
+  if (event_tree_->GetBranch("pos0_charge2")) {
+    event_tree_->SetBranchAddress("pos0_charge2", &pos0_charge2_, &b_pos0_charge2);
+  }
+  if (event_tree_->GetBranch("pos1_charge2")) {
+    event_tree_->SetBranchAddress("pos1_charge2", &pos1_charge2_, &b_pos1_charge2);
+  }
+  if (event_tree_->GetBranch("pos0_utpc")) {
+    event_tree_->SetBranchAddress("pos0_utpc", &pos0_utpc_, &b_pos0_utpc);
+  }
+  if (event_tree_->GetBranch("pos1_utpc")) {
+    event_tree_->SetBranchAddress("pos1_utpc", &pos1_utpc_, &b_pos1_utpc);
+  }
+  if (event_tree_->GetBranch("pos0_algo")) {
+    event_tree_->SetBranchAddress("pos0_algo", &pos0_algo_, &b_pos0_algo);
+  }
+  if (event_tree_->GetBranch("pos1_algo")) {
+    event_tree_->SetBranchAddress("pos1_algo", &pos1_algo_, &b_pos1_algo);
+  }  
+     
 
   if ((number_clusters_to_read_ < 0) || (number_clusters_to_read_ > event_tree_->GetEntries())) {
     number_clusters_to_read_ = event_tree_->GetEntries();
@@ -183,10 +212,10 @@ StatusCode EventLoaderVMMSDAT::run(const std::shared_ptr<Clipboard> &clipboard) 
 
   std::map<std::string, ClusterVector> deviceClusters;
   ++currentCluster_;
-  if (currentCluster_ < runClusters_.size()) {
-    while (!triggered(runClusters_[currentCluster_]->getDetectorID(), runClusters_[currentCluster_]->row(), runClusters_[currentCluster_]->column(),
-                      runClusters_[currentCluster_]->charge())) {                
-      if (++currentCluster_ == runClusters_.size()) {
+  if (static_cast<size_t>(currentCluster_) < runClusters_.size()) {
+    while (!triggered(runClusters_[static_cast<size_t>(currentCluster_)]->getDetectorID(), runClusters_[static_cast<size_t>(currentCluster_)]->row(), runClusters_[static_cast<size_t>(currentCluster_)]->column(),
+                      runClusters_[static_cast<size_t>(currentCluster_)]->charge())) {                
+      if (static_cast<size_t>(++currentCluster_) == runClusters_.size()) {
         LOG(INFO) << "All data read from the file! EndRun.";
         return StatusCode::Failure;
       }
@@ -196,7 +225,7 @@ StatusCode EventLoaderVMMSDAT::run(const std::shared_ptr<Clipboard> &clipboard) 
     return StatusCode::Failure;
   }  
   
-  std::shared_ptr<Cluster> ccluster = runClusters_[currentCluster_];
+  std::shared_ptr<Cluster> ccluster = runClusters_[static_cast<size_t>(currentCluster_)];
   double time_window = time_window_;
     
   // These two loops will add all clusters in the time window around selected one, assuming the vector is time sorted
@@ -204,7 +233,7 @@ StatusCode EventLoaderVMMSDAT::run(const std::shared_ptr<Clipboard> &clipboard) 
   std::for_each(detector_map_.begin(), detector_map_.end(), [&](const auto &pp) { nclsev[pp.second] = 0; });
 
   double eve_timestamp = ccluster->timestamp();
-  size_t cluster_after = currentCluster_;
+  size_t cluster_after = static_cast<size_t>(currentCluster_);
   while (cluster_after < runClusters_.size() && std::abs(runClusters_[cluster_after]->timestamp() - eve_timestamp) <= time_window) {
     std::shared_ptr<Cluster> iclust = runClusters_[cluster_after];
     deviceClusters[iclust->getDetectorID()].push_back(iclust);
@@ -215,8 +244,8 @@ StatusCode EventLoaderVMMSDAT::run(const std::shared_ptr<Clipboard> &clipboard) 
   //cluster_before has to be type int, since it can get negative values
   //if it is size_t, it gets huge positive values leading to a segmentation fault
   int cluster_before = currentCluster_ - 1;
-  while (cluster_before >= 0 && (std::abs(runClusters_[cluster_before]->timestamp() - eve_timestamp) <= time_window)) {
-    std::shared_ptr<Cluster> jclust = runClusters_[cluster_before];
+  while (cluster_before >= 0 && (std::abs(runClusters_[static_cast<size_t>(cluster_before)]->timestamp() - eve_timestamp) <= time_window)) {
+    std::shared_ptr<Cluster> jclust = runClusters_[static_cast<size_t>(static_cast<size_t>(cluster_before))];
     deviceClusters[jclust->getDetectorID()].push_back(jclust);
     ++nclsev[jclust->getDetectorID()];
     --cluster_before;
