@@ -18,7 +18,7 @@ EventLoaderVMMSDAT::EventLoaderVMMSDAT(Configuration &config, std::vector<std::s
 
 void EventLoaderVMMSDAT::initialize() {
   for (auto &detector : get_detectors()) {
-    LOG(DEBUG) << "Initialise for detector " + detector->getName();
+    //LOG(DEBUG) << "Initialise for detector " + detector->getName();
     std::string detectorID = detector->getName();
     std::string hhname = detectorID + "_ClusterMap";
     std::string title = detectorID + ": clustermap;x [px];y [px];events";
@@ -119,10 +119,11 @@ void EventLoaderVMMSDAT::initialize() {
 
   // Initialise member variables
   eventNumber_ = 0;
-  currentCluster_ = 0;
+  //Start at -1, since in run currentCluster is directly incremented to 0
+  currentCluster_ = -1;
 
   input_file_name_ = config_.get<std::string>("input_file");
-  tree_name_ = config_.get<std::string>("tree_name");
+  tree_name_ = config_.get<std::string>("tree_name", "clusters_detector");
   number_clusters_to_read_ = config_.get<Long64_t>("number_clusters_to_read", -1);
   number_clusters_to_skip_ = config_.get<Long64_t>("number_clusters_to_skip", 0);
 
@@ -178,11 +179,13 @@ void EventLoaderVMMSDAT::initialize() {
 }
 
 StatusCode EventLoaderVMMSDAT::run(const std::shared_ptr<Clipboard> &clipboard) {
+
+
   std::map<std::string, ClusterVector> deviceClusters;
   ++currentCluster_;
   if (currentCluster_ < runClusters_.size()) {
     while (!triggered(runClusters_[currentCluster_]->getDetectorID(), runClusters_[currentCluster_]->row(), runClusters_[currentCluster_]->column(),
-                      runClusters_[currentCluster_]->charge())) {
+                      runClusters_[currentCluster_]->charge())) {                
       if (++currentCluster_ == runClusters_.size()) {
         LOG(INFO) << "All data read from the file! EndRun.";
         return StatusCode::Failure;
@@ -191,10 +194,11 @@ StatusCode EventLoaderVMMSDAT::run(const std::shared_ptr<Clipboard> &clipboard) 
   } else {
     LOG(INFO) << "All data read from the file! EndRun.";
     return StatusCode::Failure;
-  }
+  }  
+  
   std::shared_ptr<Cluster> ccluster = runClusters_[currentCluster_];
   double time_window = time_window_;
-
+    
   // These two loops will add all clusters in the time window around selected one, assuming the vector is time sorted
   std::map<std::string, size_t> nclsev;
   std::for_each(detector_map_.begin(), detector_map_.end(), [&](const auto &pp) { nclsev[pp.second] = 0; });
@@ -208,7 +212,9 @@ StatusCode EventLoaderVMMSDAT::run(const std::shared_ptr<Clipboard> &clipboard) 
     ++cluster_after;
   }
 
-  size_t cluster_before = currentCluster_ - 1;
+  //cluster_before has to be type int, since it can get negative values
+  //if it is size_t, it gets huge positive values leading to a segmentation fault
+  int cluster_before = currentCluster_ - 1;
   while (cluster_before >= 0 && (std::abs(runClusters_[cluster_before]->timestamp() - eve_timestamp) <= time_window)) {
     std::shared_ptr<Cluster> jclust = runClusters_[cluster_before];
     deviceClusters[jclust->getDetectorID()].push_back(jclust);
@@ -269,7 +275,9 @@ StatusCode EventLoaderVMMSDAT::run(const std::shared_ptr<Clipboard> &clipboard) 
   return StatusCode::Success;
 }
 
-void EventLoaderVMMSDAT::finalize(const std::shared_ptr<ReadonlyClipboard> &) { LOG(DEBUG) << "Analysed " << eventNumber_ << " events"; }
+void EventLoaderVMMSDAT::finalize(const std::shared_ptr<ReadonlyClipboard> &) { 
+//LOG(DEBUG) << "Analysed " << eventNumber_ << " events"; 
+}
 
 void EventLoaderVMMSDAT::loop() {
   std::map<std::string, size_t> detposmap;

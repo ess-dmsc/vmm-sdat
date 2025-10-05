@@ -79,7 +79,7 @@ namespace corryvreckan {
         Long64_t number_clusters_to_read_;
         Long64_t number_clusters_to_skip_;
         double time_window_;
-        size_t currentCluster_;
+        int currentCluster_;
 
         double time0_;
         double time1_;
