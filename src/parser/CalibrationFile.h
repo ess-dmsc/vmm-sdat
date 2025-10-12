@@ -12,8 +12,7 @@
 #include <string>
 #include <vector>
 
-namespace Gem {
-/// \todo check whether packing is necessary, static assert assert?
+
 struct Calibration {
   // Apple clang demands constructors for the struct
   Calibration() = default;
@@ -61,7 +60,6 @@ public:
   const Calibration &getCalibration(size_t fecId, size_t vmmId,
                                     size_t chNo) const;
 
-  std::string debug() const;
 
 private:
   std::vector<std::vector<std::vector<Calibration>>> Calibrations;
@@ -69,4 +67,3 @@ private:
   /// Default correction
   Calibration NoCorr{0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0};
 };
-} // namespace Gem

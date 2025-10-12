@@ -46,6 +46,7 @@ int sort_tree(const char* infile, const char* outfile, const char* algo, const c
     {
         TTreeReader rTime(tree);
         TTreeReaderValue<Double_t> time0(rTime, "time0");
+        /*
         TTreeReaderValue<Double_t> time1(rTime, "time1");
         TTreeReaderValue<Double_t> time0_charge2(rTime, "time0_charge2");
         TTreeReaderValue<Double_t> time1_charge2(rTime, "time1_charge2");
@@ -53,9 +54,10 @@ int sort_tree(const char* infile, const char* outfile, const char* algo, const c
         TTreeReaderValue<Double_t> time1_utpc(rTime, "time1_utpc");
         TTreeReaderValue<Double_t> time0_algo(rTime, "time0_algo");
         TTreeReaderValue<Double_t> time1_algo(rTime, "time1_algo");         
-
+*/
         Long64_t i = 0;
         while (rTime.Next()) {
+        /*
         	if(strcmp(algo, "charge2") == 0) {
         		if(strcmp(choice, "time1") == 0) {
 					index.emplace_back(static_cast<double>(*time1_charge2), i);
@@ -100,8 +102,8 @@ int sort_tree(const char* infile, const char* outfile, const char* algo, const c
 					index.emplace_back(static_cast<double>(*time0), i);
 				}
         	}
-        	
-        	
+        	*/
+        	index.emplace_back(static_cast<double>(*time0), i);
             ++i;
             if ((i % 100000) == 0) printf("Indexing entry %lld / %lld\r", i, nentries);
         }

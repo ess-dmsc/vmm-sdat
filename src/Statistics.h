@@ -1,11 +1,32 @@
-#ifndef STATS_H
-#define STATS_H
+/***************************************************************************
+**  vmm-sdat
+**  Data analysis program for VMM3a data
+**
+**  This program is free software: you can redistribute it and/or modify
+**  it under the terms of the GNU General Public License as published by
+**  the Free Software Foundation, either version 3 of the License, or
+**  (at your option) any later version.
+**
+**  You should have received a copy of the GNU General Public License
+**  along with this program.  If not, see http://www.gnu.org/licenses/.
+**
+****************************************************************************
+**  Contact: dorothea.pfeiffer@cern.ch
+**  Date: 12.10.2025
+**  Version: 1.0.0
+****************************************************************************
+**
+**  vmm-sdat
+**  Statistics.h
+**
+****************************************************************************/
+#pragma once
 
 #include "Configuration.h"
 
 class Statistics {
 public:
-  Statistics() = default;
+  Statistics();
   ~Statistics() = default;
 
   void CreateClusterStats(Configuration &config);
@@ -71,4 +92,3 @@ private:
   std::map<uint8_t, double> m_lastFrameCounter;
 };
 
-#endif // STATS_H

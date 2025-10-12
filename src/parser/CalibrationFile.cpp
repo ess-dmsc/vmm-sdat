@@ -10,32 +10,23 @@
 //#include <parser/Log.h>
 #include <fstream>
 #include <parser/CalibrationFile.h>
-#include <parser/Trace.h>
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpedantic"
+#include <log.h>
 #include <nlohmann/json.hpp>
-#pragma GCC diagnostic pop
+
 
 using json = nlohmann::json;
 
-//#undef TRC_LEVEL
-//#define TRC_LEVEL TRC_L_DEB
-
-namespace Gem {
 /// \brief load calibration from file
 CalibrationFile::CalibrationFile(std::string jsonfile) : CalibrationFile() {
-
+  corryvreckan::Log::setSection("CalibrationFile");
   if (jsonfile.empty()) {
     return;
   }
-
-  XTRACE(INIT, DEB, "Loading calibration file %s\n", jsonfile.c_str());
 
   std::ifstream t(jsonfile);
   std::string Jsonstring((std::istreambuf_iterator<char>(t)),
                          std::istreambuf_iterator<char>());
   if (!t.good()) {
-    XTRACE(INIT, ERR, "Invalid Json file %s\n", jsonfile.c_str());
     throw std::runtime_error(
         "CalibrationFile error - requested file unavailable.");
   }
@@ -49,7 +40,6 @@ void CalibrationFile::loadCalibration(std::string jsonstring) {
   try {
     Root = nlohmann::json::parse(jsonstring);
   } catch (...) {
-    XTRACE(INIT, DEB, "Invalid Json: %s\n", jsonstring.c_str());
     throw std::runtime_error("Invalid Json in calibration file.");
   }
 
@@ -67,15 +57,6 @@ void CalibrationFile::loadCalibration(std::string jsonstring) {
       auto timewalk_cs = vmmcal["timewalk_c"];
       auto timewalk_ds = vmmcal["timewalk_d"];
 
-      XTRACE(INIT, DEB,
-             "fecid: %lu, vmmid: %lu, adc_offsets(%lu), adc_slopes(%lu), "
-             "time_offsets(%lu), time_slopes(%lu),"
-             "timewalk_as(%lu),timewalk_bs(%lu),"
-             "timewalk_cs(%lu),timewalk_ds(%lu)\n",
-             fecid, vmmid, adc_offsets.size(), adc_slopes.size(),
-             time_offsets.size(), time_slopes.size(), timewalk_as.size(),
-             timewalk_bs.size(), timewalk_cs.size(), timewalk_ds.size());
-
       if ((adc_offsets.size() > 0 && adc_offsets.size() != MAX_CH) or
           (adc_slopes.size() > 0 && adc_slopes.size() != MAX_CH) or
           (time_offsets.size() > 0 && time_offsets.size() != MAX_CH) or
@@ -84,10 +65,7 @@ void CalibrationFile::loadCalibration(std::string jsonstring) {
           (timewalk_bs.size() > 0 && timewalk_bs.size() != MAX_CH) or
           (timewalk_cs.size() > 0 && timewalk_cs.size() != MAX_CH) or
           (timewalk_ds.size() > 0 && timewalk_ds.size() != MAX_CH)) {
-        XTRACE(INIT, DEB,
-               "Invalid channel configuration, skipping for fec {%lu} and vmm "
-               "{%lu}",
-               fecid, vmmid);
+
         throw std::runtime_error("Invalid array lengths in calibration file.");
       }
 
@@ -131,7 +109,6 @@ void CalibrationFile::loadCalibration(std::string jsonstring) {
       }
     }
   } catch (const std::exception &exc) {
-    XTRACE(INIT, DEB, "JSON config - invalid json: {%s}", exc.what());
     throw std::runtime_error("Invalid json in calibration file field.");
   }
 }
@@ -167,29 +144,3 @@ const Calibration &CalibrationFile::getCalibration(size_t fecId, size_t vmmId,
   return vmm[chNo];
 }
 
-std::string CalibrationFile::debug() const {
-  std::string ret;
-  for (size_t fecID = 0; fecID < Calibrations.size(); ++fecID) {
-    const auto &fec = Calibrations[fecID];
-    if (!fec.empty()) {
-      ret += fmt::format("\n  FEC={}", fecID);
-    }
-    for (size_t vmmID = 0; vmmID < fec.size(); ++vmmID) {
-      const auto &vmm = fec[vmmID];
-      if (!vmm.empty()) {
-        ret += fmt::format("\n{:>8}{:<10}", "vmm=", vmmID);
-      }
-      for (size_t chipNo = 0; chipNo < vmm.size(); ++chipNo) {
-        const auto &cal = vmm[chipNo];
-        if ((chipNo % 8) == 0)
-          ret += fmt::format("{:<7}", "\n");
-        ret += fmt::format("{:<5}", fmt::format("[{}]", chipNo)) +
-               fmt::format("{:>7}", cal.adc_offset) +
-               ((cal.adc_slope >= 0.0) ? " +" : " -") +
-               fmt::format("{:>5}x    ", std::fabs(cal.adc_slope));
-      }
-    }
-  }
-  return ret;
-}
-} // namespace Gem

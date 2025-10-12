@@ -1,3 +1,25 @@
+/***************************************************************************
+**  vmm-sdat
+**  Data analysis program for VMM3a data
+**
+**  This program is free software: you can redistribute it and/or modify
+**  it under the terms of the GNU General Public License as published by
+**  the Free Software Foundation, either version 3 of the License, or
+**  (at your option) any later version.
+**
+**  You should have received a copy of the GNU General Public License
+**  along with this program.  If not, see http://www.gnu.org/licenses/.
+**
+****************************************************************************
+**  Contact: dorothea.pfeiffer@cern.ch
+**  Date: 12.10.2025
+**  Version: 1.0.0
+****************************************************************************
+**
+**  vmm-sdat
+**  Statistics.h
+**
+****************************************************************************/
 #pragma once
 
 #include <fstream>
@@ -14,7 +36,7 @@ private:
   bool CheckDetectorParameters(std::string name, std::vector<double> &v);
 
 public:
-  Configuration() = default;
+  Configuration();
   ~Configuration() = default;
   bool ParseCommandLine(int argc, char **argv);
 
@@ -126,8 +148,6 @@ public:
   bool fFound = false;
   bool vmmsFound = false;
   int pAlgo = 0;
-  bool pIsPcap = false;
-  bool pShowStats = true;
   bool pTimeZero = false;
   bool pHighMultiplicity = false;
   bool pIsPads[16];
@@ -136,4 +156,6 @@ public:
   int pPositions1[NUMFECS][16][64];
   int pDetectors[NUMFECS][16];
   int pPlanes[NUMFECS][16];
+  std::string pLogLevel = "INFO";
+  std::vector<std::string> pLogLevels = {"TRACE", "DEBUG", "INFO", "STATUS", "WARNING", "ERROR", "FATAL"};
 };

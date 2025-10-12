@@ -1,3 +1,25 @@
+/***************************************************************************
+**  vmm-sdat
+**  Data analysis program for VMM3a data
+**
+**  This program is free software: you can redistribute it and/or modify
+**  it under the terms of the GNU General Public License as published by
+**  the Free Software Foundation, either version 3 of the License, or
+**  (at your option) any later version.
+**
+**  You should have received a copy of the GNU General Public License
+**  along with this program.  If not, see http://www.gnu.org/licenses/.
+**
+****************************************************************************
+**  Contact: dorothea.pfeiffer@cern.ch
+**  Date: 12.10.2025
+**  Version: 1.0.0
+****************************************************************************
+**
+**  vmm-sdat
+**  Statistics.h
+**
+****************************************************************************/
 #pragma once
 #include "RootFile.h"
 #include "Statistics.h"
@@ -35,8 +57,6 @@ public:
                      double maxDeltaTime);
   int ClusterByPad(std::pair<uint8_t, uint8_t> dp, ClusterContainer &cluster,
                    double maxDeltaTime);
-
-
   
   int MatchClustersDetector(uint8_t det);
   int MatchClustersDetector_HighMultiplicity(uint8_t det);
@@ -50,9 +70,9 @@ public:
   void FillCalibHistos(uint16_t fec, uint8_t vmm, uint8_t ch, float adc,
                        float adc_corrected, float chip_time,
                        float chip_time_corrected);
-#ifdef USE_ROOT
+
   void createRootFile(string fileName);
-#endif
+
 private:
   void AlgorithmUTPC(int idx_min_largest_time, int idx_max_largest_time,
                      std::vector<double> &vADC, std::vector<double> &vStrips,

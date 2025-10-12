@@ -18,7 +18,6 @@
 static const int MaxVMMs{16}; ///Maximum number of VMMs per FEC card
 static const int MaxFECs{16}; ///Maximum number of FECs per EFU
 
-namespace Gem {
 
   struct ParserStats {
   // Input thread
@@ -135,4 +134,3 @@ public:
   std::string dataFormat;
 
  };
-}

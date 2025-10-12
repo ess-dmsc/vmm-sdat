@@ -1,6 +1,30 @@
+/***************************************************************************
+**  vmm-sdat
+**  Data analysis program for VMM3a data
+**
+**  This program is free software: you can redistribute it and/or modify
+**  it under the terms of the GNU General Public License as published by
+**  the Free Software Foundation, either version 3 of the License, or
+**  (at your option) any later version.
+**
+**  You should have received a copy of the GNU General Public License
+**  along with this program.  If not, see http://www.gnu.org/licenses/.
+**
+****************************************************************************
+**  Contact: dorothea.pfeiffer@cern.ch
+**  Date: 12.10.2025
+**  Version: 1.0.0
+****************************************************************************
+**
+**  vmm-sdat
+**  RootFile.cpp
+**
+****************************************************************************/
+
 #include "RootFile.h"
 #include "TBufferJSON.h"
 #include "TMath.h"
+#include <log.h>
 #include <RooDouble.h>
 #include <TStyle.h>
 #include <time.h>
@@ -14,6 +38,7 @@ RootFile *RootFile::GetInstance() { return m_rootFile; }
 RootFile *RootFile::GetInstance(Configuration &config) {
   if (!m_rootFile) {
     m_rootFile = new RootFile(config);
+    corryvreckan::Log::setSection("RootFile");
   }
 
   return m_rootFile;
@@ -555,7 +580,7 @@ RootFile::RootFile(Configuration &config) : m_config(config) {
   }
   if (m_config.useCalibration) {
   }
-  std::cout << "ROOT file " << m_fileName << " created!" << std::endl;
+  LOG(STATUS) << "ROOT file " << m_fileName << " created!";
 }
 
 RootFile::~RootFile() {}

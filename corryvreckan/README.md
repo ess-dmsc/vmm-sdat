@@ -28,7 +28,8 @@ This folder contains the following resources for testing the module:
 - **`GEM_telescospe.geo`** – Example geometry file.
 - **`output/`** – Empty folder that will contain histograms after running the example.
 - **`example.root`** – Example vmm-sdat data file to be read into Corryvreckan.
-- **`sort_tree.cpp`** – Utility script to pre-sort vmm-sdat data by timestamp.  
+- **`duplicate_detector.C`** – Utility script to duplicated a detector in a root tree.  
+- **`sort_tree.C`** – Utility script to pre-sort vmm-sdat data by timestamp.  
   By default, `EventLoaderVMMSDAT` sorts clusters during runtime. For repeated runs on large files, pre-sorting with this script can significantly improve performance.
 
 ---

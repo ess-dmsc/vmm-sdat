@@ -7,8 +7,6 @@
 ///
 /// Using the Wireshark API https://www.tcpdump.org/manpages/pcap.3pcap.html
 //===----------------------------------------------------------------------===//
-#define FMT_HEADER_ONLY
-#include <fmt/format.h>
 #include <algorithm>
 #include <arpa/inet.h>
 #include <cassert>
@@ -20,8 +18,7 @@
 #include <netinet/udp.h>
 #include <parser/ReaderPcap.h>
 #include <sstream>
-
-// GCOVR_EXCL_START
+#include <log.h>
 
 // Protocol identifiers
 // Header and data location specifications
@@ -162,10 +159,20 @@ void ReaderPcap::printPacket(unsigned char *Data, size_t Size) {
 }
 
 void ReaderPcap::printStats() {
-  fmt::print("Total packets        {}\n", Stats.PacketsTotal);
-  fmt::print("Truncated packets    {}\n", Stats.PacketsTruncated);
-  fmt::print("  ipproto UDP        {}\n", Stats.IpProtoUDP);
-  fmt::print("  other              {}\n", Stats.PacketsNoMatch);
-  fmt::print("Total bytes          {}\n", Stats.BytesTotal);
+  corryvreckan::Log::setSection("ReaderPcap");
+
+  LOG(INFO) << "****************************************";
+  LOG(INFO) << "UDP packet statistics";
+  LOG(INFO) << "****************************************";
+  LOG(INFO) << "First packet date: " <<firstPacketDate;
+  LOG(INFO) << "First packet seconds: " <<std::setprecision(1) << std::fixed <<firstPacketSeconds;
+  LOG(INFO) << "Last packet date: " <<lastPacketDate;
+  LOG(INFO) << "Last packet seconds: " <<std::setprecision(1) << std::fixed << lastPacketSeconds;
+  LOG(INFO) << "Total packets: " << Stats.PacketsTotal;
+  LOG(INFO) << "Truncated packets: " << Stats.PacketsTruncated;
+  LOG(INFO) << "ipproto udp: " << Stats.IpProtoUDP;
+  LOG(INFO) << "others: " << Stats.PacketsNoMatch;
+  LOG(INFO) << "Total bytes: " << Stats.BytesTotal;
+  LOG(INFO) << "****************************************";
 }
-// GCOVR_EXCL_STOP
+
