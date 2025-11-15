@@ -32,7 +32,7 @@ This module uses the **`clusters_detector`** tree, which contains clusters alrea
 ---
 
 ## Prerequisites
-The user needs to install [Corryvreckan](https://gitlab.cern.ch/corryvreckan/corryvreckan) first. Then the folder `EventLoaderVMMSDAT` has to be copied into the `src/modules` folder of Corryvreckan. After this, run again `cmake` and `make` to build the new module `EventLoaderVMMSDAT`. 
+The user needs to install [Corryvreckan](https://gitlab.cern.ch/corryvreckan/corryvreckan) first. Then the folder `EventLoaderVMM` has to be copied into the `src/modules` folder of Corryvreckan. After this, run again `cmake` and `make` to build the new module `EventLoaderVMM`. 
 
 ---
 
@@ -61,11 +61,6 @@ sort_clusters = true           # Sort clusters by time (recommended)
 
 # Detector mapping
 detector_map = [[1, "GEMXY1"], [2, "GEMXY2"], [3, "GEMXY3"], [4, "GEMXY4"]]
-
-# Optional: Detector geometry corrections (pitch, offsets)
-detector_position_scale_map   = [["GEMXY1", 0.4], ["GEMXY2", 0.4], ["GEMXY3", 0.4], ["GEMXY4", 0.4]]
-detector_position_shift_x_map = [["GEMXY1", 0.0], ["GEMXY2", 0.0], ["GEMXY3", 0.0], ["GEMXY4", 0.0]]
-detector_position_shift_y_map = [["GEMXY1", 0.0], ["GEMXY2", 0.0], ["GEMXY3", 0.0], ["GEMXY4", 0.0]]
 
 # Optional: Trigger (default: TRIGGER)
 detector_trigger   = "GEMXY3"

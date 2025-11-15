@@ -13,8 +13,7 @@
 
 using namespace corryvreckan;
 
-EventLoaderVMM::EventLoaderVMM(Configuration &config, std::vector<std::shared_ptr<Detector>> detectors)
-    : Module(config, std::move(detectors)) {}
+EventLoaderVMM::EventLoaderVMM(Configuration &config, std::vector<std::shared_ptr<Detector>> detectors) : Module(config, std::move(detectors)) {}
 
 void EventLoaderVMM::initialize() {
   for (auto &detector : get_detectors()) {
@@ -54,7 +53,6 @@ void EventLoaderVMM::initialize() {
     return;
   }
 
- 
   position_algorithm_ = config_.get<std::string>("position_algorithm", "cog");
   time_algorithm_ = config_.get<std::string>("time_algorithm", "cog");
   time_choice_ = config_.get<std::string>("time_choice", "time0");
@@ -63,44 +61,8 @@ void EventLoaderVMM::initialize() {
 
   sort_clusters_ = config_.get<bool>("sort_clusters", true);
 
-  if (config_.has("detector_position_scale_map")) {
-    det_pos_scale_ = config_.getMap<std::string, double>("detector_position_scale_map");
-  }
-  if (config_.has("detector_position_shift_x_map")) {
-    det_pos_shift_x_ = config_.getMap<std::string, double>("detector_position_shift_x_map");
-  }
-  if (config_.has("detector_position_shift_y_map")) {
-    det_pos_shift_y_ = config_.getMap<std::string, double>("detector_position_shift_y_map");
-  }
-
-  for (auto &detm : detector_map_) {
-    if (det_pos_scale_.find(detm.second) == det_pos_scale_.end()) {
-      LOG(WARNING) << "Position scale factor for detector " << detm.second << " is not set in config file, using 1.0";
-      det_pos_scale_[detm.second] = 1.0;
-    }
-
-    if (det_pos_shift_x_.find(detm.second) == det_pos_shift_x_.end()) {
-      LOG(WARNING) << "Position shift in x for detector " << detm.second << " is not set in config file, using 0.0";
-      det_pos_shift_x_[detm.second] = 0.0;
-    }
-
-    if (det_pos_shift_y_.find(detm.second) == det_pos_shift_y_.end()) {
-      LOG(WARNING) << "Position shift in y for detector " << detm.second << " is not set in config file, using 0.0";
-      det_pos_shift_y_[detm.second] = 0.0;
-    }
-  }
-
   for (auto &detm : detector_map_) {
     LOG(INFO) << "Detector map : [id, name]  " << detm.first << "  " << detm.second;
-  }
-  for (auto &detm : det_pos_scale_) {
-    LOG(INFO) << "Detector position scale factor  : [name, scale]  " << detm.first << "  " << detm.second;
-  }
-  for (auto &detm : det_pos_shift_x_) {
-    LOG(INFO) << "Detector position shift x : [name, shift_x]  " << detm.first << "  " << detm.second;
-  }
-  for (auto &detm : det_pos_shift_y_) {
-    LOG(INFO) << "Detector position shift y : [name, shift_y]  " << detm.first << "  " << detm.second;
   }
 
   LOG(INFO) << "Trigger: " << detector_trigger_;
@@ -112,7 +74,7 @@ void EventLoaderVMM::initialize() {
 
   // Initialise member variables
   eventNumber_ = 0;
-  //Start at -1, since in run currentCluster is directly incremented to 0
+  // Start at -1, since in run currentCluster is directly incremented to 0
   currentCluster_ = -1;
 
   input_file_name_ = config_.get<std::string>("input_file");
@@ -141,35 +103,35 @@ void EventLoaderVMM::initialize() {
   event_tree_->SetBranchAddress("size0", &size0_, &b_size0);
   event_tree_->SetBranchAddress("pos0", &pos0_, &b_pos0);
   event_tree_->SetBranchAddress("pos1", &pos1_, &b_pos1);
-  
-  //Check first existence of these branches for extended functionality
+
+  // Check first existence of these branches for extended functionality
   if (event_tree_->GetBranch("size1")) {
     event_tree_->SetBranchAddress("size1", &size1_, &b_size1);
-  } 
+  }
   if (event_tree_->GetBranch("adc1")) {
     event_tree_->SetBranchAddress("adc1", &adc1_, &b_adc1);
-  } 
+  }
   if (event_tree_->GetBranch("time1")) {
     event_tree_->SetBranchAddress("time1", &time1_, &b_time1);
   }
   if (event_tree_->GetBranch("time0_charge2")) {
     event_tree_->SetBranchAddress("time0_charge2", &time0_charge2_, &b_time0_charge2);
-  } 
+  }
   if (event_tree_->GetBranch("time1_charge2")) {
     event_tree_->SetBranchAddress("time1_charge2", &time1_charge2_, &b_time1_charge2);
-  } 
+  }
   if (event_tree_->GetBranch("time0_utpc")) {
     event_tree_->SetBranchAddress("time0_utpc", &time0_utpc_, &b_time0_utpc);
-  } 
+  }
   if (event_tree_->GetBranch("time1_utpc")) {
     event_tree_->SetBranchAddress("time1_utpc", &time1_utpc_, &b_time1_utpc);
   }
   if (event_tree_->GetBranch("time0_algo")) {
     event_tree_->SetBranchAddress("time0_algo", &time0_algo_, &b_time0_algo);
-  } 
+  }
   if (event_tree_->GetBranch("time1_algo")) {
     event_tree_->SetBranchAddress("time1_algo", &time1_algo_, &b_time1_algo);
-  } 
+  }
   if (event_tree_->GetBranch("pos0_charge2")) {
     event_tree_->SetBranchAddress("pos0_charge2", &pos0_charge2_, &b_pos0_charge2);
   }
@@ -187,14 +149,13 @@ void EventLoaderVMM::initialize() {
   }
   if (event_tree_->GetBranch("pos1_algo")) {
     event_tree_->SetBranchAddress("pos1_algo", &pos1_algo_, &b_pos1_algo);
-  }  
-     
+  }
 
   if ((number_clusters_to_read_ < 0) || (number_clusters_to_read_ > event_tree_->GetEntries())) {
     number_clusters_to_read_ = event_tree_->GetEntries();
   }
-  LOG(INFO) << "Set to skip " << number_clusters_to_skip_ << " and then read " << number_clusters_to_read_ << " clusters form the input file.";
-  LOG(INFO) << "Use time window of " << time_window_ << " for collecting clustres to event.";
+  LOG(INFO) << "Set to skip " << number_clusters_to_skip_ << " and then read " << number_clusters_to_read_ << " clusters from the input file.";
+  LOG(INFO) << "Use time window of " << time_window_ << " to allocate clusters to event.";
 
   loop();
   input_file_->Close();
@@ -202,12 +163,10 @@ void EventLoaderVMM::initialize() {
 
 StatusCode EventLoaderVMM::run(const std::shared_ptr<Clipboard> &clipboard) {
 
-
   std::map<std::string, ClusterVector> deviceClusters;
   ++currentCluster_;
   if (static_cast<size_t>(currentCluster_) < runClusters_.size()) {
-    while (!triggered(runClusters_[static_cast<size_t>(currentCluster_)]->getDetectorID(), runClusters_[static_cast<size_t>(currentCluster_)]->row(), runClusters_[static_cast<size_t>(currentCluster_)]->column(),
-                      runClusters_[static_cast<size_t>(currentCluster_)]->charge())) {                
+    while (!triggered(runClusters_[static_cast<size_t>(currentCluster_)]->getDetectorID(), runClusters_[static_cast<size_t>(currentCluster_)]->row(), runClusters_[static_cast<size_t>(currentCluster_)]->column(), runClusters_[static_cast<size_t>(currentCluster_)]->charge())) {
       if (static_cast<size_t>(++currentCluster_) == runClusters_.size()) {
         LOG(INFO) << "All data read from the file! EndRun.";
         return StatusCode::Failure;
@@ -216,11 +175,11 @@ StatusCode EventLoaderVMM::run(const std::shared_ptr<Clipboard> &clipboard) {
   } else {
     LOG(INFO) << "All data read from the file! EndRun.";
     return StatusCode::Failure;
-  }  
-  
+  }
+
   std::shared_ptr<Cluster> ccluster = runClusters_[static_cast<size_t>(currentCluster_)];
   double time_window = time_window_;
-    
+
   // These two loops will add all clusters in the time window around selected one, assuming the vector is time sorted
   std::map<std::string, size_t> nclsev;
   std::for_each(detector_map_.begin(), detector_map_.end(), [&](const auto &pp) { nclsev[pp.second] = 0; });
@@ -234,8 +193,8 @@ StatusCode EventLoaderVMM::run(const std::shared_ptr<Clipboard> &clipboard) {
     ++cluster_after;
   }
 
-  //cluster_before has to be type int, since it can get negative values
-  //if it is size_t, it gets huge positive values leading to a segmentation fault
+  // cluster_before has to be type int, since it can get negative values
+  // if it is size_t, it gets huge positive values leading to a segmentation fault
   int cluster_before = currentCluster_ - 1;
   while (cluster_before >= 0 && (std::abs(runClusters_[static_cast<size_t>(cluster_before)]->timestamp() - eve_timestamp) <= time_window)) {
     std::shared_ptr<Cluster> jclust = runClusters_[static_cast<size_t>(static_cast<size_t>(cluster_before))];
@@ -261,8 +220,7 @@ StatusCode EventLoaderVMM::run(const std::shared_ptr<Clipboard> &clipboard) {
     }
     clipboard->putData(pixels, detClustItr.first);
     clipboard->putData(detClustItr.second, detClustItr.first);
-    LOG(INFO) << "Event " << eventNumber_ << ": has " << detClustItr.second.size() << " clusters for device " << detClustItr.first
-              << "  Current trigger detector cluster: " << currentCluster_;
+    LOG(TRACE) << "Event " << eventNumber_ << ": has " << detClustItr.second.size() << " clusters for device " << detClustItr.first << "  Current trigger detector cluster: " << currentCluster_;
   }
   // Increment event counter
   eventNumber_++;
@@ -276,13 +234,31 @@ StatusCode EventLoaderVMM::run(const std::shared_ptr<Clipboard> &clipboard) {
   });
   totalClusters_->Fill(static_cast<double>(nclstot));
 
+  bool all_clusters = true;
+  bool no_clusters = true;
+  for (auto &detector : get_detectors()) {
+    if ((!detector->hasRole(DetectorRole::AUXILIARY)) && (!detector->hasRole(DetectorRole::DUT))) {
+      if (nclsev[detector->getName()] == 0) {
+        all_clusters = false;
+      }
+      if (nclsev[detector->getName()] >= 1) {
+        no_clusters = false;
+      }
+    }
+  }
+
+  if (all_clusters) {
+    totalClusters_->Fill(-1.0);
+  }
+  if (no_clusters) {
+    totalClusters_->Fill(-2.0);
+  }
+
   // Return value telling analysis to keep running
   return StatusCode::Success;
 }
 
-void EventLoaderVMM::finalize(const std::shared_ptr<ReadonlyClipboard> &) { 
-
-}
+void EventLoaderVMM::finalize(const std::shared_ptr<ReadonlyClipboard> &) {}
 
 void EventLoaderVMM::loop() {
   std::map<std::string, size_t> detposmap;
@@ -290,33 +266,45 @@ void EventLoaderVMM::loop() {
   for (auto &detector : get_detectors()) {
     detposmap[detector->getName()] = ind++;
     Configuration config = detector->getConfiguration();
-    double size_x = 0;
-    double size_y = 0;
-    double pitch_x = 0;
     if (config.has("number_of_pixels") && config.has("pixel_pitch")) {
-      size_x = detector->getSize().x();
-      size_y = detector->getSize().y();
-      det_pos_shift_x_[detector->getName()] = (-0.5 * size_x);
-      det_pos_shift_y_[detector->getName()] = (-0.5 * size_y);
-      pitch_x = detector->getPitch().x();
-      det_pos_scale_[detector->getName()] = pitch_x;
+      det_size_x_[detector->getName()] = detector->getSize().x();
+      det_size_y_[detector->getName()] = detector->getSize().y();
+      det_pitch_x_[detector->getName()] = detector->getPitch().x();
+      det_pitch_y_[detector->getName()] = detector->getPitch().y();
+      LOG(INFO) << "Detector: " << detector->getName() << ": scale_x: " << det_pitch_x_[detector->getName()] << ", shift_x: " <<0.5*det_pitch_x_[detector->getName()] -0.5 * det_size_x_[detector->getName()];
+      LOG(INFO) << "Detector: " << detector->getName() << ": scale_y: " << det_pitch_y_[detector->getName()] << ", shift_y: " << 0.5*det_pitch_y_[detector->getName()] -0.5 * det_size_y_[detector->getName()];
     } else {
-      det_pos_scale_[detector->getName()] = 1.0;
-      det_pos_shift_x_[detector->getName()] = 0.0;
-      det_pos_shift_y_[detector->getName()] = 0.0;
+      if (!detector->hasRole(DetectorRole::AUXILIARY)) {
+        LOG(ERROR) << "Detector " << detector->getName() << " does not have number of pixels and pitch defined in geometry!";
+      }
+      det_size_x_[detector->getName()] = 0.0;
+      det_size_y_[detector->getName()] = 0.0;
+      det_pitch_x_[detector->getName()] = 0.0;
+      det_pitch_y_[detector->getName()] = 0.0;
+    }
+    if (det_size_x_[detector->getName()] == det_pitch_x_[detector->getName()]) {
+      if (det_size_y_[detector->getName()] != det_pitch_y_[detector->getName()]) {
+      	LOG(INFO) << "1D-Detector: " << detector->getName() << ": x=0";
+      }
+      else {
+      	LOG(INFO) << "0D-Detector: " << detector->getName() << ": x=0, y=0";
+      }
+    } else {
+      if (det_size_y_[detector->getName()] == det_pitch_y_[detector->getName()]) {
+        LOG(INFO) << "1D-Detector: " << detector->getName() << ": y=0";
+      }
     }
   }
 
   Long64_t last_entry = number_clusters_to_skip_ + number_clusters_to_read_;
   if (last_entry > event_tree_->GetEntries())
     last_entry = event_tree_->GetEntries();
-  LOG(INFO) << "Reading data from the tree starting form entry " << number_clusters_to_skip_ << " till " << last_entry;
+  LOG(INFO) << "Reading data from the tree starting from entry " << number_clusters_to_skip_ << " till " << last_entry;
 
   for (Long64_t i = number_clusters_to_skip_; i < last_entry; i++) {
     event_tree_->GetEntry(i);
     if (detector_map_.find(det_) == detector_map_.end())
       continue;
-
     auto cluster = std::make_shared<Cluster>();
     std::string detName = detector_map_[det_];
 
@@ -382,19 +370,33 @@ void EventLoaderVMM::loop() {
     cluster->setTimestamp(the_time);
     cluster->setDetectorID(detName);
     cluster->setCharge(the_charge);
+    
+    if (det_size_x_[detName] == det_pitch_x_[detName]) {
+      the_pos0=0;
+    }
+    if (det_size_y_[detName] == det_pitch_y_[detName]) {
+      the_pos1=0;
+    }
+    
+    double scale_x = det_pitch_x_[detName];
+    double scale_y = det_pitch_y_[detName];
+    //The correct shift also shifts the pixel position to the center of the pixel
+    double shift_x = 0.5*det_pitch_x_[detName]-0.5 * det_size_x_[detName];
+    double shift_y = 0.5*det_pitch_y_[detName]-0.5 * det_size_y_[detName];
 
-    PositionVector3D<Cartesian3D<double>> positionLocal(pos0_ * det_pos_scale_[detName] + det_pos_shift_x_[detName],
-                                                        pos1_ * det_pos_scale_[detName] + det_pos_shift_y_[detName], 0.0);
+    PositionVector3D<Cartesian3D<double>> positionLocal(the_pos0 * scale_x + shift_x, the_pos1 * scale_y + shift_y, 0.0);
     std::shared_ptr<Detector> m_detector = get_detectors().at(detposmap[detName]);
     auto positionGlobal = m_detector->localToGlobal(positionLocal);
     LOG(TRACE) << "Detector: " << detName << ": cluster local position: " << positionLocal;
-    LOG(TRACE) << "Detector: " << detName << ": cluster global position: " << positionGlobal;
+    LOG(TRACE) << "Detector: " << detName << ": cluster global position: " << positionGlobal; 
+       
     clustermap_[detName]->Fill(the_pos0, the_pos1);
     cluster->setClusterCentreLocal(positionLocal);
     cluster->setClusterCentre(positionGlobal);
-
-    cluster->setColumn(the_pos0);
+	cluster->setColumn(the_pos0);
     cluster->setRow(the_pos1);
+    
+
     cluster->setError(m_detector->getSpatialResolution(the_pos0, the_pos1));
 
     TMatrixD errorMatrix(3, 3);

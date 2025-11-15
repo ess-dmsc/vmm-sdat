@@ -61,7 +61,18 @@ namespace corryvreckan {
         void finalize(const std::shared_ptr<ReadonlyClipboard>& clipboard) override;
 
     private:
+    	/**
+         * @brief [Loop over all clusters in tree]
+         * The function loops over all clusters in the vmm-sdat root tree
+         * It reads clusters from the vmm-sdat clusters, create a std::make_shared<Cluster>
+         * and puts them into the ClusterVector runClusters_.
+         * It then optionally sorts the clusters in runClusters_ by time.
+         */
         void loop();
+        
+        /**
+         * @brief [triggered]
+         */
 		bool triggered(std::string name, double pos0, double pos1, double charge);
       
     private:
@@ -69,9 +80,11 @@ namespace corryvreckan {
         std::map<std::string, TH2D*>  hitmap_;
         std::map<int, std::string>    detector_map_;
 
-        std::map<std::string, double> det_pos_scale_;   // should be moved to detector geometry definition class
-        std::map<std::string, double> det_pos_shift_x_;   // should be moved to detector geometry definition class
-        std::map<std::string, double> det_pos_shift_y_;   // should be moved to detector geometry definition class
+		//Geometry parameters are read from geometry file
+        std::map<std::string, double> det_size_x_;
+        std::map<std::string, double> det_size_y_;
+        std::map<std::string, double> det_pitch_x_;
+        std::map<std::string, double> det_pitch_y_;
 
         ClusterVector                 runClusters_;
 
