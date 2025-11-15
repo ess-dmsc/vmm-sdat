@@ -6,7 +6,7 @@ CORRYVRECKAN_GLOBAL_MODULE(MODULE_NAME)
 
 # Add source files to library
 CORRYVRECKAN_MODULE_SOURCES(${MODULE_NAME}
-    EventLoaderVMMSDAT.cpp
+    EventLoaderVMM.cpp
     # ADD SOURCE FILES HERE...
 )
 

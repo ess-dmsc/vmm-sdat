@@ -1,8 +1,8 @@
 /**
  * @file
- * @brief Definition of module EventLoaderVMMSDAT
+ * @brief Definition of module EventLoaderVMM
  *
- * @copyright Copyright (c) 2015-2024 CERN and the Corryvreckan authors.
+ * @copyright Copyright (c) 2015-2025 CERN and the Corryvreckan authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -22,12 +22,20 @@
 #include "objects/Track.hpp"
 
 namespace corryvreckan {
-    /** @ingroup Modules
-     * @brief Module to do function
-     *
-     * More detailed explanation of module
+  	/**
+     * @brief EventLoaderVMM loads clustered VMM3a data from the root tree
+     * clusters_detector, that is the output of the vmm-sdat software.
+     * https://github.com/ess-dmsc/vmm-sdat
+     * 
+     * EventLoaderVMM carries out the following steps:
+     * 1) Sorts the tree clusters_detector by cluster time
+     * 2) Loops over all vmm-sdat clusters
+     * 3) Creates corryvreckan clusters using the x/y position and cluster time 
+     
+     * 3) first sorts all clusters in the root tree by time.
+     * and then creates corryvreckan 
      */
-    class EventLoaderVMMSDAT : public Module {
+    class EventLoaderVMM : public Module {
 
     public:
         /**
@@ -35,7 +43,7 @@ namespace corryvreckan {
          * @param config Configuration object for this module as retrieved from the steering file
          * @param detectors Vector of pointers to the detectors
          */
-        EventLoaderVMMSDAT(Configuration& config, std::vector<std::shared_ptr<Detector>> detectors);
+        EventLoaderVMM(Configuration& config, std::vector<std::shared_ptr<Detector>> detectors);
 
         /**
          * @brief [Initialise this module]
@@ -73,7 +81,6 @@ namespace corryvreckan {
         double channel_trigger_;
         double charge_trigger_;
         
-        std::vector<std::string> detector_required_;
         std::unique_ptr<TFile> input_file_;
         TTree       *event_tree_;
         Long64_t number_clusters_to_read_;

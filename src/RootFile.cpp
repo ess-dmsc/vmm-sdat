@@ -578,8 +578,7 @@ RootFile::RootFile(Configuration &config) : m_config(config) {
       }
     }
   }
-  if (m_config.useCalibration) {
-  }
+  corryvreckan::Log::setSection("RootFile");
   LOG(STATUS) << "ROOT file " << m_fileName << " created!";
 }
 

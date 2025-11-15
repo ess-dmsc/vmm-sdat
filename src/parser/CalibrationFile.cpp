@@ -36,10 +36,12 @@ CalibrationFile::CalibrationFile(std::string jsonfile) : CalibrationFile() {
 
 /// \brief parse json string with calibration data
 void CalibrationFile::loadCalibration(std::string jsonstring) {
+  corryvreckan::Log::setSection("CalibrationFile");
   nlohmann::json Root;
   try {
     Root = nlohmann::json::parse(jsonstring);
   } catch (...) {
+  	LOG(ERROR) << "Invalid Json in calibration file";
     throw std::runtime_error("Invalid Json in calibration file.");
   }
 
@@ -65,7 +67,7 @@ void CalibrationFile::loadCalibration(std::string jsonstring) {
           (timewalk_bs.size() > 0 && timewalk_bs.size() != MAX_CH) or
           (timewalk_cs.size() > 0 && timewalk_cs.size() != MAX_CH) or
           (timewalk_ds.size() > 0 && timewalk_ds.size() != MAX_CH)) {
-
+ 	LOG(ERROR) << "Invalid array lengths in calibration file";
         throw std::runtime_error("Invalid array lengths in calibration file.");
       }
 
@@ -109,6 +111,7 @@ void CalibrationFile::loadCalibration(std::string jsonstring) {
       }
     }
   } catch (const std::exception &exc) {
+   	LOG(ERROR) << "Invalid Json in calibration file field";
     throw std::runtime_error("Invalid json in calibration file field.");
   }
 }

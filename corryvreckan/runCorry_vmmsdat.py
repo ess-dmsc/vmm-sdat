@@ -5,7 +5,7 @@ import re
 import sys
 	
 try:	
-	args = ['/Users/dpfeiffe/programming/vmm-data/corryvreckan/bin/corry', '-c', './EventLoaderVMMSDAT.conf']	
+	args = ['/Users/dpfeiffe/programming/vmm-data/corryvreckan/bin/corry', '-c', './EventLoaderVMM.conf']	
 	
 	subprocess.call(args)
 

@@ -713,7 +713,6 @@ int Clusterer::ClusterByStrip(std::pair<uint8_t, uint8_t> dp, ClusterContainer &
         clusterPlane.adcs = std::move(vADC);
 
         m_cluster_id++;
-
         LOG(TRACE) << "Cluster id: " << m_cluster_id;
         clusterPlane.id = static_cast<uint32_t>(m_cluster_id);
         clusterPlane.det = det;
@@ -1392,15 +1391,14 @@ int Clusterer::MatchClustersDetector_HighMultiplicity(uint8_t det) {
             m_stats.SetStatsDetector("ChargeRatio_0_1", det, ratio);
           }
           m_stats.SetStatsDetector("ClusterCntDetector", det, 0);
-        
-                LOG(TRACE) << "Common cluster " <<  (int)det
-  << " id x/id y: " << clusterDetector.id0<< "/" << clusterDetector.id1 << "\n";
-                LOG(TRACE) << "pos x/pos y: " << clusterDetector.pos0 << "/" << clusterDetector.pos0 << "\n";
-                LOG(TRACE) << "time x/time y: " << static_cast<unsigned long long>(clusterDetector.time0) << "/"
-                           << static_cast<unsigned long long>(clusterDetector.time1) << "\n";
-                LOG(TRACE) << "adc x/adc y: " << clusterDetector.adc0 << "/" << clusterDetector.adc1 << "\n";
-                LOG(TRACE) << "size x/size y: " << clusterDetector.size0 << "/" << clusterDetector.size1 << "\n";
-                LOG(TRACE) << "delta time planes: " << (int)clusterDetector.delta_plane_0_1 << "\n";
+		LOG(TRACE) << "Common cluster " <<  (int)det
+<< " id x/id y: " << clusterDetector.id0<< "/" << clusterDetector.id1;
+		LOG(TRACE) << "pos x/pos y: " << clusterDetector.pos0 << "/" << clusterDetector.pos0;
+		LOG(TRACE) << "time x/time y: " << static_cast<unsigned long long>(clusterDetector.time0) << "/"
+				   << static_cast<unsigned long long>(clusterDetector.time1);
+		LOG(TRACE) << "adc x/adc y: " << clusterDetector.adc0 << "/" << clusterDetector.adc1;
+		LOG(TRACE) << "size x/size y: " << clusterDetector.size0 << "/" << clusterDetector.size1;
+		LOG(TRACE) << "delta time planes: " << (int)clusterDetector.delta_plane_0_1;
 
                 m_clusters_detector[det].emplace_back(std::move(clusterDetector));
                 clusterCount++;
@@ -1419,8 +1417,8 @@ void Clusterer::AnalyzeClustersPlane(std::pair<uint8_t, uint8_t> dp) {
     return;
   }
   int cnt = ClusterByTime(dp);
-  LOG(TRACE) << "Number of clusters in detector " << (int)std::get<0>(dp) << " plane " << (int)std::get<1>(dp) << ": " << cnt << "\n";
-
+  corryvreckan::Log::setSection("Clusterer");
+  LOG(TRACE) << "Number of clusters in detector " << (int)std::get<0>(dp) << " plane " << (int)std::get<1>(dp) << ": " << cnt;
   m_hits[dp].clear();
 }
 

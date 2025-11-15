@@ -1,6 +1,6 @@
 /**
  * @file
- * @brief Implementation of module EventLoaderVMMSDAT
+ * @brief Implementation of module EventLoaderVMM
  *
  * @copyright Copyright (c) 2015-2024 CERN and the Corryvreckan authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
@@ -9,16 +9,16 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include "EventLoaderVMMSDAT.h"
+#include "EventLoaderVMM.h"
 
 using namespace corryvreckan;
 
-EventLoaderVMMSDAT::EventLoaderVMMSDAT(Configuration &config, std::vector<std::shared_ptr<Detector>> detectors)
+EventLoaderVMM::EventLoaderVMM(Configuration &config, std::vector<std::shared_ptr<Detector>> detectors)
     : Module(config, std::move(detectors)) {}
 
-void EventLoaderVMMSDAT::initialize() {
+void EventLoaderVMM::initialize() {
   for (auto &detector : get_detectors()) {
-    //LOG(DEBUG) << "Initialise for detector " + detector->getName();
+    LOG(DEBUG) << "Initialise detector " + detector->getName();
     std::string detectorID = detector->getName();
     std::string hhname = detectorID + "_ClusterMap";
     std::string title = detectorID + ": clustermap;x [px];y [px];events";
@@ -54,12 +54,7 @@ void EventLoaderVMMSDAT::initialize() {
     return;
   }
 
-  if (!config_.has("detector_required")) {
-    LOG(ERROR) << "Required detectors have to be defined!";
-    return;
-  }
-  detector_required_ = config_.getArray<std::string>("detector_required");
-
+ 
   position_algorithm_ = config_.get<std::string>("position_algorithm", "cog");
   time_algorithm_ = config_.get<std::string>("time_algorithm", "cog");
   time_choice_ = config_.get<std::string>("time_choice", "time0");
@@ -107,9 +102,7 @@ void EventLoaderVMMSDAT::initialize() {
   for (auto &detm : det_pos_shift_y_) {
     LOG(INFO) << "Detector position shift y : [name, shift_y]  " << detm.first << "  " << detm.second;
   }
-  for (auto &detv : detector_required_) {
-    LOG(INFO) << "Required detector  " << detv;
-  }
+
   LOG(INFO) << "Trigger: " << detector_trigger_;
   LOG(INFO) << "Position algorithm (vmm-sdat): " << position_algorithm_;
   LOG(INFO) << "Time algorithm (vmm-sdat): " << time_algorithm_;
@@ -207,7 +200,7 @@ void EventLoaderVMMSDAT::initialize() {
   input_file_->Close();
 }
 
-StatusCode EventLoaderVMMSDAT::run(const std::shared_ptr<Clipboard> &clipboard) {
+StatusCode EventLoaderVMM::run(const std::shared_ptr<Clipboard> &clipboard) {
 
 
   std::map<std::string, ClusterVector> deviceClusters;
@@ -283,32 +276,15 @@ StatusCode EventLoaderVMMSDAT::run(const std::shared_ptr<Clipboard> &clipboard) 
   });
   totalClusters_->Fill(static_cast<double>(nclstot));
 
-  bool all_zero = true;
-  bool all_at_least_one = true;
-  for (size_t n = 0; n < detector_required_.size(); n++) {
-    if (nclsev[detector_required_[n]] != 0) {
-      all_zero = false;
-    }
-    if (nclsev[detector_required_[n]] < 1) {
-      all_at_least_one = false;
-    }
-  }
-  if (all_zero) {
-    totalClusters_->Fill(-1.0);
-  }
-  if (all_at_least_one) {
-    totalClusters_->Fill(-2.0);
-  }
-
   // Return value telling analysis to keep running
   return StatusCode::Success;
 }
 
-void EventLoaderVMMSDAT::finalize(const std::shared_ptr<ReadonlyClipboard> &) { 
-//LOG(DEBUG) << "Analysed " << eventNumber_ << " events"; 
+void EventLoaderVMM::finalize(const std::shared_ptr<ReadonlyClipboard> &) { 
+
 }
 
-void EventLoaderVMMSDAT::loop() {
+void EventLoaderVMM::loop() {
   std::map<std::string, size_t> detposmap;
   size_t ind = 0;
   for (auto &detector : get_detectors()) {
@@ -441,7 +417,7 @@ void EventLoaderVMMSDAT::loop() {
   }
 }
 
-bool EventLoaderVMMSDAT::triggered(std::string name, double pos0, double pos1, double charge) {
+bool EventLoaderVMM::triggered(std::string name, double pos0, double pos1, double charge) {
   if (name != detector_trigger_) {
     return false;
   }

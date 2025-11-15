@@ -1,15 +1,13 @@
-# EventLoaderVMMSDAT
-
-**Maintainer:** [dorothea.pfeiffer@cern.ch](mailto:dorothea.pfeiffer@cern.ch)  
-**Based on:** `EventLoaderMPGD` by Maryna Borysova [maryna.borysova@weizmann.ac.il](mailto:maryna.borysova@weizmann.ac.il)
-
+# EventLoaderVMM
+  
+**Maintainer:** Maryna Borysova [maryna.borysova@weizmann.ac.il](mailto:maryna.borysova@weizmann.ac.il)
 **Module Type:** *GLOBAL*  
 **Status:** *Immature*  
 
 ---
 
 ## Overview
-`EventLoaderVMMSDAT` is a Corryvreckan module for loading pre-processed VMM3a data.  
+`EventLoaderVMM` is a Corryvreckan module for loading pre-processed VMM3a data.  
 It is derived from the `EventLoaderMPGD` module (by Maryna Borysova, <maryna.borysova@weizmann.ac.il>).
 
 The module reads ROOT files produced by the [vmm-sdat](https://github.com/ess-dmsc/vmm-sdat) analysis program.  
@@ -44,7 +42,7 @@ The user needs to install [Corryvreckan](https://gitlab.cern.ch/corryvreckan/cor
 Add the following section to your Corryvreckan configuration file:
 
 ```toml
-[EventLoaderVMMSDAT]
+[EventLoaderVMM]
 
 # General settings
 #log_level = "INFO"
@@ -76,9 +74,6 @@ channel_trigger=-1.0
 # Optional: charge of the trigger cluster
 charge_trigger=-1.0
 
-#Mandatory
-detector_required  = ["GEMXY1", "GEMXY2", "GEMXY3"]
-
 # Optional: Algorithms for position/time/charge/size
 position_algorithm = "cog"     # [cog | charge2 | utpc | algo]
 time_algorithm     = "cog"     # [cog | charge2 | utpc | algo]
@@ -105,7 +100,7 @@ size_choice        = "plane0"  # [plane0 | plane1 | both]
 Minimal steering file:
 
 ```toml
-[EventLoaderVMMSDAT]
+[EventLoaderVMM]
 input_file = "/data/vmm-sdat/sorted_by_time0_100events.root"
 
 # Event building
