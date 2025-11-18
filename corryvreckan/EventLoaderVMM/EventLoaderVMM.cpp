@@ -57,8 +57,7 @@ void EventLoaderVMM::initialize() {
   time_algorithm_ = config_.get<std::string>("time_algorithm", "cog");
   time_choice_ = config_.get<std::string>("time_choice", "time0");
   charge_choice_ = config_.get<std::string>("charge_choice", "adc0");
-  size_choice_ = config_.get<std::string>("size_choice", "size0");
-
+ 
   sort_clusters_ = config_.get<bool>("sort_clusters", true);
 
   for (auto &detm : detector_map_) {
@@ -100,14 +99,10 @@ void EventLoaderVMM::initialize() {
   event_tree_->SetBranchAddress("time0", &time0_, &b_time0);
   event_tree_->SetBranchAddress("det", &det_, &b_det);
   event_tree_->SetBranchAddress("adc0", &adc0_, &b_adc0);
-  event_tree_->SetBranchAddress("size0", &size0_, &b_size0);
   event_tree_->SetBranchAddress("pos0", &pos0_, &b_pos0);
   event_tree_->SetBranchAddress("pos1", &pos1_, &b_pos1);
 
   // Check first existence of these branches for extended functionality
-  if (event_tree_->GetBranch("size1")) {
-    event_tree_->SetBranchAddress("size1", &size1_, &b_size1);
-  }
   if (event_tree_->GetBranch("adc1")) {
     event_tree_->SetBranchAddress("adc1", &adc1_, &b_adc1);
   }
@@ -207,16 +202,12 @@ StatusCode EventLoaderVMM::run(const std::shared_ptr<Clipboard> &clipboard) {
     // Add dummy pixels as they are needed by the other modules of Corryvreckan
     PixelVector pixels;
     for (auto &dcluster : detClustItr.second) {
-      int cl_size = static_cast<int>(std::round(dcluster->widthX()));
       int cl_col = static_cast<int>(std::round(dcluster->column()));
       int cl_row = static_cast<int>(std::round(dcluster->row()));
       double cl_charge = dcluster->charge();
-      cl_size = 1; // probably one dummy pixel is enough for algorithms to work.
-      for (int pi = 0; pi < cl_size; ++pi) {
-        auto pixel = std::make_shared<Pixel>(std::string(detClustItr.first), cl_col, cl_row, cl_charge, cl_charge, eve_timestamp);
+      auto pixel = std::make_shared<Pixel>(std::string(detClustItr.first), cl_col, cl_row, cl_charge, cl_charge, eve_timestamp);
         pixels.push_back(pixel);
         dcluster->addPixel(pixel.get());
-      }
     }
     clipboard->putData(pixels, detClustItr.first);
     clipboard->putData(detClustItr.second, detClustItr.first);
@@ -314,7 +305,7 @@ void EventLoaderVMM::loop() {
     double the_time = 0;
     double the_time0 = 0;
     double the_time1 = 0;
-
+    
     if (position_algorithm_ == "charge2") {
       the_pos0 = pos0_charge2_;
       the_pos1 = pos1_charge2_;
@@ -358,15 +349,8 @@ void EventLoaderVMM::loop() {
     } else {
       the_charge = static_cast<double>(adc0_);
     }
-
-    if (size_choice_ == "plane1") {
-      cluster->setWidth(1.0, size1_);
-    } else if (size_choice_ == "both") {
-      cluster->setWidth(size0_, size1_);
-    } else {
-      cluster->setWidth(size0_, 1.0);
-    }
-
+	
+	cluster->setWidth(1, 1);
     cluster->setTimestamp(the_time);
     cluster->setDetectorID(detName);
     cluster->setCharge(the_charge);

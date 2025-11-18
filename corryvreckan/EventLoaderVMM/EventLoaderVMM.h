@@ -113,8 +113,6 @@ namespace corryvreckan {
         unsigned char det_;
         unsigned short adc0_;
         unsigned short adc1_;
-        unsigned short size0_;
-        unsigned short size1_;
         double pos0_;
         double pos1_;
         double pos0_charge2_;
@@ -128,7 +126,6 @@ namespace corryvreckan {
         std::string time_algorithm_;
         std::string time_choice_;
         std::string charge_choice_;
-        std::string size_choice_;
         bool sort_clusters_;
 
     // List of branches
@@ -142,9 +139,7 @@ namespace corryvreckan {
        TBranch* b_time1_algo;
        TBranch* b_det;
        TBranch* b_adc0;
-       TBranch* b_adc1;   
-       TBranch* b_size0;
-       TBranch* b_size1;  
+       TBranch* b_adc1;    
        TBranch* b_pos0;
        TBranch* b_pos1;
        TBranch* b_pos0_charge2;

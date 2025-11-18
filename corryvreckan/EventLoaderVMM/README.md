@@ -32,7 +32,7 @@ This module uses the **`clusters_detector`** tree, which contains clusters alrea
 ---
 
 ## Prerequisites
-The user needs to install [Corryvreckan](https://gitlab.cern.ch/corryvreckan/corryvreckan) first. Then the folder `EventLoaderVMM` has to be copied into the `src/modules` folder of Corryvreckan. After this, run again `cmake` and `make` to build the new module `EventLoaderVMM`. 
+The user needs to install [Corryvreckan](https://gitlab.cern.ch/corryvreckan/corryvreckan) first. Then the folder `EventLoaderVMMSDAT` has to be copied into the `src/modules` folder of Corryvreckan. After this, run again `cmake` and `make` to build the new module `EventLoaderVMMSDAT`. 
 
 ---
 
@@ -74,7 +74,6 @@ position_algorithm = "cog"     # [cog | charge2 | utpc | algo]
 time_algorithm     = "cog"     # [cog | charge2 | utpc | algo]
 time_choice        = "plane0"  # [plane0 | plane1 | both]
 charge_choice      = "plane0"  # [plane0 | plane1 | both]
-size_choice        = "plane0"  # [plane0 | plane1 | both]
 ```
 
 ---
