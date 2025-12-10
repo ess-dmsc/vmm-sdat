@@ -50,10 +50,6 @@ int main(int argc, char ** argv) {
   if (!m_config.CreateMapping()) {
     return -1;
   }
-  if (!m_config.CalculateTransform()) {
-    return -1;
-  }
-
   if (m_config.pDataFormat != "SRS" && m_config.pDataFormat != "TRG") {
     return -1;
   }
@@ -95,10 +91,8 @@ int main(int argc, char ** argv) {
     }
     int hits = parser -> receive(buffer, rdsize);
     total_hits += hits;
-
     for (int i = 0; i < hits; i++) {
       auto & d = parser -> data[i];
-
       double timestampOffset = -1.0;
 
       // triggerOffset goes from -1 to 15
@@ -116,7 +110,7 @@ int main(int argc, char ** argv) {
       }
       double srs_timestamp = 0;
       int event_counter = d.triggerCounter;
-      if (m_config.pDataFormat == "SRS") {
+      if (m_config.pDataFormat == "SRS" || m_config.pDataFormat == "srs") {
         srs_timestamp =
           (static_cast < double > (d.fecTimeStamp) * m_config.pBCTime_ns +
             m_config.pOffsetPeriod * timestampOffset);
@@ -129,9 +123,10 @@ int main(int argc, char ** argv) {
       if (firstTime == 0) {
         firstTime = srs_timestamp;
       }
+ 
       double t0_correction = 0;
       std::pair < uint8_t, uint8_t > fec_vmm =
-        std::make_pair(parser -> pd.fecId, d.vmmid);
+        std::make_pair(parser->pd.fecId, d.vmmid);
       auto searchMap = m_config.pFecVMM_time0.find(fec_vmm);
       if (searchMap != m_config.pFecVMM_time0.end()) {
         std::string t0 = m_config.pFecVMM_time0[fec_vmm];
@@ -141,6 +136,7 @@ int main(int argc, char ** argv) {
           t0_correction = std::stod(t0);
         }
       }
+
       srs_timestamp = srs_timestamp - t0_correction;
       auto calib =
         calfile.getCalibration(parser -> pd.fecId, d.vmmid, d.chno);

@@ -60,7 +60,7 @@ public:
   
   int MatchClustersDetector(uint8_t det);
   int MatchClustersDetector_HighMultiplicity(uint8_t det);
-
+  int FillClustersDetector(uint8_t det, uint8_t plane);
   void FinishAnalysis();
 
   void SaveDate(double the_seconds_start, std::string the_date_start,
@@ -89,12 +89,7 @@ private:
   double last_time0 = 0;
   double last_time1 = 0;
   double last_time2 = 0;
-  /*
-  double last_time0_utpc = 0;
-  double last_time1_utpc = 0;
-  double last_time0_charge2 = 0;
-  double last_time1_charge2 = 0;
-*/
+
   uint8_t m_oldVmmId = 0;
   uint8_t m_oldFecId = 0;
 

@@ -56,7 +56,6 @@ void Statistics::CreatePCAPStats(Configuration &config) {
 
 void Statistics::CreateFECStats(Configuration &config) {
   m_counter_names.push_back("TimestampTooLarge");
-  m_counter_names.push_back("TimestampOrderError");
   m_counter_names.push_back("TimestampOverflow");
 
   for (auto const &fec : config.pFecs) {
@@ -64,15 +63,14 @@ void Statistics::CreateFECStats(Configuration &config) {
     m_oldTriggerTimestamp.emplace(std::make_pair(fec, 0));
     m_lastFrameCounter.emplace(std::make_pair(fec, 0));
     m_counters.emplace(std::make_pair(std::make_pair(fec, "TimestampTooLarge"), 0));
-    m_counters.emplace(std::make_pair(std::make_pair(fec, "TimestampOrderError"), 0));
     m_counters.emplace(std::make_pair(std::make_pair(fec, "TimestampOverflow"), 0));
   }
 }
 
 void Statistics::CreateClusterStats(Configuration &config) {
   int size = 0;
-
   for (auto const &det : config.pDets) {
+    int the_det = config.pDets[det.first];
     auto plane0 = std::make_pair(det.first, 0);
     auto plane1 = std::make_pair(det.first, 1);
     auto plane2 = std::make_pair(det.first, 2);
@@ -86,17 +84,17 @@ void Statistics::CreateClusterStats(Configuration &config) {
     if (det.second == 0) {
       m_units.emplace(std::make_pair("DeltaTimeHits", "ns"));
       m_factors.emplace(std::make_pair("DeltaTimeHits", 0.02));
-      m_limits.emplace(std::make_pair("DeltaTimeHits", 1 + config.pDeltaTimeHits[det.first] * m_factors["DeltaTimeHits"]));
+      m_limits.emplace(std::make_pair("DeltaTimeHits", 1 + config.pDeltaTimeHits[the_det] * m_factors["DeltaTimeHits"]));
       m_stats_plane_names.push_back("DeltaTimeHits");
 
       m_units.emplace(std::make_pair("MissingStripsCluster", "strips"));
       m_factors.emplace(std::make_pair("MissingStripsCluster", 1));
-      m_limits.emplace(std::make_pair("MissingStripsCluster", 1 + config.pMissingStripsClusterX[det.first] * m_factors["MissingStripsCluster"]));
+      m_limits.emplace(std::make_pair("MissingStripsCluster", 1 + config.pMissingStripsClusterX[the_det] * m_factors["MissingStripsCluster"]));
       m_stats_plane_names.push_back("MissingStripsCluster");
 
       m_units.emplace(std::make_pair("SpanClusterTime", "ns"));
       m_factors.emplace(std::make_pair("SpanClusterTime", 0.02));
-      m_limits.emplace(std::make_pair("SpanClusterTime", 1 + config.pSpanClusterTime[det.first] * m_factors["SpanClusterTime"]));
+      m_limits.emplace(std::make_pair("SpanClusterTime", 1 + config.pSpanClusterTime[the_det] * m_factors["SpanClusterTime"]));
       m_stats_plane_names.push_back("SpanClusterTime");
 
       m_units.emplace(std::make_pair("ClusterSize", "strips"));
@@ -111,17 +109,17 @@ void Statistics::CreateClusterStats(Configuration &config) {
 
       m_units.emplace(std::make_pair("DeltaTimePlanes_0_1", "ns"));
       m_factors.emplace(std::make_pair("DeltaTimePlanes_0_1", 0.02));
-      m_limits.emplace(std::make_pair("DeltaTimePlanes_0_1", 1 + config.pDeltaTimePlanes[det.first] * m_factors["DeltaTimePlanes_0_1"]));
+      m_limits.emplace(std::make_pair("DeltaTimePlanes_0_1", 1 + config.pDeltaTimePlanes[the_det] * m_factors["DeltaTimePlanes_0_1"]));
       m_stats_detector_names.push_back("DeltaTimePlanes_0_1");
 
       m_units.emplace(std::make_pair("DeltaTimePlanes_1_2", "ns"));
       m_factors.emplace(std::make_pair("DeltaTimePlanes_1_2", 0.02));
-      m_limits.emplace(std::make_pair("DeltaTimePlanes_1_2", 1 + config.pDeltaTimePlanes[det.first] * m_factors["DeltaTimePlanes_1_2"]));
+      m_limits.emplace(std::make_pair("DeltaTimePlanes_1_2", 1 + config.pDeltaTimePlanes[the_det] * m_factors["DeltaTimePlanes_1_2"]));
       m_stats_detector_names.push_back("DeltaTimePlanes_1_2");
 
       m_units.emplace(std::make_pair("DeltaTimePlanes_0_2", "ns"));
       m_factors.emplace(std::make_pair("DeltaTimePlanes_0_2", 0.02));
-      m_limits.emplace(std::make_pair("DeltaTimePlanes_0_2", 1 + config.pDeltaTimePlanes[det.first] * m_factors["DeltaTimePlanes_0_2"]));
+      m_limits.emplace(std::make_pair("DeltaTimePlanes_0_2", 1 + config.pDeltaTimePlanes[the_det] * m_factors["DeltaTimePlanes_0_2"]));
       m_stats_detector_names.push_back("DeltaTimePlanes_0_2");
 
       m_units.emplace(std::make_pair("ChargeRatio_0_1", "%"));
@@ -445,10 +443,10 @@ void Statistics::StatsOutput(int n, long val, std::string stat, long cnt, long c
     }
   } else {
     if (cnt0 > 0 && cnt1 > 0 && cnt2 > 0) {
-      LOG(INFO) << val << " (common cluster in detector, " << std::setprecision(1) << (100 * (double)val / (double)cnt0) << " % plane 0, " << std::setprecision(1) << std::fixed << (100 * (double)val / (double)cnt1) << " % plane 1, "
+      LOG(INFO) << val << " (common cluster in detector, " << std::setprecision(1) << std::fixed << (100 * (double)val / (double)cnt0) << " % plane 0, " << std::setprecision(1) << std::fixed << (100 * (double)val / (double)cnt1) << " % plane 1, "
                 << std::setprecision(1) << std::fixed << (100 * (double)val / (double)cnt2) << " % plane 2)";
     } else if (cnt0 > 0 && cnt1 > 0) {
-      LOG(INFO) << val << " (common cluster in detector, " << std::setprecision(1) << (100 * (double)val / (double)cnt0) << " % plane 0, " << std::setprecision(1) << std::fixed << (100 * (double)val / (double)cnt1) << " % plane 1)";
+      LOG(INFO) << val << " (common cluster in detector, " << std::setprecision(1) << std::fixed << (100 * (double)val / (double)cnt0) << " % plane 0, " << std::setprecision(1) << std::fixed << (100 * (double)val / (double)cnt1) << " % plane 1)";
     } else {
       LOG(INFO) << val << " (" << std::setprecision(1) << std::fixed << (100 * (double)val / (double)cnt) << " %)";
     }

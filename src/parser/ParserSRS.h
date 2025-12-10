@@ -56,10 +56,10 @@ public:
 
   ///< Do NOT rearrange fields, used for casting to data pointer
   struct SRSHeader {
-    uint32_t frameCounter;   /// frame counter packet field
-    uint32_t dataId;         /// data type identifier packet field + ID of the FEC card (0-255)
-    uint32_t udpTimeStamp;   /// Transmission time for UDP packet
-    uint32_t offsetOverflow; /// indicates if marker for vmm was sent in last frame
+    uint32_t frameCounter{0};   /// frame counter packet field
+    uint32_t dataId{0};         /// data type identifier packet field + ID of the FEC card (0-255)
+    uint32_t udpTimeStamp{0};   /// Transmission time for UDP packet
+    uint32_t offsetOverflow{0}; /// indicates if marker for vmm was sent in last frame
   };
 
   /// 
@@ -77,16 +77,16 @@ public:
 
   /// Data related to a single Hit
   struct VMM3Data {
-    uint64_t fecTimeStamp; /// 42 bits can change within a packet so must be here
-    uint16_t bcid;         /// 12 bit - bcid after graydecode
-    uint16_t adc;          /// 10 bit - adc value from vmm readout
-    uint8_t tdc;           ///  8 bit - tdc value from vmm readout
-    uint8_t chno;          ///  6 bit - channel number from readout
-    uint8_t overThreshold; ///  1 bit - over threshold flag for channel from readout
-    uint8_t vmmid;         ///  5 bit - asic identifier - unique id per fec 0 - 15
-    uint8_t timestampOffset; ///  5 bit
-    uint64_t triggerTime; /// Time of the occurence of the FEC trigger signa
-    uint64_t triggerCounter; /// Trigger number
+    uint64_t fecTimeStamp{0}; /// 42 bits can change within a packet so must be here
+    uint16_t bcid{0};         /// 12 bit - bcid after graydecode
+    uint16_t adc{0};          /// 10 bit - adc value from vmm readout
+    uint8_t tdc{0};           ///  8 bit - tdc value from vmm readout
+    uint8_t chno{0};          ///  6 bit - channel number from readout
+    uint8_t overThreshold{0}; ///  1 bit - over threshold flag for channel from readout
+    uint8_t vmmid{0};         ///  5 bit - asic identifier - unique id per fec 0 - 15
+    uint8_t timestampOffset{0}; ///  5 bit
+    uint64_t triggerTime{0}; /// Time of the occurence of the FEC trigger signa
+    uint64_t triggerCounter{0}; /// Trigger number
   };
 
   /// \brief create a data handler for VMM3 SRS data of fixed size Capacity

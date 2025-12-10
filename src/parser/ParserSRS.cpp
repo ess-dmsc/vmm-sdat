@@ -36,7 +36,6 @@ int ParserSRS::parse(uint32_t data1, uint16_t data2, struct VMM3Data *vmm3Data) 
       vmm3Data->triggerTime = markers[idx].triggerTime;
       vmm3Data->triggerCounter = markers[idx].triggerCounter + 1;
     }
-   
     return 1;
   } else {
     /// Marker
@@ -65,7 +64,7 @@ int ParserSRS::parse(uint32_t data1, uint16_t data2, struct VMM3Data *vmm3Data) 
       uint64_t timestamp_42bit = (timestamp_upper_32bit << 10)
         + timestamp_lower_10bit;
       //normal data marker  
-      if(dataFormat == "SRS") {
+      if(dataFormat == "SRS" || dataFormat == "srs") {
          if(markers[idx].fecTimeStamp > timestamp_42bit) {
             if (markers[idx].fecTimeStamp < 0x1FFFFFFF + timestamp_42bit) {
               stats.ParserTimestampSeqErrors++;

@@ -42,8 +42,6 @@ public:
 
   bool PrintUsage(const std::string &errorMessage, char *argv);
   bool CreateMapping();
-  bool CalculateTransform();
-  // bool GetAxes(std::pair<uint8_t, uint8_t> dp);
   bool GetDetectorPlane(std::pair<uint8_t, uint8_t> dp);
   //**************************************************************
   // BEGIN INPUT PARAMETERS
@@ -70,26 +68,7 @@ public:
       {1, 0, 1, 0}, {1, 0, 1, 1}, {1, 0, 1, 2}, {1, 0, 1, 3},
       {1, 1, 1, 6}, {1, 1, 1, 7}, {1, 1, 1, 8}, {1, 1, 1, 9}};
 
-  // The tuples for the axes are defined as follows:
-  // detector (choose a number between 0 and 255)
-  // plane (0 or 1)
-  // flip axis flag (0 or 1)
-  // Using the convention described above, if the axis is NOT FLIPPED:
-  //   - plane 0 is at the bottom and goes from left (0) to right (255)
-  //   - plane 1 is at the right and goes from bottom (0) to top (255)
-  // If the axis is FLIPPED:
-  //   - plane 0 is at the bottom and goes from right (255) to left (0)
-  //   - plane 1 is at the right and goes from top (0) to bottom (255)
-  std::map<std::pair<uint8_t, uint8_t>, uint8_t> pAxes{{{1, 0}, 0},
-                                                       {{1, 1}, 0}};
-
-  std::vector<std::tuple<double, double, double>> pTranslation;
-  std::vector<std::tuple<double, double, double>> pScale;
-  std::vector<std::tuple<double, double, double>> pRotation;
-  std::vector<std::vector<std::string>> pTransform;
-  std::vector<std::tuple<double, double, double, double>> pTransformX;
-  std::vector<std::tuple<double, double, double, double>> pTransformY;
-  std::vector<std::tuple<double, double, double, double>> pTransformZ;
+  
 
   std::vector<double> pMinClusterSize = {1.0};
   std::vector<double> pCoincidentClusterSize = {1.0};

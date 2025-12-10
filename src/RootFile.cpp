@@ -340,58 +340,14 @@ RootFile::RootFile(Configuration &config) : m_config(config) {
         int n0 = m_config.pChannels[dp0];
         int n1 = m_config.pChannels[dp1];
 
-        if (m_config.pTransform.size() != m_config.pDets.size()) {
-          m_min0 = 0;
-          m_min1 = 0;
-          m_max0 = n0;
-          m_max1 = n1;
-          m_bins0 = n0 * BINNING_FACTOR;
-          m_bins1 = n1 * BINNING_FACTOR;
-        }
-        // Transformation is applied
-        else {
-          auto tx = m_config.pTransformX[m_config.pDets[det.first]];
-          auto ty = m_config.pTransformY[m_config.pDets[det.first]];
-          auto tz = m_config.pTransformZ[m_config.pDets[det.first]];
-          double t0 =
-              n0 * std::get<0>(tx) + 0 * std::get<1>(tx) + std::get<3>(tx);
-          double t1 =
-              n0 * std::get<0>(ty) + 0 * std::get<1>(ty) + std::get<3>(ty);
-          double t2 =
-              0 * std::get<0>(tx) + n1 * std::get<1>(tx) + std::get<3>(tx);
-          double t3 =
-              0 * std::get<0>(ty) + n1 * std::get<1>(ty) + std::get<3>(ty);
 
-          if (t0 > m_max0) {
-            m_max0 = t0;
-          }
-          if (t1 > m_max0) {
-            m_max0 = t1;
-          }
-          if (t2 > m_max0) {
-            m_max0 = t2;
-          }
-          if (t3 > m_max0) {
-            m_max0 = t3;
-          }
-          if (t0 < m_min0) {
-            m_min0 = t0;
-          }
-          if (t1 < m_min0) {
-            m_min0 = t1;
-          }
-          if (t2 < m_min0) {
-            m_min0 = t2;
-          }
-          if (t3 < m_min0) {
-            m_min0 = t3;
-          }
-          m_max1 = m_max0;
-          m_min1 = m_min0;
-          m_bins0 = (m_max0 - m_min0) * BINNING_FACTOR;
-          m_bins1 = (m_max1 - m_min1) * BINNING_FACTOR;
-        }
-
+        m_min0 = 0;
+        m_min1 = 0;
+        m_max0 = n0;
+        m_max1 = n1;
+        m_bins0 = n0 * BINNING_FACTOR;
+        m_bins1 = n1 * BINNING_FACTOR;
+        
         name = std::to_string(det.first) + "_delta_time_planes";
         h1 = new TH1D(name.c_str(), name.c_str(), 1000, -500, 500);
         m_TH1D.push_back(h1);
