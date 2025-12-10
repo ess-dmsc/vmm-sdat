@@ -79,23 +79,26 @@ namespace corryvreckan {
         int eventNumber_;
         std::map<std::string, TH2D*>  hitmap_;
         std::map<int, std::string>    detector_map_;
-
+	  
 		//Geometry parameters are read from geometry file
         std::map<std::string, double> det_size_x_;
         std::map<std::string, double> det_size_y_;
         std::map<std::string, double> det_pitch_x_;
         std::map<std::string, double> det_pitch_y_;
-
+        std::map<std::string, std::string>    detector_dimension_;
+  
         ClusterVector                 runClusters_;
 
         std::string input_file_name_;
-        std::string tree_name_;
+        std::string tree_name_detector_;
+        std::string tree_name_plane_;
         std::string detector_trigger_;
         double channel_trigger_;
         double charge_trigger_;
         
         std::unique_ptr<TFile> input_file_;
-        TTree       *event_tree_;
+        TTree       *event_tree_detector_;
+        TTree       *event_tree_plane_;
         Long64_t number_clusters_to_read_;
         Long64_t number_clusters_to_skip_;
         double time_window_;
@@ -121,14 +124,27 @@ namespace corryvreckan {
         double pos1_utpc_;
         double pos0_algo_;
         double pos1_algo_;
+        
+        
+        double time_;
+        double time_charge2_;
+        double time_utpc_;
+        double time_algo_;
 
+        unsigned char plane_;
+        unsigned short adc_;
+        double pos_;
+        double pos_charge2_;
+        double pos_utpc_;
+        double pos_algo_;
+        
         std::string position_algorithm_;
         std::string time_algorithm_;
         std::string time_choice_;
         std::string charge_choice_;
         bool sort_clusters_;
 
-    // List of branches
+        // List of branches tree detector
        TBranch* b_time0;
        TBranch* b_time1;
        TBranch* b_time0_charge2;
@@ -147,7 +163,21 @@ namespace corryvreckan {
        TBranch* b_pos0_utpc;
        TBranch* b_pos1_utpc;
        TBranch* b_pos0_algo;
-       TBranch* b_pos1_algo;              
+       TBranch* b_pos1_algo;    
+       
+       // List of branches tree plane
+   		TBranch* b_det_p;
+  		TBranch* b_plane_p;
+  		TBranch* b_adc_p;
+  		TBranch* b_time_p;
+  		TBranch* b_time_utpc_p;
+  		TBranch* b_time_charge2_p;
+  		TBranch* b_time_algo_p;
+  		TBranch* b_pos_p;
+  		TBranch* b_pos_utpc_p;
+  		TBranch* b_pos_charge2_p;
+  		TBranch* b_pos_algo_p;
+                 
        std::map<std::string, TH2D*> clustermap_{};
        std::map<std::string, TH1D*> numberClustermap_{};
        TH1D*  totalClusters_;

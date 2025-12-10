@@ -49,7 +49,9 @@ Add the following section to your Corryvreckan configuration file:
 input_file = "/path/to/sorted_by_time0_100events.root"
 
 #optional: clusters_detector is default 
-tree_name = "clusters_detector"
+tree_name_detector = "clusters_detector"
+#optional: clusters_plane is default 
+tree_name_plane = "clusters_plane"
 
 # Number of clusters to skip/read
 number_clusters_to_skip = 0
@@ -74,6 +76,7 @@ position_algorithm = "cog"     # [cog | charge2 | utpc | algo]
 time_algorithm     = "cog"     # [cog | charge2 | utpc | algo]
 time_choice        = "plane0"  # [plane0 | plane1 | both]
 charge_choice      = "plane0"  # [plane0 | plane1 | both]
+size_choice        = "plane0"  # [plane0 | plane1 | both]
 ```
 
 ---

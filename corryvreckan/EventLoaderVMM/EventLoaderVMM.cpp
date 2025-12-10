@@ -77,7 +77,8 @@ void EventLoaderVMM::initialize() {
   currentCluster_ = -1;
 
   input_file_name_ = config_.get<std::string>("input_file");
-  tree_name_ = config_.get<std::string>("tree_name", "clusters_detector");
+  tree_name_detector_ = config_.get<std::string>("tree_name_detector", "clusters_detector");
+  tree_name_plane_ = config_.get<std::string>("tree_name_plane", "clusters_plane");
   number_clusters_to_read_ = config_.get<Long64_t>("number_clusters_to_read", -1);
   number_clusters_to_skip_ = config_.get<Long64_t>("number_clusters_to_skip", 0);
 
@@ -89,65 +90,100 @@ void EventLoaderVMM::initialize() {
     return;
   }
 
-  event_tree_ = input_file_->Get<TTree>(tree_name_.c_str());
-
-  if (!event_tree_) {
-    LOG(ERROR) << "Cannot get tree " << tree_name_ << " fdom the inpu file " << input_file_name_;
+  event_tree_detector_ = input_file_->Get<TTree>(tree_name_detector_.c_str());
+  event_tree_plane_ = input_file_->Get<TTree>(tree_name_plane_.c_str());
+ 
+  if (!event_tree_detector_) {
+    LOG(ERROR) << "Cannot get detector tree " << tree_name_detector_ << " from the input file " << input_file_name_;
     return;
   }
-
-  event_tree_->SetBranchAddress("time0", &time0_, &b_time0);
-  event_tree_->SetBranchAddress("det", &det_, &b_det);
-  event_tree_->SetBranchAddress("adc0", &adc0_, &b_adc0);
-  event_tree_->SetBranchAddress("pos0", &pos0_, &b_pos0);
-  event_tree_->SetBranchAddress("pos1", &pos1_, &b_pos1);
-
-  // Check first existence of these branches for extended functionality
-  if (event_tree_->GetBranch("adc1")) {
-    event_tree_->SetBranchAddress("adc1", &adc1_, &b_adc1);
+  if (!event_tree_plane_) {
+    LOG(ERROR) << "Cannot get plane tree " << tree_name_plane_ << " from the input file " << input_file_name_;
+    return;
   }
-  if (event_tree_->GetBranch("time1")) {
-    event_tree_->SetBranchAddress("time1", &time1_, &b_time1);
-  }
-  if (event_tree_->GetBranch("time0_charge2")) {
-    event_tree_->SetBranchAddress("time0_charge2", &time0_charge2_, &b_time0_charge2);
-  }
-  if (event_tree_->GetBranch("time1_charge2")) {
-    event_tree_->SetBranchAddress("time1_charge2", &time1_charge2_, &b_time1_charge2);
-  }
-  if (event_tree_->GetBranch("time0_utpc")) {
-    event_tree_->SetBranchAddress("time0_utpc", &time0_utpc_, &b_time0_utpc);
-  }
-  if (event_tree_->GetBranch("time1_utpc")) {
-    event_tree_->SetBranchAddress("time1_utpc", &time1_utpc_, &b_time1_utpc);
-  }
-  if (event_tree_->GetBranch("time0_algo")) {
-    event_tree_->SetBranchAddress("time0_algo", &time0_algo_, &b_time0_algo);
-  }
-  if (event_tree_->GetBranch("time1_algo")) {
-    event_tree_->SetBranchAddress("time1_algo", &time1_algo_, &b_time1_algo);
-  }
-  if (event_tree_->GetBranch("pos0_charge2")) {
-    event_tree_->SetBranchAddress("pos0_charge2", &pos0_charge2_, &b_pos0_charge2);
-  }
-  if (event_tree_->GetBranch("pos1_charge2")) {
-    event_tree_->SetBranchAddress("pos1_charge2", &pos1_charge2_, &b_pos1_charge2);
-  }
-  if (event_tree_->GetBranch("pos0_utpc")) {
-    event_tree_->SetBranchAddress("pos0_utpc", &pos0_utpc_, &b_pos0_utpc);
-  }
-  if (event_tree_->GetBranch("pos1_utpc")) {
-    event_tree_->SetBranchAddress("pos1_utpc", &pos1_utpc_, &b_pos1_utpc);
-  }
-  if (event_tree_->GetBranch("pos0_algo")) {
-    event_tree_->SetBranchAddress("pos0_algo", &pos0_algo_, &b_pos0_algo);
-  }
-  if (event_tree_->GetBranch("pos1_algo")) {
-    event_tree_->SetBranchAddress("pos1_algo", &pos1_algo_, &b_pos1_algo);
-  }
-
-  if ((number_clusters_to_read_ < 0) || (number_clusters_to_read_ > event_tree_->GetEntries())) {
-    number_clusters_to_read_ = event_tree_->GetEntries();
+  if(tree_name_detector_ == "clusters_detector") {
+	  event_tree_detector_->SetBranchAddress("time0", &time0_, &b_time0);
+	  event_tree_detector_->SetBranchAddress("det", &det_, &b_det);
+	  event_tree_detector_->SetBranchAddress("adc0", &adc0_, &b_adc0);
+	  event_tree_detector_->SetBranchAddress("pos0", &pos0_, &b_pos0);
+	  event_tree_detector_->SetBranchAddress("pos1", &pos1_, &b_pos1);
+	
+	  // Check first existence of these branches for extended functionality
+	  if (event_tree_detector_->GetBranch("adc1")) {
+		event_tree_detector_->SetBranchAddress("adc1", &adc1_, &b_adc1);
+	  }
+	  if (event_tree_detector_->GetBranch("time1")) {
+		event_tree_detector_->SetBranchAddress("time1", &time1_, &b_time1);
+	  }
+	  if (event_tree_detector_->GetBranch("time0_charge2")) {
+		event_tree_detector_->SetBranchAddress("time0_charge2", &time0_charge2_, &b_time0_charge2);
+	  }
+	  if (event_tree_detector_->GetBranch("time1_charge2")) {
+		event_tree_detector_->SetBranchAddress("time1_charge2", &time1_charge2_, &b_time1_charge2);
+	  }
+	  if (event_tree_detector_->GetBranch("time0_utpc")) {
+		event_tree_detector_->SetBranchAddress("time0_utpc", &time0_utpc_, &b_time0_utpc);
+	  }
+	  if (event_tree_detector_->GetBranch("time1_utpc")) {
+		event_tree_detector_->SetBranchAddress("time1_utpc", &time1_utpc_, &b_time1_utpc);
+	  }
+	  if (event_tree_detector_->GetBranch("time0_algo")) {
+		event_tree_detector_->SetBranchAddress("time0_algo", &time0_algo_, &b_time0_algo);
+	  }
+	  if (event_tree_detector_->GetBranch("time1_algo")) {
+		event_tree_detector_->SetBranchAddress("time1_algo", &time1_algo_, &b_time1_algo);
+	  }
+	  if (event_tree_detector_->GetBranch("pos0_charge2")) {
+		event_tree_detector_->SetBranchAddress("pos0_charge2", &pos0_charge2_, &b_pos0_charge2);
+	  }
+	  if (event_tree_detector_->GetBranch("pos1_charge2")) {
+		event_tree_detector_->SetBranchAddress("pos1_charge2", &pos1_charge2_, &b_pos1_charge2);
+	  }
+	  if (event_tree_detector_->GetBranch("pos0_utpc")) {
+		event_tree_detector_->SetBranchAddress("pos0_utpc", &pos0_utpc_, &b_pos0_utpc);
+	  }
+	  if (event_tree_detector_->GetBranch("pos1_utpc")) {
+		event_tree_detector_->SetBranchAddress("pos1_utpc", &pos1_utpc_, &b_pos1_utpc);
+	  }
+	  if (event_tree_detector_->GetBranch("pos0_algo")) {
+		event_tree_detector_->SetBranchAddress("pos0_algo", &pos0_algo_, &b_pos0_algo);
+	  }
+	  if (event_tree_detector_->GetBranch("pos1_algo")) {
+		event_tree_detector_->SetBranchAddress("pos1_algo", &pos1_algo_, &b_pos1_algo);
+	  }
+	}
+	
+	if(tree_name_plane_ == "clusters_plane") {
+	  event_tree_plane_->SetBranchAddress("time", &time_, &b_time_p);
+	  event_tree_plane_->SetBranchAddress("det", &det_, &b_det_p);
+	  event_tree_plane_->SetBranchAddress("plane", &plane_, &b_plane_p);
+	  event_tree_plane_->SetBranchAddress("adc", &adc_, &b_adc_p);
+	  event_tree_plane_->SetBranchAddress("pos", &pos_, &b_pos_p);
+	  	
+	  // Check first existence of these branches for extended functionality
+	  if (event_tree_plane_->GetBranch("time_charge2")) {
+		event_tree_plane_->SetBranchAddress("time_charge2", &time_charge2_, &b_time_charge2_p);
+	  }
+	  if (event_tree_plane_->GetBranch("time_utpc")) {
+		event_tree_plane_->SetBranchAddress("time_utpc", &time_utpc_, &b_time_utpc_p);
+	  }
+	  if (event_tree_plane_->GetBranch("time_algo")) {
+		event_tree_plane_->SetBranchAddress("time_algo", &time_algo_, &b_time_algo_p);
+	  }
+	  if (event_tree_plane_->GetBranch("pos_charge2")) {
+		event_tree_plane_->SetBranchAddress("pos_charge2", &pos_charge2_, &b_pos_charge2_p);
+	  }
+	  if (event_tree_plane_->GetBranch("pos_utpc")) {
+		event_tree_plane_->SetBranchAddress("pos_utpc", &pos_utpc_, &b_pos_utpc_p);
+	  }
+	  if (event_tree_plane_->GetBranch("pos_algo")) {
+		event_tree_plane_->SetBranchAddress("pos_algo", &pos_algo_, &b_pos_algo_p);
+	  }
+	}
+	
+	
+  if ((number_clusters_to_read_ < 0) || (number_clusters_to_read_ > event_tree_plane_->GetEntries())) {
+    number_clusters_to_read_ = event_tree_plane_->GetEntries();
   }
   LOG(INFO) << "Set to skip " << number_clusters_to_skip_ << " and then read " << number_clusters_to_read_ << " clusters from the input file.";
   LOG(INFO) << "Use time window of " << time_window_ << " to allocate clusters to event.";
@@ -273,31 +309,42 @@ void EventLoaderVMM::loop() {
       det_pitch_x_[detector->getName()] = 0.0;
       det_pitch_y_[detector->getName()] = 0.0;
     }
+    detector_dimension_[detector->getName()] = "2d";
     if (det_size_x_[detector->getName()] == det_pitch_x_[detector->getName()]) {
       if (det_size_y_[detector->getName()] != det_pitch_y_[detector->getName()]) {
-      	LOG(INFO) << "1D-Detector: " << detector->getName() << ": x=0";
+      	detector_dimension_[detector->getName()] = "1d_y";
+      	LOG(INFO) << "Detector-1dy: " << detector->getName() << ": x=0";
       }
       else {
-      	LOG(INFO) << "0D-Detector: " << detector->getName() << ": x=0, y=0";
+      	detector_dimension_[detector->getName()] = "0d";
+      	LOG(INFO) << "Detector-0d: " << detector->getName() << ": x=0, y=0";
       }
     } else {
       if (det_size_y_[detector->getName()] == det_pitch_y_[detector->getName()]) {
-        LOG(INFO) << "1D-Detector: " << detector->getName() << ": y=0";
+      	detector_dimension_[detector->getName()] = "1d_x";
+        LOG(INFO) << "Detector-1dx: " << detector->getName() << ": y=0";
       }
     }
   }
 
   Long64_t last_entry = number_clusters_to_skip_ + number_clusters_to_read_;
-  if (last_entry > event_tree_->GetEntries())
-    last_entry = event_tree_->GetEntries();
-  LOG(INFO) << "Reading data from the tree starting from entry " << number_clusters_to_skip_ << " till " << last_entry;
+  if (last_entry > event_tree_detector_->GetEntries())
+    last_entry = event_tree_detector_->GetEntries();
+  LOG(INFO) << "Reading data from the tree detector starting from entry " << number_clusters_to_skip_ << " till " << last_entry;
 
   for (Long64_t i = number_clusters_to_skip_; i < last_entry; i++) {
-    event_tree_->GetEntry(i);
-    if (detector_map_.find(det_) == detector_map_.end())
+    event_tree_detector_->GetEntry(i);
+    if (detector_map_.find(det_) == detector_map_.end()) {
       continue;
-    auto cluster = std::make_shared<Cluster>();
+    }
     std::string detName = detector_map_[det_];
+    
+    if(detector_dimension_[detName] != "2d") {
+    	continue;
+    }
+       
+    auto cluster = std::make_shared<Cluster>();
+
 
     double the_charge = 0;
     double the_pos0 = 0;
@@ -354,14 +401,7 @@ void EventLoaderVMM::loop() {
     cluster->setTimestamp(the_time);
     cluster->setDetectorID(detName);
     cluster->setCharge(the_charge);
-    
-    if (det_size_x_[detName] == det_pitch_x_[detName]) {
-      the_pos0=0;
-    }
-    if (det_size_y_[detName] == det_pitch_y_[detName]) {
-      the_pos1=0;
-    }
-    
+
     double scale_x = det_pitch_x_[detName];
     double scale_y = det_pitch_y_[detName];
     //The correct shift also shifts the pixel position to the center of the pixel
@@ -371,8 +411,8 @@ void EventLoaderVMM::loop() {
     PositionVector3D<Cartesian3D<double>> positionLocal(the_pos0 * scale_x + shift_x, the_pos1 * scale_y + shift_y, 0.0);
     std::shared_ptr<Detector> m_detector = get_detectors().at(detposmap[detName]);
     auto positionGlobal = m_detector->localToGlobal(positionLocal);
-    LOG(TRACE) << "Detector: " << detName << ": cluster local position: " << positionLocal;
-    LOG(TRACE) << "Detector: " << detName << ": cluster global position: " << positionGlobal; 
+    LOG(TRACE) << "Detector-2D: " << detName << ": cluster local position: " << positionLocal;
+    LOG(TRACE) << "Detector-2D: " << detName << ": cluster global position: " << positionGlobal; 
        
     clustermap_[detName]->Fill(the_pos0, the_pos1);
     cluster->setClusterCentreLocal(positionLocal);
@@ -392,6 +432,97 @@ void EventLoaderVMM::loop() {
     runClusters_.push_back(cluster);
   }
 
+
+  last_entry = number_clusters_to_skip_ + number_clusters_to_read_;
+  if (last_entry > event_tree_plane_->GetEntries())
+    last_entry = event_tree_plane_->GetEntries();
+  LOG(INFO) << "Reading data from the tree plane starting from entry " << number_clusters_to_skip_ << " till " << last_entry;
+
+  for (Long64_t i = number_clusters_to_skip_; i < last_entry; i++) {
+    event_tree_plane_->GetEntry(i);
+    if (detector_map_.find(det_) == detector_map_.end() )
+      continue;
+      
+    std::string detName = detector_map_[det_];
+    
+    if(detector_dimension_[detName] == "2d" || (detector_dimension_[detName] == "1d_x" && plane_ == 1) || (detector_dimension_[detName] == "1d_y" && plane_ == 0)) {
+    	continue;
+    }
+         
+    auto cluster = std::make_shared<Cluster>();
+  
+    double the_charge = 0;
+    double the_pos = 0;
+    double the_pos0 = 0;
+    double the_pos1 = 0;
+    double the_time = 0;
+    
+    if (position_algorithm_ == "charge2") {
+      the_pos = pos_charge2_;
+    } else if (position_algorithm_ == "algo") {
+      the_pos = pos_algo_;
+    } else if (position_algorithm_ == "utpc") {
+      the_pos = pos_utpc_;
+    } else {
+      the_pos = pos_;
+    }
+
+    if (time_algorithm_ == "charge2") {
+      the_time = time_charge2_;
+    } else if (time_algorithm_ == "algo") {
+      the_time = time_algo_;
+    } else if (time_algorithm_ == "utpc") {
+      the_time = time_utpc_;
+    } else {
+      the_time = time_;
+    }
+
+    the_charge = static_cast<double>(adc_);
+	
+	cluster->setWidth(1, 1);
+    cluster->setTimestamp(the_time);
+    cluster->setDetectorID(detName);
+    cluster->setCharge(the_charge);
+    
+    if (detector_dimension_[detName] == "1d_y") {
+      the_pos0=0;
+      the_pos1=the_pos;
+    }
+    if (detector_dimension_[detName] == "1d_x") {
+      the_pos0=the_pos;
+      the_pos1=0;
+    }
+    
+    double scale_x = det_pitch_x_[detName];
+    double scale_y = det_pitch_y_[detName];
+    //The correct shift also shifts the pixel position to the center of the pixel
+    double shift_x = 0.5*det_pitch_x_[detName]-0.5 * det_size_x_[detName];
+    double shift_y = 0.5*det_pitch_y_[detName]-0.5 * det_size_y_[detName];
+
+    PositionVector3D<Cartesian3D<double>> positionLocal(the_pos0 * scale_x + shift_x, the_pos1 * scale_y + shift_y, 0.0);
+    std::shared_ptr<Detector> m_detector = get_detectors().at(detposmap[detName]);
+    auto positionGlobal = m_detector->localToGlobal(positionLocal);
+    LOG(TRACE) << "Detector-1D: " << detName << ": cluster local position: " << positionLocal;
+    LOG(TRACE) << "Detector-1D: " << detName << ": cluster global position: " << positionGlobal; 
+       
+    clustermap_[detName]->Fill(the_pos0, the_pos1);
+    cluster->setClusterCentreLocal(positionLocal);
+    cluster->setClusterCentre(positionGlobal);
+	cluster->setColumn(the_pos0);
+    cluster->setRow(the_pos1);
+    
+
+    cluster->setError(m_detector->getSpatialResolution(the_pos0, the_pos1));
+
+    TMatrixD errorMatrix(3, 3);
+    errorMatrix(0, 0) = 1.0;
+    errorMatrix(1, 1) = 1.0;
+    errorMatrix(2, 2) = 1.0;
+    cluster->setErrorMatrixGlobal(errorMatrix);
+
+    runClusters_.push_back(cluster);
+  }
+  
   // Sort clusters by time
   if (sort_clusters_) {
     LOG(INFO) << "Data is read. Start sorting.";
