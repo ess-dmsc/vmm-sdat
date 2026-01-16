@@ -47,11 +47,6 @@ Example command line:
 
 ## Description of analysis program
 
-The ESS DAQ https://github.com/ess-dmsc/essdaq provides in various detector pipelines the option to write hits 
-to hdf5 files. The format of this hdf5 file is defined in the ESS DAQ in the Readout.h files. For GEM detectors 
-and the SRS readout, the Readout.h file can be found in 
-https://github.com/ess-dmsc/event-formation-unit/blob/master/src/gdgem/nmx/Readout.h
-
 ### Time calculation
 The convertFile utility of the vmm-sdat package analyses pcapng directly from the SRS FEC, or the hdf5 files of the 
 gdgem/SRS pipeline. There are two time stamps in the hdf5 file, the srs_timestamp coming from the SRS front end card (FEC), and the 
@@ -64,14 +59,14 @@ The TDC gives information about the time between BCIDs. With a TAC slope of
 60 ns, the time resolution of the tdc_time is 60ns/256 bits = 0.23 ns. The tdc_time and the bc_time together are 
 called chiptime. 
 
-The formula is chiptime = bc_time - tdc_time = (BCID + 1) * 25 ns - TDC * 60ns / 256. 
+The formula is chiptime = bc_time - tdc_time = (BCID + 1.5) * 22.5 ns - TDC * 60ns / 256. 
 The TDC time is subtracted, because the TDC starts counting when the peakfinder has found the hit, and is then 
 stopped by the falling edge of the next BC clock pulse. A small TDC value means the hit occured shortly before 
 the next BC clock, whereas a large TDC value means it appeared a long time before the next clock. 
 
 Every 4096 * 22.5 ns the BCID overflows, these overflows are called offset in the FEC firmware. 
 Example:
-    Offset 12, BCID 100, TDC 80: 12 * 92.16 us + (100+1) * 22.5 ns - 80 * 60 ns/256 = 1108173.75 ns = 1.18 ms
+    Offset 12, BCID 100, TDC 80: 12 * 92.16 us + (100+1.5) * 22.5 ns - 80 * 60 ns/256 = 1.18 ms
 But even with the offset the time range covered is only 16 * 92.16 us = 1474.56 us = 1.47 ms. Therefore every 
 1.47 ms 42 bit time markers are send by the FEC card. 
 
@@ -82,14 +77,12 @@ from it in unit [ns]. The chiptime is calculated from BCID and TDC, and the comp
 srs_timestamp and chiptime as shown in the example above.
 
 ### Calibration files
-The ESS DAQ has the option to load JSON calibration files, that contain for each channel of each VMM ASIC 
-an ADC (adc_offset and adc_slope) and a time (adc_offset and adc_slope) correction.
-https://github.com/ess-dmsc/event-formation-unit/blob/master/src/gdgem/srs/CalibrationFile.cpp
-The JSON calibration file can either be produced automatically with the VMM Slow Control program
-https://gitlab.cern.ch/rd51-slow-control/vmmsc
-or by other means. If the calibration file is loaded during the data acquisition with the ESS DAQ, then the 
+The VMM slow control (https://gitlab.cern.ch/rd51-slow-control/vmmsc) can produce JSON calibration files, that 
+contain for each channel of each VMM ASIC an ADC (adc_offset and adc_slope) and a time (adc_offset and adc_slope) correction.
+
+If the calibration file is loaded during the analysis with vmm-sdat, then the 
 chip_time has been calculated using the following formula:
-- new_chiptime = BCID * 25 ns + ( 1.5*25 ns - tdc_time - time_offset) * time_slope
+- new_chiptime = BCID * 22.5 ns + ( 1.5*22.5 ns - tdc_time - time_offset) * time_slope
 For the ADC, the formula is: 
 - new_adc = (adc - adc_offset) * adc_slope;
 If the data has been saved to file without the use of calibration files in the ESS DAQ, then the calibration
@@ -115,10 +108,13 @@ a position and a time is calculated using three different algorithms:
 The user can define additional algorithms in the method Clusterer::AlgorithmUTPC() in
 https://github.com/ess-dmsc/vmm-sdat/blob/master/src/Clusterer.cpp
 
-The additional algorithm is picked depending on the -algo parameter. At the moment, two additional algorithms are 
+The additional algorithm is picked depending on the -algo parameter. At the moment, four additional algorithms are 
 defined there 
-    - 0 = utpc center-of-mass2 (center of mass squared of the strip with the latest time and its one or two neighbours)
-    - 1 = utpc center-of-mass (center of mass of the strip with the latest time and its one or two neighbours)
+1: fit gaussian for position
+2: center-of-mass over threshold only
+3: center-of-mass2 over threshold only
+4: position and time strip with highest ADC
+
 If the number of strips in a plane cluster is equal or larger than the value specified in the -cs (cluster size) 
 parameter, the cluster is valid. For X-ray data the cluster size parameter is usually 1 or 2, whereas for electron or
 alpha tracks it can be 3 or larger. 
@@ -141,67 +137,11 @@ plane clusters also in the detector cluster tree. The entries of the missing pla
   
     -f: data file with the extension .pcapng. The data file was created by Wireshark or tcdump
     
-    -df: data format of pcapng file. Default is SRS format (valid offsets: -1 - 15), other option is data format ESS 
-    
-    Definition of detector geometry: EITHER the flags -vmm, -axis and -mapping can be used, OR a JSON geometry file loaded with -geo.
-
-    -vmm: mapping of detectors, plane, fecs and chips starting and ending with " and separated by brackets
-        and comma [[det, plane, fec,chip], [det, plane, fec, chip], etc.]
-        The tuples for the VMMs are defined as follows:
-            detector (choose a number between 0 and 255)
-            plane (0 or 1)
-            fec (fecID set in firmware based on IP address, 10.0.0.1 is fecID 1, 10.0.0.2 is fecID 2 and so on)
-            vmm (depends on connection of hybrid to FEC, FEC channel 1 equals VMMs 0 and 1, FEC channel 2 
-                VMMs 2 and 3, FEC channel 8 VMMs 14 and 15)
-        When looking at the detector, the following conventions are used:
-            - top side of the hybrids is visible (if the hybrids are mounted in the readout plane)
-            - side of the Hirose connector (bottom of the hybird) is visible (hybrids mounted on detector side)
-            - plane 0 is at the bottom (HDMI cables go downwards)
-            - plane 1 is at the right side (HDMI cables go to the right)
-        If one looks at a VMM3a hybrid (connector to detector readout is on the bottom side), 
-            the channel 0 of the VMM 0 is always where the HDMI cable is connected
-        If the planes are correctly used as described above, the VMM IDs are always in icreasing order 
-            PER HYBRID (e.g. 14, 15 or e.g. 0, 1)
-
-    -axis: direction of axis. Detector, plane and direction flag (if direction flag = 1, axis direction is flipped). 
-   	For a 1D detector,  only axis 0 is defined, for a 2D detector axis 0 and 1 have to be defined.
-        Detector, plane and direction flag starting and ending with " and separated by bracket and comma 
-            [[[det,plane],flag], [[det, plane],flag]]
-        The tuples for the axes are defined as follows:
-            - detector (choose a number between 0 and 255)
-            - plane (0 or 1)
-            - flip axis flag (0 or 1)
-        Using the convention described above, if the plane axis is NOT FLIPPED:
-            - plane 0 is at the bottom and goes from left (0) to right (255)
-            - plane 1 is at the right and goes from bottom (0) to top (255)
-        If the plane axis is FLIPPED:
-            - plane 0 is at the bottom and goes from right (0) to left (255)
-            - plane 1 is at the right and goes from top (0) to bottom (255)
-            
-    -map:   Mapping of VMM3a channels to strips of the detector readout. There are some pre-defined options:
-    	- gem: channels are continuously mapped to strips, channel 0 is strip 0, channel 127 strip 127 (default).
-         - gem_swapped: odd and even channels are swapped (to correct error in readout).
-         - mm1: Micromegas mapping from Jona Bortfeld\n"  << std::endl;
-    
-    -geo:   Instead of using -vmm, -axis, -map, the detector geometry can be defined in a JSON file. Tow example geometry files (for strip and pad detectors) are in the run folder.
-
-    -sc: Scale coordinates. Per detector a tuple with three values in mm, 
-        e.g for two detectors [[s0,s1,s2], [s0,s1,s2]]
-    
-    -tl: Translate coordinates. Per detector a tuple with three values in mm, 
-        e.g for two detectors [[t0,t1,t2], [t0,t1,t2]]
-    
-    -ro: Rotate around plane 0, plane 1, plane 2. Per detector a tuple with three angles in degrees, 
-        e.g for two detectors [[r0,r1,r2], [r0,r1,r2]]
-    
-    -tr: Transform detector coordinates. 
-        S=scale, T=translate, R0=rotation plane 0, R1=rotation plane1, R2=rotation plane2
-        example (two detectors): -tr [[S,T,R2], [S,T,R0]]. 
-        First detector scaling, then translation, then rotation around normal axis to plane0 and plane 1.
-        Second detector scaling, then translation, then rotation around plane0 axis
-        Normally beam in direction of plane 2 or z, hence: Plane 0 (x), plane 1 (y), plane 2 (z)
+    -df: data format of pcapng file. Default is SRS format (valid offsets: -1 - 15), other option is data format TRIG 
    
-    -bc: bunch crossing clock. Optional argument (default 40 MHz)
+    -geo:   the detector geometry has to be defined in a JSON file. Tow example geometry files (for strip and pad detectors) are in the run folder.
+    
+    -bc: bunch crossing clock. Optional argument (default 44.4444 MHz)
 
     -tac: tac slope. Optional argument (default 60 ns)
 
@@ -225,21 +165,13 @@ plane clusters also in the detector cluster tree. The entries of the missing pla
         The time can be calculated with the center-of-mass algorithm (center-of-mass), the uTPC method (utpc) 
         or the center-of-mass squared method (charge2). Optional argument (default center-of-mass)
 
-    -algo:  There are three different algorithms implemented that calulate cluster times: 
-        center-of-mass (charge as weight), 
-        center-of-mass2 (charge squared as weight),
-        utpc (latest time)
-        An additional algorithm can be chosen in pos_algo and time_algo field in clusters
-        0: No algorithm
-        1: Gaussian fit of position (for cluster sizes >= 3, otherwise COG)
-        2: COG including only over Threshold hits
-        3: COG2 including only over Threshold hits
-        4: position and time of largest ADC
-        5: trigger pattern (NIP box), the trigger pattern is stored as integer in time_algo2
-            The vmm that is connected to the NIP box has to be defined as plane 2 of the detector. The channels of the VMM have to be mapped to the strips in the form channel representing bit 0 = strip 0, bit 1 channel = strip 1 and so on.
-		6: utp with COG of strips with largest time
-        7: utpc with COG2 of strips with largest time
-    -crl: Valid clusters normally have the same amount of charge in both detector planes 
+    -algo:  There are four different algorithms implemented that calulate cluster position/times: 
+        1: fit gaussian for position
+		2: center-of-mass over threshold only
+		3: center-of-mass2 over threshold only
+		4: position and time strip with highest ADC
+
+	-crl: Valid clusters normally have the same amount of charge in both detector planes 
     	(ratio of charge plane 0 / charge plane 1 is 100% or 1). Depending on the readout, 
     	the charge sharing can be different, e.g. in a standard GEM strip readout the total 
     	charge is divided 60/40 between plane 0/plane 1.
