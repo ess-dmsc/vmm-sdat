@@ -58,8 +58,8 @@ gdgem/SRS pipeline. There are two time stamps in the hdf5 file, the srs_timestam
 chiptime coming from the VMM ASIC. To obtain the total time, these two timestamps are added, and the new field in the 
 root file is just called time.
 
-The VMM measures time in BCID and TDC, with a 40 MHz BC clock the BCID has a 25 ns resolution. The BCID is a 12 bit 
-number with values going from 0-4095, that means the bc_time is covering a range of 4096 * 25 ns = 102.4 us. 
+The VMM measures time in BCID and TDC, with a 44.444 MHz BC clock the BCID has a 22.5 ns resolution. The BCID is a 12 bit 
+number with values going from 0-4095, that means the bc_time is covering a range of 4096 * 22.5 ns = 92.16 us. 
 The TDC gives information about the time between BCIDs. With a TAC slope of 
 60 ns, the time resolution of the tdc_time is 60ns/256 bits = 0.23 ns. The tdc_time and the bc_time together are 
 called chiptime. 
@@ -69,15 +69,17 @@ The TDC time is subtracted, because the TDC starts counting when the peakfinder 
 stopped by the falling edge of the next BC clock pulse. A small TDC value means the hit occured shortly before 
 the next BC clock, whereas a large TDC value means it appeared a long time before the next clock. 
 
-Every 4096 * 25 ns the BCID overflows, these overflows are called offset in the FEC firmware. 
+Every 4096 * 22.5 ns the BCID overflows, these overflows are called offset in the FEC firmware. 
 Example:
-    Offset 24, BCID 100, TDC 80: 24 * 102.4 us + (100+1) * 25 ns - 80 * 60 ns/256 = 2460106.25 ns = 2.46 ms
-But even with the offset the time range covered is only 32 * 102.4 us = 3278.8 us = 3.3 ms. Therefore every 
-3.3 ms 42 bit time markers are send by the FEC card. All the offsets always refer to the previous time marker 
-sent for the particular VMM. The EFU now takes the time markers and the offset and calculates the srs_timestamp 
-from it in unit [ns]. If one analyses a pcapng file, the vmm-sdat analysis code carries out the same steps that are 
-done in the EFU. The chiptime is calculated from BCID and TDC, the srs_timestamp is calculated from the last time marker
-and the offsets.
+    Offset 12, BCID 100, TDC 80: 12 * 92.16 us + (100+1) * 22.5 ns - 80 * 60 ns/256 = 1108173.75 ns = 1.18 ms
+But even with the offset the time range covered is only 16 * 92.16 us = 1474.56 us = 1.47 ms. Therefore every 
+1.47 ms 42 bit time markers are send by the FEC card. 
+
+In the time marker we have th 42 bit srs clock counter, which is measured in 44 MHz clock cycles. So to convert it to a timestamp
+in ns one has to multiply it with 22.5 ns. All the offsets always refer to the previous time marker 
+sent for the particular VMM. vmm-sdat takes the time markers and the offset and calculates the srs_timestamp 
+from it in unit [ns]. The chiptime is calculated from BCID and TDC, and the complete timestamp is the sum of 
+srs_timestamp and chiptime as shown in the example above.
 
 ### Calibration files
 The ESS DAQ has the option to load JSON calibration files, that contain for each channel of each VMM ASIC 
