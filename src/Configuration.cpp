@@ -551,43 +551,43 @@ bool Configuration::CreateMapping() {
         auto strips0 = geo["id0"];
         auto strips1 = geo["id1"];
         uint8_t plane = 0;
-
+        pIsPads[detector] = false;
         if (strips0.size() != 64 ||
           (strips1.size() > 0 && strips1.size() < 64)) {
           throw std::runtime_error(
             "Wrong lengths of id0 or id1 arrays in geometry file.");
         } else if (strips1.size() == 64) {
           pIsPads[detector] = true;
-        } else {
-          plane = geo["plane"].get < uint8_t > ();
-          pIsPads[detector] = false;
-          auto searchDetPlane =
-            p_DetPlane_idx.find(std::make_pair(detector, plane));
-          if (searchDetPlane == p_DetPlane_idx.end()) {
-            // Add det/plane pair to the list and set index
-            p_DetPlane_idx.emplace(
-              std::make_pair(std::make_pair(detector, plane), 0));
+        } 
+        plane = geo["plane"].get < uint8_t > ();
+        pIsPads[detector] = false;
+        auto searchDetPlane =
+          p_DetPlane_idx.find(std::make_pair(detector, plane));
+        if (searchDetPlane == p_DetPlane_idx.end()) {
+          // Add det/plane pair to the list and set index
+          p_DetPlane_idx.emplace(
+            std::make_pair(std::make_pair(detector, plane), 0));
+        }
+        auto searchTuple =
+          std::find(std::begin(pVMMs), std::end(pVMMs),
+            std::make_tuple(detector, plane, fec, vmm));
+        if (searchTuple == pVMMs.end()) {
+          pVMMs.emplace_back(std::make_tuple(detector, plane, fec, vmm));
+          auto searchTuple = pChannels.find(std::make_pair(detector, plane));
+          int strips = 0;
+          for (size_t ch = 0; ch < strips0.size(); ch++) {
+            int s0 = strips0[ch].get < int > ();
+            if (s0 > -1) {
+              strips++;
+            }
           }
-          auto searchTuple =
-            std::find(std::begin(pVMMs), std::end(pVMMs),
-              std::make_tuple(detector, plane, fec, vmm));
-          if (searchTuple == pVMMs.end()) {
-            pVMMs.emplace_back(std::make_tuple(detector, plane, fec, vmm));
-            auto searchTuple = pChannels.find(std::make_pair(detector, plane));
-            int strips = 0;
-            for (size_t ch = 0; ch < strips0.size(); ch++) {
-              int s0 = strips0[ch].get < int > ();
-              if (s0 > -1) {
-                strips++;
-              }
-            }
-            if (searchTuple == pChannels.end()) {
-              pChannels[std::make_tuple(detector, plane)] = strips;
-            } else {
-              pChannels[std::make_tuple(detector, plane)] += strips;
-            }
+          if (searchTuple == pChannels.end()) {
+            pChannels[std::make_tuple(detector, plane)] = strips;
+          } else {
+            pChannels[std::make_tuple(detector, plane)] += strips;
           }
         }
+        
         auto searchFec = std::find(std::begin(pFecs), std::end(pFecs), fec);
         if (searchFec == pFecs.end()) {
           pFecs.push_back(fec);

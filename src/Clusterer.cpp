@@ -21,13 +21,6 @@
 **
 ****************************************************************************/
 
-#include <Math/MinimizerOptions.h>
-#include <TF1.h>
-#include <TFitResult.h>
-#include <TGraph.h>
-#include <TGraphErrors.h>
-#include <log.h>
-
 #include <algorithm>
 #include <chrono>
 #include <cmath>
@@ -36,6 +29,13 @@
 #include <iomanip>
 #include <limits>
 #include <thread>
+#include <log.h>
+
+#include <Math/MinimizerOptions.h>
+#include <TF1.h>
+#include <TFitResult.h>
+#include <TGraph.h>
+#include <TGraphErrors.h>
 
 #include "Clusterer.h"
 
