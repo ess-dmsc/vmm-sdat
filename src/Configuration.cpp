@@ -560,7 +560,6 @@ bool Configuration::CreateMapping() {
           pIsPads[detector] = true;
         } 
         plane = geo["plane"].get < uint8_t > ();
-        pIsPads[detector] = false;
         auto searchDetPlane =
           p_DetPlane_idx.find(std::make_pair(detector, plane));
         if (searchDetPlane == p_DetPlane_idx.end()) {
