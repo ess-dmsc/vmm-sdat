@@ -27,7 +27,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include <log.h>
+#include "log.h"
 #include "Clusterer.h"
 #include "Configuration.h"
 #include <parser/CalibrationFile.h>

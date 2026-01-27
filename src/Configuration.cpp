@@ -21,18 +21,18 @@
 **
 ****************************************************************************/
 
-
-#include <fstream>
-#include <nlohmann/json.hpp>
-
-#include <log.h>
-#include "Configuration.h"
 #include <cmath>
 #include <cstring>
 #include <ctime>
 #include <iomanip>
 #include <regex>
 #include <string>
+#include <fstream>
+#include <nlohmann/json.hpp>
+
+#include "log.h"
+#include "Configuration.h"
+
 
 using json = nlohmann::json;
 

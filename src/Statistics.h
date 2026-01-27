@@ -32,7 +32,9 @@ public:
   void CreateClusterStats(Configuration &config);
   void CreateFECStats(Configuration &config);
   void CreatePCAPStats(Configuration &config);
-
+  
+  long GetStatsPads(std::string stats, uint8_t det, int n);
+  void SetStatsPads(std::string stats, uint8_t det, double value);
   long GetStatsDetector(std::string stats, uint8_t det, int n);
   void SetStatsDetector(std::string stats, uint8_t det, double value);
   long GetStatsPlane(std::string stats, std::pair<uint8_t, uint8_t> dp, int n);
@@ -70,8 +72,10 @@ private:
            std::vector<long>>
       m_stats_plane;
   std::map<std::pair<uint8_t, std::string>, std::vector<long>> m_stats_detector;
+  std::map<std::pair<uint8_t, std::string>, std::vector<long>> m_stats_pads;
   std::vector<std::string> m_stats_plane_names;
   std::vector<std::string> m_stats_detector_names;
+  std::vector<std::string> m_stats_pads_names;
   std::map<std::string, double> m_factors;
   std::map<std::string, double> m_limits;
   std::map<std::string, std::string> m_units;

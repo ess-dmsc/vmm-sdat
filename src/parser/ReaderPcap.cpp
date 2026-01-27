@@ -18,7 +18,7 @@
 #include <netinet/udp.h>
 #include <parser/ReaderPcap.h>
 #include <sstream>
-#include <log.h>
+#include "log.h"
 
 // Protocol identifiers
 // Header and data location specifications

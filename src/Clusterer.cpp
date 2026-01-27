@@ -29,7 +29,7 @@
 #include <iomanip>
 #include <limits>
 #include <thread>
-#include <log.h>
+#include "log.h"
 
 #include <Math/MinimizerOptions.h>
 #include <TF1.h>
@@ -462,6 +462,9 @@ int Clusterer::ClusterByPad(std::pair<uint8_t, uint8_t> dp, ClusterContainer& cl
       clusterDetector.size0 = max0 - min0+1;
       clusterDetector.size1 = max1 - min1+1;
       clusterDetector.size2 = stripCount;
+      m_stats.SetStatsPads("ClusterSizePads", det, clusterDetector.size2);
+      m_stats.SetStatsPads("ClusterExtensionPads_0", det, clusterDetector.size0);
+      m_stats.SetStatsPads("ClusterExtensionPads_1", det, clusterDetector.size1);
       clusterDetector.adc0 = adcTotal;
       clusterDetector.adc1 = adcTotal;
       clusterDetector.adc2 = 0;
@@ -496,7 +499,8 @@ int Clusterer::ClusterByPad(std::pair<uint8_t, uint8_t> dp, ClusterContainer& cl
       LOG(TRACE) << "number of pads: " << clusterDetector.size2;
 
       
-      m_stats.SetStatsDetector("ClusterCntDetector", det, 0);
+      m_stats.SetStatsPads("ClusterCntPadDetector", det, 0);
+      
       m_cluster_detector_id++;
     }
   }

@@ -21,9 +21,9 @@
 **
 ****************************************************************************/
 
-#include <log.h>
 #include <iomanip>
 #include <iostream>
+#include "log.h"
 #include "Statistics.h"
 
 Statistics::Statistics() {
@@ -67,6 +67,7 @@ void Statistics::CreateFECStats(Configuration &config) {
   }
 }
 
+
 void Statistics::CreateClusterStats(Configuration &config) {
   int size = 0;
   for (auto const &det : config.pDets) {
@@ -80,7 +81,8 @@ void Statistics::CreateClusterStats(Configuration &config) {
     m_lowestCommonTriggerTimestamp_plane[plane0] = 0;
     m_lowestCommonTriggerTimestamp_plane[plane1] = 0;
     m_lowestCommonTriggerTimestamp_plane[plane2] = 0;
-
+    //det.second == 0: first detector in config.pDets
+    //Names ans limits only have to be created once
     if (det.second == 0) {
       m_units.emplace(std::make_pair("DeltaTimeHits", "ns"));
       m_factors.emplace(std::make_pair("DeltaTimeHits", 0.02));
@@ -155,8 +157,27 @@ void Statistics::CreateClusterStats(Configuration &config) {
       m_units.emplace(std::make_pair("ClusterCntDetector", ""));
       m_factors.emplace(std::make_pair("ClusterCntDetector", 1));
       m_limits.emplace(std::make_pair("ClusterCntDetector", 1));
-
       m_stats_detector_names.push_back("ClusterCntDetector");
+
+      m_units.emplace(std::make_pair("ClusterSizePads", "pads"));
+      m_factors.emplace(std::make_pair("ClusterSizePads", 1));
+      m_limits.emplace(std::make_pair("ClusterSizePads", 1 + 16 * m_factors["ClusterSizePads"]));
+      m_stats_pads_names.push_back("ClusterSizePads");
+
+      m_units.emplace(std::make_pair("ClusterExtensionPads_0", "pads"));
+      m_factors.emplace(std::make_pair("ClusterExtensionPads_0", 1));
+      m_limits.emplace(std::make_pair("ClusterExtensionPads_0", 1 + 8 * m_factors["ClusterExtensionPads_0"]));
+      m_stats_pads_names.push_back("ClusterExtensionPads_0");
+
+      m_units.emplace(std::make_pair("ClusterExtensionPads_1", "pads"));
+      m_factors.emplace(std::make_pair("ClusterExtensionPads_1", 1));
+      m_limits.emplace(std::make_pair("ClusterExtensionPads_1", 1 + 8 * m_factors["ClusterExtensionPads_1"]));
+      m_stats_pads_names.push_back("ClusterExtensionPads_1");
+     
+      m_units.emplace(std::make_pair("ClusterCntPadDetector", ""));
+      m_factors.emplace(std::make_pair("ClusterCntPadDetector", 1));
+      m_limits.emplace(std::make_pair("ClusterCntPadDetector", 1));
+      m_stats_pads_names.push_back("ClusterCntPadDetector");
     }
     size = static_cast<int>(m_limits["DeltaTimeHits"]);
     std::vector<long> v(size, 0);
@@ -242,6 +263,42 @@ void Statistics::CreateClusterStats(Configuration &config) {
     v.resize(size);
     std::fill(v.begin(), v.end(), 0);
     m_stats_detector.emplace(std::make_pair(std::make_pair(det.first, "ClusterCntDetector"), v));
+
+    size = static_cast<int>(m_limits["ClusterSizePads"]);
+    v.resize(size);
+    std::fill(v.begin(), v.end(), 0);
+    m_stats_pads.emplace(std::make_pair(std::make_pair(det.first, "ClusterSizePads"), v));
+
+     size = static_cast<int>(m_limits["ClusterExtensionPads_0"]);
+    v.resize(size);
+    std::fill(v.begin(), v.end(), 0);
+    m_stats_pads.emplace(std::make_pair(std::make_pair(det.first, "ClusterExtensionPads_0"), v));
+
+     size = static_cast<int>(m_limits["ClusterExtensionPads_1"]);
+    v.resize(size);
+    std::fill(v.begin(), v.end(), 0);
+    m_stats_pads.emplace(std::make_pair(std::make_pair(det.first, "ClusterExtensionPads_1"), v));
+
+     size = static_cast<int>(m_limits["ClusterCntPadDetector"]);
+    v.resize(size);
+    std::fill(v.begin(), v.end(), 0);
+    m_stats_pads.emplace(std::make_pair(std::make_pair(det.first, "ClusterCntPadDetector"), v));
+
+  }
+}
+
+long Statistics::GetStatsPads(std::string stats, uint8_t det, int n) {
+  if (n < m_limits[stats.c_str()]) {
+    return m_stats_pads[std::make_pair(det, stats.c_str())][n];
+  }
+  return -1;
+}
+
+void Statistics::SetStatsPads(std::string stats, uint8_t det, double value) {
+  if (value * m_factors[stats] < m_limits[stats]) {
+    m_stats_pads[std::make_pair(det, stats)][static_cast<unsigned int>(value * m_factors[stats])]++;
+  } else {
+    m_stats_pads[std::make_pair(det, stats)][m_limits[stats] - 1]++;
   }
 }
 
@@ -308,77 +365,92 @@ void Statistics::PrintClusterStats(Configuration &config) {
   long totalPlane1 = 0;
   long totalDetector = 0;
   bool bothPlanes = false;
-
   for (auto const &det : config.pDets) {
     auto dp0 = std::make_pair(det.first, 0);
     auto dp1 = std::make_pair(det.first, 1);
     auto dp2 = std::make_pair(det.first, 2);
-
-    long cnt = m_stats_detector[std::make_pair(det.first, "ClusterCntDetector")][0];
-    long cnt0 = 1;
-    if (m_stats_plane[std::make_pair(dp0, "ClusterCntPlane")][0] > 0) {
-      cnt0 = m_stats_plane[std::make_pair(dp0, "ClusterCntPlane")][0];
-    }
-    long cnt1 = 1;
-    if (m_stats_plane[std::make_pair(dp1, "ClusterCntPlane")][0] > 0) {
-      cnt1 = m_stats_plane[std::make_pair(dp1, "ClusterCntPlane")][0];
-    }
-    long cnt2 = 1;
-    if (m_stats_plane[std::make_pair(dp2, "ClusterCntPlane")][0] > 0) {
-      cnt2 = m_stats_plane[std::make_pair(dp2, "ClusterCntPlane")][0];
-    }
     corryvreckan::Log::setSection("Statistics");
     LOG(INFO) << "****************************************";
     LOG(INFO) << "Stats detector " << (int)det.first;
     LOG(INFO) << "****************************************";
-
-    for (auto const &stat : m_stats_plane_names) {
-      if (config.pIsPads[det.first] || config.GetDetectorPlane(dp0) == true) {
+    if(config.pIsPads[det.first]) {
+      long cntPads = m_stats_pads[std::make_pair(det.first, "ClusterCntPadDetector")][0];
+  
+      for (auto const &stat : m_stats_pads_names) {
         LOG(INFO) << "****************************************";
-        LOG(INFO) << "Plane 0: " << stat;
+        LOG(INFO) << stat;
         LOG(INFO) << "****************************************";
-        std::vector<long> v = m_stats_plane[std::make_pair(dp0, stat)];
+        std::vector<long> v = m_stats_pads[std::make_pair(det.first, stat)];
         for (unsigned int n = 0; n < static_cast<unsigned int>(m_limits[stat]); n++) {
-          StatsOutput(n, v[n], stat, cnt0);
+          StatsOutput(n, v[n], stat, cntPads);
         }
+        LOG(INFO) << "****************************************";
       }
-      if (config.GetDetectorPlane(dp1) == true) {
-        LOG(INFO) << "****************************************";
-        LOG(INFO) << "****************************************";
-        LOG(INFO) << "Plane 1: " << stat;
-        LOG(INFO) << "****************************************";
-        std::vector<long> v = m_stats_plane[std::make_pair(dp1, stat)];
-        for (unsigned int n = 0; n < static_cast<unsigned int>(m_limits[stat]); n++) {
-          StatsOutput(n, v[n], stat, cnt1);
-        }
-      }
-      if (config.GetDetectorPlane(dp2) == true) {
-        LOG(INFO) << "****************************************";
-        LOG(INFO) << "****************************************";
-        LOG(INFO) << "Plane 2: " << stat;
-        LOG(INFO) << "****************************************";
-        std::vector<long> v = m_stats_plane[std::make_pair(dp2, stat)];
-        for (unsigned int n = 0; n < static_cast<unsigned int>(m_limits[stat]); n++) {
-          StatsOutput(n, v[n], stat, cnt2);
-        }
-      }
-      LOG(INFO) << "****************************************";
+  
     }
-    if (config.GetDetectorPlane(dp0) == true && config.GetDetectorPlane(dp1) == true) {
-      for (auto const &stat : m_stats_detector_names) {
-        if (config.GetDetectorPlane(dp2) == true || (stat.find("_0_2") == std::string::npos && stat.find("_1_2") == std::string::npos && stat.find("_2_0") == std::string::npos && stat.find("_2_1") == std::string::npos)) {
+    else {
+      long cnt = m_stats_detector[std::make_pair(det.first, "ClusterCntDetector")][0];
+      long cnt0 = 1;
+      if (m_stats_plane[std::make_pair(dp0, "ClusterCntPlane")][0] > 0) {
+      cnt0 = m_stats_plane[std::make_pair(dp0, "ClusterCntPlane")][0];
+      }
+      long cnt1 = 1;
+      if (m_stats_plane[std::make_pair(dp1, "ClusterCntPlane")][0] > 0) {
+      cnt1 = m_stats_plane[std::make_pair(dp1, "ClusterCntPlane")][0];
+      }
+      long cnt2 = 1;
+      if (m_stats_plane[std::make_pair(dp2, "ClusterCntPlane")][0] > 0) {
+      cnt2 = m_stats_plane[std::make_pair(dp2, "ClusterCntPlane")][0];
+      }
+      for (auto const &stat : m_stats_plane_names) {
+        if (config.GetDetectorPlane(dp0) == true) {
           LOG(INFO) << "****************************************";
-          LOG(INFO) << stat;
+          LOG(INFO) << "Plane 0: " << stat;
           LOG(INFO) << "****************************************";
-          std::vector<long> v = m_stats_detector[std::make_pair(det.first, stat)];
+          std::vector<long> v = m_stats_plane[std::make_pair(dp0, stat)];
           for (unsigned int n = 0; n < static_cast<unsigned int>(m_limits[stat]); n++) {
-            if (config.GetDetectorPlane(dp2) == true) {
-              StatsOutput(n, v[n], stat, cnt, cnt0, cnt1, cnt2);
-            } else {
-              StatsOutput(n, v[n], stat, cnt, cnt0, cnt1);
-            }
+            StatsOutput(n, v[n], stat, cnt0);
           }
+        }
+        if (config.GetDetectorPlane(dp1) == true) {
           LOG(INFO) << "****************************************";
+          LOG(INFO) << "****************************************";
+          LOG(INFO) << "Plane 1: " << stat;
+          LOG(INFO) << "****************************************";
+          std::vector<long> v = m_stats_plane[std::make_pair(dp1, stat)];
+          for (unsigned int n = 0; n < static_cast<unsigned int>(m_limits[stat]); n++) {
+            StatsOutput(n, v[n], stat, cnt1);
+          }
+        }
+        if (config.GetDetectorPlane(dp2) == true) {
+          LOG(INFO) << "****************************************";
+          LOG(INFO) << "****************************************";
+          LOG(INFO) << "Plane 2: " << stat;
+          LOG(INFO) << "****************************************";
+          std::vector<long> v = m_stats_plane[std::make_pair(dp2, stat)];
+          for (unsigned int n = 0; n < static_cast<unsigned int>(m_limits[stat]); n++) {
+            StatsOutput(n, v[n], stat, cnt2);
+          }
+        }
+        LOG(INFO) << "****************************************";
+      }
+
+      if ((config.GetDetectorPlane(dp0) == true && config.GetDetectorPlane(dp1)) == true) {
+        for (auto const &stat : m_stats_detector_names) {
+          if (config.GetDetectorPlane(dp2) == true || (stat.find("_0_2") == std::string::npos && stat.find("_1_2") == std::string::npos && stat.find("_2_0") == std::string::npos && stat.find("_2_1") == std::string::npos)) {
+            LOG(INFO) << "****************************************";
+            LOG(INFO) << stat;
+            LOG(INFO) << "****************************************";
+            std::vector<long> v = m_stats_detector[std::make_pair(det.first, stat)];
+            for (unsigned int n = 0; n < static_cast<unsigned int>(m_limits[stat]); n++) {
+              if (config.GetDetectorPlane(dp2) == true) {
+                StatsOutput(n, v[n], stat, cnt, cnt0, cnt1, cnt2);
+              } else {
+                StatsOutput(n, v[n], stat, cnt, cnt0, cnt1);
+              }
+            }
+            LOG(INFO) << "****************************************";
+          }
         }
       }
     }
