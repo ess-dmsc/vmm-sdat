@@ -54,7 +54,7 @@ bool Configuration::PrintUsage(const std::string & errorMessage, char * argv) {
 
   std::cout << "\n\nFlags:\n" << std::endl;
   std::cout << "-f:     PCAPNG file created with wireshark or tcdump "
-  "(*.pcapng), coming from the SRS or the ESS readout.\n" <<
+  "(*.pcapng), coming from the SRS or MAXI-ROC.\n" <<
   std::endl;
   std::cout << "-log:   Corryvreckan style log, set to TRACE,DEBUG, INFO, STATUS, WARNING, ERROR, FATAL." <<
   std::endl;
@@ -204,11 +204,12 @@ bool Configuration::PrintUsage(const std::string & errorMessage, char * argv) {
   std::endl;
   std::cout <<
     "-df:    Data format: The pcap files can have different data formats, " <<
-    "depending on the firmware on the FEC.\n" <<
+    "depending on the readout card or the firmware.\n" <<
     "        SRS (default): FEC card, and time stamps and offsets are "
   "sent in markers, offset is interpreted as signed number and valid "
-  "offsets goes from -1 to 15\n" <<
-  "        TRIG: Triggered firmware, event_counter in hit tree" <<
+  "offsets goes from -1 to 15, 48 bit per hit/marker\n" <<
+  "        TRIG: Triggered firmware, event_counter in hit tree\n" <<
+  "        MAX: Maxi-Roc, offsets from -1 to 255, one hit/marker is 64 bits" <<
   std::endl;
   std::cout <<
     "-cahi:    Calibration histograms: If a calibration file is used, " <<
@@ -439,17 +440,17 @@ bool Configuration::ParseCommandLine(int argc, char ** argv) {
       }
     } else if (strncmp(argv[i], "-df", 3) == 0) {
       pDataFormat = argv[i + 1];
+      std::transform(pDataFormat.begin(), pDataFormat.end(), pDataFormat.begin(), ::toupper);
       std::vector < std::string > v_valid_values = {
         "SRS",
         "TRG",
-        "srs",
-        "trg"
+        "MAX"
       };
       auto searchValid =
         std::find(v_valid_values.begin(), v_valid_values.end(), pDataFormat);
       if (searchValid == v_valid_values.end()) {
         return PrintUsage("The data format parameter -df accepts only the "
-          "values SRS, TRG!",
+          "values SRS, TRG, MAX!",
           nullptr);
       }
     } else {

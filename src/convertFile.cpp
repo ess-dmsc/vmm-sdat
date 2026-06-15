@@ -44,13 +44,24 @@ int main(int argc, char ** argv) {
   Configuration m_config;
   Statistics m_stats;
 
+  int max_offset = 15;
+
   if (!m_config.ParseCommandLine(argc, argv)) {
     return -1;
   }
   if (!m_config.CreateMapping()) {
     return -1;
   }
-  if (m_config.pDataFormat != "SRS" && m_config.pDataFormat != "TRG") {
+  if (m_config.pDataFormat == "SRS") {
+    max_offset = 15;
+  }
+  else if(m_config.pDataFormat == "TRG") {
+    max_offset = 15;
+  }
+  else if(m_config.pDataFormat == "MAX") {
+    max_offset = 255;
+  }
+  else {
     return -1;
   }
 
@@ -89,36 +100,39 @@ int main(int argc, char ** argv) {
     if (rdsize == 0) {
       continue; // non udp data
     }
-    int hits = parser -> receive(buffer, rdsize);
+    int hits = parser->receive(buffer, rdsize);
     total_hits += hits;
+   
     for (int i = 0; i < hits; i++) {
       auto & d = parser -> data[i];
       double timestampOffset = -1.0;
-
-      // triggerOffset goes from -1 to 15
+      
+      // triggerOffset goes from -1 to 15 (SRS) or -1 to 255 (MAXI-ROC)
       // but presented as uint8_t
       // latency violation
-      if (d.timestampOffset <= 15.0) {
+      if (d.timestampOffset <= max_offset) {
         timestampOffset = static_cast < double > (d.timestampOffset);
-      } else if (d.timestampOffset == 31) {
+      } else if (d.timestampOffset == 2*max_offset+1) {
         timestampOffset = -1.0;
-      } else if (d.timestampOffset == 16) {
-        timestampOffset = -99.0;
+      } else if (d.timestampOffset == max_offset+1) {
+        timestampOffset = -999.0;
       }
-      if (timestampOffset == -99) {
+      
+      if (timestampOffset <= -999.0) {
         continue;
       }
       double srs_timestamp = 0;
-      int event_counter = d.triggerCounter;
-      if (m_config.pDataFormat == "SRS" || m_config.pDataFormat == "srs") {
-        srs_timestamp =
-          (static_cast < double > (d.fecTimeStamp) * m_config.pBCTime_ns +
-            m_config.pOffsetPeriod * timestampOffset);
-      } else {
-        srs_timestamp =
+      double event_counter = d.triggerCounter;
+      if (m_config.pDataFormat == "TRG") {
+          srs_timestamp =
           (static_cast < double > (d.triggerTime) * m_config.pBCTime_ns +
             m_config.pOffsetPeriod * timestampOffset -
             static_cast < double > (d.fecTimeStamp) * m_config.pBCTime_ns);
+
+      } else {
+            srs_timestamp =
+          (static_cast < double > (d.fecTimeStamp) * m_config.pBCTime_ns +
+            m_config.pOffsetPeriod * timestampOffset);
       }
       if (firstTime == 0) {
         firstTime = srs_timestamp;
@@ -191,7 +205,16 @@ int main(int argc, char ** argv) {
           pow(corrected_adc / calib.timewalk_c, calib.timewalk_b));
 
       double corrected_time = chiptime_corrected - timewalk_correction;
-
+     
+      if (m_config.pDataFormat == "SRS" || m_config.pDataFormat == "MAX") {
+        for(int n=0; n<5;n++) {
+          if(static_cast < double > (parser->nim->TriggerTime[n]) * m_config.pBCTime_ns - t0_correction  <= srs_timestamp+corrected_time) {
+            event_counter = static_cast < double > (parser->nim->TriggerTime[n]) * m_config.pBCTime_ns - t0_correction;
+            break;
+          }
+        }
+      }
+    
       bool result = m_Clusterer -> AnalyzeHits(
         srs_timestamp, parser -> pd.fecId, d.vmmid, d.chno, d.bcid,
         d.tdc, corrected_adc, d.overThreshold != 0, corrected_time, 0, event_counter);

@@ -59,7 +59,7 @@ Clusterer::~Clusterer() {
 }
 
 //====================================================================================================================
-bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId, uint16_t chNo, uint16_t bcid, uint16_t tdc, uint16_t adc, bool overThresholdFlag, double chipTime, uint8_t geoId, int event_counter) {
+bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId, uint16_t chNo, uint16_t bcid, uint16_t tdc, uint16_t adc, bool overThresholdFlag, double chipTime, uint8_t geoId, double event_counter) {
   int pos0 = m_config.pPositions0[fecId][vmmId][chNo];
   int pos1 = m_config.pPositions1[fecId][vmmId][chNo];
 

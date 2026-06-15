@@ -14,8 +14,8 @@
 #include <string>
 #include <parser/BitMath.h>
 
-
-static const int MaxVMMs{16}; ///Maximum number of VMMs per FEC card
+static const int MaxVMMsSRS{16}; ///Maximum number of VMMs per FEC card
+static const int MaxVMMsMaxi{32}; ///Maximum number of VMMs per FEC card
 static const int MaxFECs{16}; ///Maximum number of FECs per EFU
 
 
@@ -51,40 +51,71 @@ class ParserSRS {
 public:
   // bytes
   static const int SRSHeaderSize{16};
-  static const int HitAndMarkerSize{6};
+  static const int SRSHitAndMarkerSize{6};
   static const int Data1Size{4};
 
+  static const int MaxiHeaderSize{32};
+  static const int MaxiHitAndMarkerSize{8};
+
+
   ///< Do NOT rearrange fields, used for casting to data pointer
-  struct SRSHeader {
+  struct SRSPacketHeader {
     uint32_t frameCounter{0};   /// frame counter packet field
     uint32_t dataId{0};         /// data type identifier packet field + ID of the FEC card (0-255)
     uint32_t udpTimeStamp{0};   /// Transmission time for UDP packet
     uint32_t offsetOverflow{0}; /// indicates if marker for vmm was sent in last frame
   };
 
+  ///< Do NOT rearrange fields, used for casting to data pointer
+  struct MaxiPacketHeader {
+    uint32_t dataId1{0};         /// x"4D415849564D4D" & G_VERSION_DATA_FORMAT
+    uint32_t dataId2{0};         /// x"4D415849564D4D" & G_VERSION_DATA_FORMAT
+    uint32_t block_port{0};      /// conv_std_logic_vector(G_BLOCK_ID,16) & i_source_port & i_source_ip
+    uint32_t ipAddress{0};       /// conv_std_logic_vector(G_BLOCK_ID,16) & i_source_port & i_source_ip
+    uint32_t frameCounter1{0};    /// r.frameCnt
+    uint32_t frameCounter2{0};    /// r.frameCnt
+    uint32_t udpTimeStamp1{0};   /// Transmission time for UDP packet
+    uint32_t udpTimeStamp2{0};   /// Transmission time for UDP packet
+   };
+
+  struct SRSHeader {
+    uint64_t frameCounter{0};   /// frame counter packet field
+    uint64_t dataId{0};         /// data type identifier packet field + ID of the FEC card (0-255)
+    uint64_t udpTimeStamp{0};   /// Transmission time for UDP packet
+    uint32_t ipAddress{0};
+    uint16_t udpPort{0};
+    uint16_t block{0}; 
+    uint8_t version{0};
+  };
+
   /// 
   struct VMM3Marker {
-    uint64_t fecTimeStamp{0};   /// 42 bit or 12 bit if it is relative trigger time
-    uint64_t triggerTime{0};   /// 42 bit
+    uint64_t fecTimeStamp{0};     /// 42/52 bit or 12 bit if it is relative trigger time
+    uint64_t triggerTime{0};      /// 42 bit
     uint64_t triggerCounter{0};   /// 42 bit
   };
 
   /// Data common to all hits and markers, or other parser related data
   struct ParserData {
     uint8_t fecId{1};
-    uint32_t nextFrameCounter{0};
+    uint64_t nextFrameCounter{0};
   };
+
+  struct NIMTrigger {
+    uint64_t TriggerTime[5] = {0,0,0,0,0};
+  };
+
 
   /// Data related to a single Hit
   struct VMM3Data {
-    uint64_t fecTimeStamp{0}; /// 42 bits can change within a packet so must be here
+    uint64_t fecTimeStamp{0}; /// 42 (SRS) or 52 bits (MAXI-ROC) can change within a packet so must be here
     uint16_t bcid{0};         /// 12 bit - bcid after graydecode
     uint16_t adc{0};          /// 10 bit - adc value from vmm readout
     uint8_t tdc{0};           ///  8 bit - tdc value from vmm readout
     uint8_t chno{0};          ///  6 bit - channel number from readout
     uint8_t overThreshold{0}; ///  1 bit - over threshold flag for channel from readout
     uint8_t vmmid{0};         ///  5 bit - asic identifier - unique id per fec 0 - 15
-    uint8_t timestampOffset{0}; ///  5 bit
+    uint16_t timestampOffset{0}; ///  5 bit SRS, 8 bit MAXI-ROC
     uint64_t triggerTime{0}; /// Time of the occurence of the FEC trigger signa
     uint64_t triggerCounter{0}; /// Trigger number
   };
@@ -93,8 +124,9 @@ public:
   /// \param maxelements The maximum number of readout elements
   ParserSRS(int maxelements, ParserStats & stats, std::string format) : maxHits(maxelements), 
   stats(stats),  dataFormat(format) {
-    markers = new struct VMM3Marker[MaxFECs * MaxVMMs];
+    markers = new struct VMM3Marker[MaxFECs * MaxVMMsMaxi];
     data = new struct VMM3Data[maxHits];
+    nim = new struct NIMTrigger;
   }
 
   /// Delete allocated data, set pointers to nullptr
@@ -115,6 +147,7 @@ public:
   /// \param data2 the raw (unbitreversed) data2 field of a SRS packet
   /// \param vmm3Data VMM3Data structure holding the parsed data (tdc, bcid, adc, ...)
   int parse(uint32_t data1, uint16_t data2, struct VMM3Data *vmm3Data);
+  int parse(uint64_t data, struct VMM3Data *vmm3Data);
 
   /// Holds data common to all readouts in a packet
   struct SRSHeader hdr;
@@ -127,6 +160,8 @@ public:
 
   /// holds time bases for all vmms in a readout
   struct VMM3Marker *markers{nullptr};
+
+  struct NIMTrigger *nim{nullptr};
 
   int maxHits{0};       /// Maximum capacity of data array
 
