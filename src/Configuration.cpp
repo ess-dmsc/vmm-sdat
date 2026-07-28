@@ -208,7 +208,7 @@ bool Configuration::PrintUsage(const std::string & errorMessage, char * argv) {
     "        SRS (default): FEC card, and time stamps and offsets are "
   "sent in markers, offset is interpreted as signed number and valid "
   "offsets goes from -1 to 15, 48 bit per hit/marker\n" <<
-  "        TRIG: Triggered firmware, event_counter in hit tree\n" <<
+  "        TRG: Triggered firmware, event_counter in hit tree\n" <<
   "        MAX: Maxi-Roc, offsets from -1 to 255, one hit/marker is 64 bits" <<
   std::endl;
   std::cout <<

@@ -138,7 +138,7 @@ int ParserSRS::parse(uint32_t data1, uint16_t data2, struct VMM3Data *vmm3Data) 
 
 int ParserSRS::receive(const char *buffer, int size) {
   int hits = 0;
-  if (dataFormat == "SRS" or dataFormat == "TRIG") {
+  if (dataFormat == "SRS" or dataFormat == "TRG") {
     if(size < 16) {
       stats.ParserErrorBytes += size;
       stats.ParserBadFrames++;
