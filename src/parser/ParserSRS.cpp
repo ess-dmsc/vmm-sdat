@@ -16,7 +16,7 @@
 #include "log.h"
 #include <parser/ParserSRS.h>
 
-
+//Maxi-ROC parse function
 int ParserSRS::parse(uint64_t data, struct VMM3Data *vmm3Data) {
 
   uint8_t flag = (data >> 60) & 0x0F;
@@ -30,7 +30,7 @@ int ParserSRS::parse(uint64_t data, struct VMM3Data *vmm3Data) {
     vmm3Data->timestampOffset = (data >> 37) & 0x7FFF;
     vmm3Data->vmmid = (data >> 52) & 0xFF;
     stats.ParserOverThreshold += vmm3Data->overThreshold;
-    uint16_t idx = (pd.fecId - 1) * MaxVMMsMaxi + vmm3Data->vmmid;
+    uint16_t idx = (pd.fecId - 1) * MaxVMMsMaxi + vmm3Data->vmmid%MaxVMMsMaxi;
     if(markers[idx].fecTimeStamp > 0)  {
       vmm3Data->fecTimeStamp = markers[idx].fecTimeStamp;
     }
@@ -54,6 +54,7 @@ int ParserSRS::parse(uint64_t data, struct VMM3Data *vmm3Data) {
   }
 }
 
+//SRS parse function
 int ParserSRS::parse(uint32_t data1, uint16_t data2, struct VMM3Data *vmm3Data) {
   int dataflag = (data2 >> 15) & 0x1;
 
@@ -68,7 +69,7 @@ int ParserSRS::parse(uint32_t data1, uint16_t data2, struct VMM3Data *vmm3Data) 
     vmm3Data->timestampOffset = (data1 >> 27) & 0x1F;
     vmm3Data->adc = (data1 >> 12) & 0x3FF;
     vmm3Data->bcid = BitMath::gray2bin32(data1 & 0xFFF);
-    uint16_t idx = (pd.fecId - 1) * MaxVMMsMaxi + vmm3Data->vmmid;
+    uint16_t idx = (pd.fecId - 1) * MaxVMMsSRS + vmm3Data->vmmid%MaxVMMsSRS;
     if(markers[idx].fecTimeStamp > 0)  {
       vmm3Data->fecTimeStamp = markers[idx].fecTimeStamp;
       vmm3Data->triggerTime = markers[idx].triggerTime;
@@ -78,8 +79,7 @@ int ParserSRS::parse(uint32_t data1, uint16_t data2, struct VMM3Data *vmm3Data) 
   } else {
     /// Marker
     uint8_t vmmid = (data2 >> 10) & 0x1F;
-    uint16_t idx = (pd.fecId - 1) * MaxVMMsMaxi + (vmmid%MaxVMMsMaxi);
-    
+    uint16_t idx = (pd.fecId - 1) * MaxVMMsSRS + (vmmid%MaxVMMsSRS);
 
     if(vmmid >= 16) {
       if(dataFormat == "TRG") {

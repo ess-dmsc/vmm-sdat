@@ -214,7 +214,7 @@ int main(int argc, char ** argv) {
           }
         }
       }
-    
+     
       bool result = m_Clusterer -> AnalyzeHits(
         srs_timestamp, parser -> pd.fecId, d.vmmid, d.chno, d.bcid,
         d.tdc, corrected_adc, d.overThreshold != 0, corrected_time, 0, event_counter);
