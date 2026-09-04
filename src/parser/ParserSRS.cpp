@@ -70,10 +70,12 @@ int ParserSRS::parse(uint32_t data1, uint16_t data2, struct VMM3Data *vmm3Data) 
     vmm3Data->adc = (data1 >> 12) & 0x3FF;
     vmm3Data->bcid = BitMath::gray2bin32(data1 & 0xFFF);
     uint16_t idx = (pd.fecId - 1) * MaxVMMsSRS + vmm3Data->vmmid%MaxVMMsSRS;
-    if(markers[idx].fecTimeStamp > 0)  {
+    if(dataFormat == "TRG" || markers[idx].fecTimeStamp > 0)  {
       vmm3Data->fecTimeStamp = markers[idx].fecTimeStamp;
       vmm3Data->triggerTime = markers[idx].triggerTime;
       vmm3Data->triggerCounter = markers[idx].triggerCounter + 1;
+      std::cout << "idx=" << idx << ", vmmid=" << (int)vmm3Data->vmmid << ", previous (real) event counter=" << markers[idx].triggerCounter 
+      << ", new +1 counter=" << vmm3Data->triggerCounter << std::endl;
     }
     return 1;
   } else {
@@ -88,6 +90,7 @@ int ParserSRS::parse(uint32_t data1, uint16_t data2, struct VMM3Data *vmm3Data) 
           uint64_t event_counter_high = data1 & 0x03F;
           uint64_t event_counter_low = data2 & 0x3FF;
           markers[idx].triggerCounter = event_counter_high*1024+event_counter_low;
+           std::cout << "new event counter: idx=" << idx << ", vmmid=" << (int)vmmid << ", real event counter=" << markers[idx].triggerCounter << std::endl;
         } 
         else {
           uint64_t timestamp_lower_10bit = data2 & 0x03FF;
