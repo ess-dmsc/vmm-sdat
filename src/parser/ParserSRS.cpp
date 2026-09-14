@@ -54,6 +54,8 @@ int ParserSRS::parse(uint64_t data, struct VMM3Data *vmm3Data) {
   }
 }
 
+
+
 //SRS parse function
 int ParserSRS::parse(uint32_t data1, uint16_t data2, struct VMM3Data *vmm3Data) {
   int dataflag = (data2 >> 15) & 0x1;
@@ -74,8 +76,6 @@ int ParserSRS::parse(uint32_t data1, uint16_t data2, struct VMM3Data *vmm3Data) 
       vmm3Data->fecTimeStamp = markers[idx].fecTimeStamp;
       vmm3Data->triggerTime = markers[idx].triggerTime;
       vmm3Data->triggerCounter = markers[idx].triggerCounter + 1;
-      std::cout << "idx=" << idx << ", vmmid=" << (int)vmm3Data->vmmid << ", previous (real) event counter=" << markers[idx].triggerCounter 
-      << ", new +1 counter=" << vmm3Data->triggerCounter << std::endl;
     }
     return 1;
   } else {
@@ -90,7 +90,6 @@ int ParserSRS::parse(uint32_t data1, uint16_t data2, struct VMM3Data *vmm3Data) 
           uint64_t event_counter_high = data1 & 0x03F;
           uint64_t event_counter_low = data2 & 0x3FF;
           markers[idx].triggerCounter = event_counter_high*1024+event_counter_low;
-           std::cout << "new event counter: idx=" << idx << ", vmmid=" << (int)vmmid << ", real event counter=" << markers[idx].triggerCounter << std::endl;
         } 
         else {
           uint64_t timestamp_lower_10bit = data2 & 0x03FF;
@@ -141,7 +140,7 @@ int ParserSRS::parse(uint32_t data1, uint16_t data2, struct VMM3Data *vmm3Data) 
 
 int ParserSRS::receive(const char *buffer, int size) {
   int hits = 0;
-  if (dataFormat == "SRS" or dataFormat == "TRG") {
+  if (dataFormat == "SRS" || dataFormat == "TRG") {
     if(size < 16) {
       stats.ParserErrorBytes += size;
       stats.ParserBadFrames++;
@@ -220,6 +219,22 @@ int ParserSRS::receive(const char *buffer, int size) {
       if (hits == maxHits && datalen > 0) {
         stats.ParserErrorBytes += datalen;
         break;
+      }
+    }
+    if (dataFormat == "TRG") {
+      //std::cout << "NEW FRAME: " << stats.ParserGoodFrames << "(" << dataIndex << ")" << std::endl;
+      for(int n=0; n<dataIndex; n++) {
+           uint16_t idx = (pd.fecId - 1) * MaxVMMsSRS + (data[n].vmmid%MaxVMMsSRS);
+          if(data[n].triggerCounter != markers[idx].triggerCounter) {
+            uint64_t old_counter = data[n].triggerCounter;
+             data[n].triggerCounter = markers[idx].triggerCounter; 
+            //std::cout << "                corrected event counter: idx=" << idx << ", vmmid=" << (int)data[n].vmmid 
+            //<< ": " << data[n].triggerCounter << "(" << old_counter << ")" << std::endl;
+          }
+          else {
+            //std::cout << "event counter: idx=" << idx << ", vmmid=" << (int)data[n].vmmid 
+            //<< ": " << data[n].triggerCounter << std::endl;
+          }
       }
     }
     stats.ParserGoodFrames++;
