@@ -155,7 +155,7 @@ int main(int argc, char ** argv) {
       auto calib =
         calfile.getCalibration(parser -> pd.fecId, d.vmmid, d.chno);
 
-      double chiptime_corrected =
+      double corrected_time =
         static_cast < double > (d.bcid) * m_config.pBCTime_ns +
         (1.5 * m_config.pBCTime_ns -
           static_cast < double > (d.tdc) *
@@ -197,15 +197,7 @@ int main(int argc, char ** argv) {
       m_Clusterer -> FillCalibHistos(parser -> pd.fecId, d.vmmid, d.chno,
         d.adc, corrected_adc,
         time_without_calib, time_with_calib);
-
-      double timewalk_correction =
-        calib.timewalk_d +
-        (calib.timewalk_a - calib.timewalk_d) /
-        (1 +
-          pow(corrected_adc / calib.timewalk_c, calib.timewalk_b));
-
-      double corrected_time = chiptime_corrected - timewalk_correction;
-     
+ 
       if (m_config.pDataFormat == "SRS" || m_config.pDataFormat == "MAX") {
         for(int n=0; n<5;n++) {
           if(static_cast < double > (parser->nim->TriggerTime[n]) * m_config.pBCTime_ns - t0_correction  <= srs_timestamp+corrected_time) {
