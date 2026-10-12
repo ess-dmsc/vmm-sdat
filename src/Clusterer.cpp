@@ -140,8 +140,8 @@ bool Clusterer::AnalyzeHits(double srsTimestamp, uint8_t fecId, uint8_t vmmId, u
 
   m_hitNr++;
   double totalTime = srsTimestamp + chipTime;
-  auto det = m_config.pDetectors[fecId][vmmId];
-  auto plane = m_config.pPlanes[fecId][vmmId];
+  auto det = m_config.pDetectors[fecId][vmmId][chNo];
+  auto plane = m_config.pPlanes[fecId][vmmId][chNo];
 
   if (std::find(m_config.pSaveHits.begin(), m_config.pSaveHits.end(), det) != m_config.pSaveHits.end()) {
     if (m_config.pIsPads[det]) {

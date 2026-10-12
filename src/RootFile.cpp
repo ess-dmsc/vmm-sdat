@@ -222,10 +222,8 @@ RootFile::RootFile(Configuration &config) : m_config(config) {
     int cntCal = 0;
     for (int i = 0; i < m_config.pVMMs.size(); i++) {
       auto tuple = m_config.pVMMs[i];
-      auto det = std::get<0>(tuple);
-      auto plane = std::get<1>(tuple);
-      auto fec = std::get<2>(tuple);
-      auto vmm = std::get<3>(tuple);
+      auto fec = std::get<0>(tuple);
+      auto vmm = std::get<1>(tuple);
 
       name = "fec" + std::to_string(fec) + "_vmm" + std::to_string(vmm) +
              "_adc_with_calib";

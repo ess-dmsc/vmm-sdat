@@ -47,26 +47,11 @@ public:
   // BEGIN INPUT PARAMETERS
   //**************************************************************
 
-  // The tuples for the VMMs are defined as follows:
-  // detector (choose a number between 0 and 255)
-  // plane (0 or 1)
-  // fec (fecID set in firmware)
-  // vmm (depends on connection of hybrid to FEC, FEC channel 1 equals VMMs 0
-  // and 1, FEC channel 2 VMMs 2 and 3, FEC channel 8 VMMs 14 and 15) When
-  // looking at the detector, the following conventions are used:
-  //   - top side of the hybrids is visible (if the hybrids are mounted in the
-  //   readout plane)
-  //   - OR: Side of the Hirose connector is visible (if hybrids are mounted on
-  //   the side of the detector)
-  //   - plane 0 is at the bottom (HDMI cables go downwards)
-  //   - plane 1 is at the right side (HDMI cables go to the right)
   // If one looks at a VMM3a hybrid (connector to detector readout is on the
   // bottom side), the channel 0 of the VMM 0 is always where the HDMI cable is
   // connected If the planes are correctly used as described above, the VMM IDs
   // are always in icreasing order PER HYBRID (e.g. 14, 15 or e.g. 0, 1)
-  std::vector<std::tuple<uint8_t, uint8_t, uint16_t, uint8_t>> pVMMs{
-      {1, 0, 1, 0}, {1, 0, 1, 1}, {1, 0, 1, 2}, {1, 0, 1, 3},
-      {1, 1, 1, 6}, {1, 1, 1, 7}, {1, 1, 1, 8}, {1, 1, 1, 9}};
+  std::vector<std::pair<uint8_t, uint8_t>> pVMMs;
 
   
 
@@ -108,14 +93,9 @@ public:
   double pBCTime_ns = 1000.0 / (double)pBC;
   double pOffsetPeriod = 1000.0 * 4096.0 / (double)pBC;
 
-  std::map<std::tuple<uint8_t, uint8_t>, int> pChannels;
+  std::map<std::pair<uint8_t, uint8_t>, int> pChannels;
   std::map<uint8_t, int> pChannels0;
   std::map<uint8_t, int> pChannels1;
-  std::map<std::pair<uint8_t, uint8_t>, std::pair<uint8_t, uint8_t>>
-      pFecChip_DetectorPlane;
-  std::multimap<std::pair<uint8_t, uint8_t>, uint8_t> pDetectorPlane_Fec;
-  std::map<std::pair<uint8_t, uint8_t>, uint32_t> pOffsets;
-  std::map<std::pair<uint8_t, uint8_t>, uint32_t> p_DetPlane_idx;
   std::map<uint8_t, uint8_t> pDets;
   std::vector<uint16_t> pFecs;
   std::map<std::pair<uint8_t, uint8_t>, std::string> pFecVMM_time0;
@@ -133,8 +113,9 @@ public:
   std::string pDataFormat = "SRS";
   int pPositions0[NUMFECS][16][64];
   int pPositions1[NUMFECS][16][64];
-  int pDetectors[NUMFECS][16];
-  int pPlanes[NUMFECS][16];
+  int pDetectors[NUMFECS][16][64];
+  int pPlanes[NUMFECS][16][64];
+
   std::string pLogLevel = "INFO";
   std::vector<std::string> pLogLevels = {"TRACE", "DEBUG", "INFO", "STATUS", "WARNING", "ERROR", "FATAL"};
 };

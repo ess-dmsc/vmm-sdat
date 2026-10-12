@@ -504,8 +504,8 @@ bool Configuration::ParseCommandLine(int argc, char ** argv) {
 
 
 bool Configuration::GetDetectorPlane(std::pair < uint8_t, uint8_t > dp) {
-  auto searchDetPlane = p_DetPlane_idx.find(dp);
-  if (searchDetPlane == p_DetPlane_idx.end()) {
+  auto searchDetPlane = pChannels.find(dp);
+  if (searchDetPlane == pChannels.end()) {
     return false;
   }
   return true;
@@ -518,12 +518,12 @@ bool Configuration::CreateMapping() {
   }
   for (int f = 0; f < NUMFECS; f++) {
     for (int v = 0; v < 16; v++) {
-      pDetectors[f][v] = -1;
-      pPlanes[f][v] = -1;
       if (f == 0) {
         pIsPads[v] = false;
       }
       for (int ch = 0; ch < 64; ch++) {
+        pDetectors[f][v][ch] = -1;
+        pPlanes[f][v][ch] = -1;
         pPositions0[f][v][ch] = -1;
         pPositions1[f][v][ch] = -1;
       }
@@ -543,15 +543,19 @@ bool Configuration::CreateMapping() {
       throw std::runtime_error("Invalid Json in geometry file.");
     }
     pVMMs.clear();
-    try {
+    try {  
       auto vmm_geos = Root["vmm_geometry"];
+      bool found = false;
+
       for (auto & geo: vmm_geos) {
+        found = true;
         auto fec = geo["fec"].get < uint16_t > ();
         auto vmm = geo["vmm"].get < uint8_t > ();
         auto detector = geo["detector"].get < uint8_t > ();
+        auto plane = geo["plane"].get < uint8_t > ();
         auto strips0 = geo["id0"];
         auto strips1 = geo["id1"];
-        uint8_t plane = 0;
+   
         pIsPads[detector] = false;
         if (strips0.size() != 64 ||
           (strips1.size() > 0 && strips1.size() < 64)) {
@@ -559,38 +563,18 @@ bool Configuration::CreateMapping() {
             "Wrong lengths of id0 or id1 arrays in geometry file.");
         } else if (strips1.size() == 64) {
           pIsPads[detector] = true;
-        } 
-        plane = geo["plane"].get < uint8_t > ();
-        auto searchDetPlane =
-          p_DetPlane_idx.find(std::make_pair(detector, plane));
-        if (searchDetPlane == p_DetPlane_idx.end()) {
-          // Add det/plane pair to the list and set index
-          p_DetPlane_idx.emplace(
-            std::make_pair(std::make_pair(detector, plane), 0));
-        }
-        auto searchTuple =
-          std::find(std::begin(pVMMs), std::end(pVMMs),
-            std::make_tuple(detector, plane, fec, vmm));
-        if (searchTuple == pVMMs.end()) {
-          pVMMs.emplace_back(std::make_tuple(detector, plane, fec, vmm));
-          auto searchTuple = pChannels.find(std::make_pair(detector, plane));
-          int strips = 0;
-          for (size_t ch = 0; ch < strips0.size(); ch++) {
-            int s0 = strips0[ch].get < int > ();
-            if (s0 > -1) {
-              strips++;
-            }
-          }
-          if (searchTuple == pChannels.end()) {
-            pChannels[std::make_tuple(detector, plane)] = strips;
-          } else {
-            pChannels[std::make_tuple(detector, plane)] += strips;
-          }
         }
         
         auto searchFec = std::find(std::begin(pFecs), std::end(pFecs), fec);
         if (searchFec == pFecs.end()) {
           pFecs.push_back(fec);
+        }
+        
+        auto searchFecVmm =
+          std::find(std::begin(pVMMs), std::end(pVMMs),
+            std::make_pair(fec, vmm));
+        if (searchFecVmm == pVMMs.end()) {
+          pVMMs.emplace_back(std::make_tuple(fec, vmm));
         }
 
         auto searchDet = pDets.find(detector);
@@ -599,50 +583,89 @@ bool Configuration::CreateMapping() {
           pChannels0[detector] = 0;
           pChannels1[detector] = 0;
         }
-
-        bool found = false;
-        // Search whether there is a new det/plane/fec combination
-        for (auto
-          const & searchDetPlaneFec: pDetectorPlane_Fec) {
-          if (searchDetPlaneFec.first == std::make_pair(detector, plane) &&
-            searchDetPlaneFec.second == fec) {
-            found = true;
-            break;
+        
+        int strips = 0;
+        for (size_t ch = 0; ch < strips0.size(); ch++) {
+          int s0 = strips0[ch].get < int > ();
+          if (s0 > -1) {
+            strips++;
           }
         }
-        if (found == false) {
-          pDetectorPlane_Fec.emplace(
-            std::make_pair(std::make_pair(detector, plane), fec));
+        auto searchDetPlane = pChannels.find(std::make_pair(detector, plane));
+        if (searchDetPlane == pChannels.end()) {
+          pChannels[std::make_tuple(detector, plane)] = strips;
+        } else {
+          pChannels[std::make_tuple(detector, plane)] += strips;
         }
 
-        // Search whether there is a new fec/chip combination
-        auto searchFecChip =
-          pFecChip_DetectorPlane.find(std::make_pair(fec, vmm));
-        if (searchFecChip == pFecChip_DetectorPlane.end()) {
-          pDetectors[fec][vmm] = (int) detector;
-          pPlanes[fec][vmm] = (int) plane;
-          for (size_t ch = 0; ch < strips0.size(); ch++) {
-            int s0 = strips0[ch].get < int > ();
-            pPositions0[fec][vmm][ch] = s0;
-            if (pIsPads[detector]) {
-              int s1 = strips1[ch].get < int > ();
-              pPositions1[fec][vmm][ch] = s1;
-              if (s0 > pChannels0[detector]) {
-                pChannels0[detector] = s0;
-              }
-              if (s1 > pChannels1[detector]) {
-                pChannels1[detector] = s1;
-              }
+        for (size_t ch = 0; ch < strips0.size(); ch++) {
+          pDetectors[fec][vmm][ch] = (int) detector;
+          pPlanes[fec][vmm][ch] = (int) plane;
+          int s0 = strips0[ch].get < int > ();
+          pPositions0[fec][vmm][ch] = s0;
+          if (pIsPads[detector]) {
+            int s1 = strips1[ch].get < int > ();
+            pPositions1[fec][vmm][ch] = s1;
+            if (s0 > pChannels0[detector]) {
+              pChannels0[detector] = s0;
+            }
+            if (s1 > pChannels1[detector]) {
+              pChannels1[detector] = s1;
             }
           }
-
-          // Add the new fec/chip pair to the list
-          pFecChip_DetectorPlane.emplace(std::make_pair(
-            std::make_pair(fec, vmm), std::make_pair(detector, plane)));
         }
       }
-    } catch (const std::exception & exc) {
-      throw std::runtime_error("Invalid json in geometry file.");
+      if (found == false) {
+        auto det_geos = Root["flexible_geometry"];
+        for (auto & geo: det_geos) {
+          found = true;
+          auto fec = geo["fec"].get < uint8_t > ();
+          auto vmm = geo["vmm"].get < uint8_t > ();
+          auto detector = geo["detector"];
+          auto plane = geo["plane"];
+          auto pos = geo["pos"];
+          if (detector.size() != 64 || plane.size() != 64 || pos.size() != 64) {
+            throw std::runtime_error(
+              "Wrong lengths of detector, plane or pos arrays in geometry file.");
+          }
+          auto searchFec = std::find(std::begin(pFecs), std::end(pFecs), fec);
+          if (searchFec == pFecs.end()) {
+            pFecs.push_back(fec);
+          }
+
+          auto searchFecVmm = std::find(std::begin(pVMMs), std::end(pVMMs), std::make_pair(fec, vmm));
+          if (searchFecVmm == pVMMs.end()) {
+            pVMMs.emplace_back(std::make_tuple(fec, vmm));
+          }
+
+          for (size_t ch = 0; ch < 64; ch++) {
+            int theDet = detector[ch].get < int > ();
+            int thePlane = plane[ch].get < int > ();
+            int thePos = pos[ch].get < int > ();
+            pDetectors[fec][vmm][ch] = (int) theDet;
+            pPlanes[fec][vmm][ch] = (int) thePlane;
+            pPositions0[fec][vmm][ch] = (int) thePos;
+            auto searchDetPlane = pChannels.find(std::make_pair(theDet, thePlane));
+            if (searchDetPlane == pChannels.end()) {
+              pChannels[std::make_pair(theDet, thePlane)] = 1;
+            } else {
+              pChannels[std::make_pair(theDet, thePlane)] += 1;
+            }
+            auto searchDet = pDets.find(theDet);
+            if (searchDet == pDets.end()) {
+              pDets.emplace(theDet, pDets.size());
+              pChannels0[theDet] = 0;
+              pChannels1[theDet] = 0;
+            }
+           }
+        }
+      }
+      if(found == false) {
+        throw std::runtime_error("Invalid json in geometry file."); 
+      }
+    } 
+    catch (const std::exception & exc) {
+       throw std::runtime_error("Invalid json in geometry file.");
     }
  
 
